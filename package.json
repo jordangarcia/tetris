@@ -1,0 +1,32 @@
+{
+  "name": "tetris",
+  "version": "0.0.1",
+  "description": "Tetris written in NuclearJS + React",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jordan Garcia",
+  "license": "ISC",
+  "jest": {
+    "scriptPreprocessor": "jestPreprocessor.js"
+  },
+  "dependencies": {
+    "nuclear-js": "^0.3.1",
+    "webpack": "^1.4.4",
+    "react": "^0.11.2",
+    "keymirror": "^0.1.0",
+    "immutable": "^2.0.17",
+    "lodash": "^2.4.1",
+    "through": "^2.3.6"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.11.2",
+    "jstransform-loader": "^0.1.1",
+    "jstransform": "^6.3.2",
+    "gulp": "^3.8.8",
+    "gulp-connect": "^2.0.6",
+    "gulp-shell": "^0.2.9",
+    "jest": "^0.1.37"
+  }
+}
