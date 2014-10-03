@@ -11,10 +11,10 @@ var partial = require('lodash').partial
  * Returns the position of a board piece if moved down one
  * @param {BoardPiece} piece
  */
-exports.moveDown = function(piece) {
+exports.movePiece = function(piece, vector) {
   return new BoardPiece({
     type: piece.type,
-    coord: addCoords(piece.coord, [0, -1])
+    coord: addCoords(piece.coord, vector)
   })
 }
 

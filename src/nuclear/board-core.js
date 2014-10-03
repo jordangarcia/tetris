@@ -16,6 +16,7 @@ module.exports = Nuclear.createCore({
   initialize() {
     this.on(Const.SPAWN_PIECE, addPiece)
     this.on(Const.CLEAR_LINES, clearLines)
+    this.on(Const.TICK, tick)
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     // initial state
@@ -31,7 +32,7 @@ module.exports = Nuclear.createCore({
  */
 function calculateBoard(activePiece, board) {
   if (activePiece) {
-    return boardHelpers.addPiece(activePiece, board)
+    return boardHelpers.addPieceToBoard(activePiece, board)
   }
   return board
 }
@@ -46,7 +47,7 @@ function tick(state, payload) {
   var board = state.get('board')
   if (piece) {
     // move piece down and check if is valid
-    var newPiece = boardHelpers.moveDown(piece)
+    var newPiece = boardHelpers.movePiece(piece, [0, -1])
     if (boardHelpers.isValidPosition(newPiece, board)) {
       newState = state.set('activePiece', newPiece)
     } else {

@@ -17,7 +17,7 @@ describe('board-helpers', () => {
         coord: coord(0, 1)
       })
 
-      var result = helpers.isValidPosition(helpers.moveDown(piece), board)
+      var result = helpers.isValidPosition(helpers.movePiece(piece, [0, -1]), board)
       expect(result).toBe(false)
     })
 
@@ -27,7 +27,7 @@ describe('board-helpers', () => {
         coord: coord(0, 0)
       })
       var board = helpers.generateBlankBoard(10, 22)
-      var result = helpers.isValidPosition(helpers.moveDown(piece), board)
+      var result = helpers.isValidPosition(helpers.movePiece(piece, [0, -1]), board)
       expect(result).toBe(false)
     })
   })
