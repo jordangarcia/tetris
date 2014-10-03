@@ -23,3 +23,17 @@ exports.tick = function(reactor) {
     payload: {}
   })
 }
+
+exports.moveLeft = function(reactor) {
+  reactor.cycle({
+    type: Const.LEFT,
+    payload: {}
+  })
+}
+
+exports.moveRight = function(reactor) {
+  reactor.cycle({
+    type: Const.RIGHT,
+    payload: {}
+  })
+}

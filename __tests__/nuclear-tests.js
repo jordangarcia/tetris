@@ -70,4 +70,33 @@ describe("board core", () => {
       })
     })
   })
+
+  describe("moving left", () => {
+    describe("when there is room", () => {
+      beforeEach(() => {
+        var piece = new BoardPiece({
+          type: 'I',
+          coord: coord(1, 1)
+        })
+        reactor.state = reactor.state
+          .updateIn(['board', 'activePiece'], x => piece)
+      })
+
+      it('should move left', () => {
+        reactor.action('game').moveLeft()
+
+        var board = reactor.getImmutable('board.board')
+        var activeCoord = reactor.getImmutable('board.activePiece').get('coord')
+        expect(Immutable.is(activeCoord, coord(0, 1))).toBe(true)
+
+        expect(board.get(coord(0, 1))).toBe('I')
+        expect(board.get(coord(1, 1))).toBe('I')
+        expect(board.get(coord(2, 1))).toBe('I')
+        expect(board.get(coord(3, 1))).toBe('I')
+        expect(board.get(coord(4, 1))).toBe(null)
+        expect(board.get(coord(0, 0))).toBe(null)
+
+      })
+    })
+  })
 })
