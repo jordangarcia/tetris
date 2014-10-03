@@ -3,8 +3,8 @@ var Immutable = require('immutable')
 var Const = require('./constants')
 var Tetriminos = require('../tetriminos')
 var coord = require('../coord')
-var BoardPiece = require('../board-piece')
-var getPieceCoords = require('../helpers').getPieceCoords
+var BoardPiece = require('../records/board-piece')
+var boardHelpers = require('./board-helpers')
 
 var WIDTH = 10
 var HEIGHT = 22
@@ -15,12 +15,13 @@ var HEIGHT = 22
 module.exports = Nuclear.createCore({
   initialize() {
     this.on(Const.SPAWN_PIECE, addPiece)
+    this.on(Const.CLEAR_LINES, clearLines)
 
-    this.computed('board', ['activePiece', 'inactivePieces'], calculateBoard)
+    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     // initial state
     return {
       activePiece: null,
-      inactivePieces: []
+      existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
     }
   }
 })
@@ -28,28 +29,33 @@ module.exports = Nuclear.createCore({
 /**
  * @param {Immutable.Vector}
  */
-function calculateBoard(activePiece, inactivePieces) {
-  return generateBlankBoard(WIDTH, HEIGHT).withMutations(board => {
-    if (activePiece) {
-      getPieceCoords(activePiece).forEach(coord => {
-        board.set(coord, activePiece.piece)
-      })
-    }
-
-    inactivePieces.forEach(entry => {
-      getPieceCoords(entry).forEach(coord => {
-        board.set(coord, entry.piece)
-      })
-    })
-    return board
-  })
+function calculateBoard(activePiece, board) {
+  if (activePiece) {
+    return boardHelpers.addPiece(activePiece, board)
+  }
+  return board
 }
 
 /**
  * Game tick, move piece down
  */
 function tick(state, payload) {
-
+  var newState
+  var piece = state.get('activePiece')
+  var existingBoard = state.get('existingBoard')
+  var board = state.get('board')
+  if (piece) {
+    // move piece down and check if is valid
+    var newPiece = boardHelpers.moveDown(piece)
+    if (boardHelpers.isValidPosition(newPiece, board)) {
+      newState = state.set('activePiece', newPiece)
+    } else {
+      newState = state
+        .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
+        .set('activePiece', null)
+    }
+  }
+  return newState
 }
 
 /**
@@ -58,24 +64,12 @@ function tick(state, payload) {
 function addPiece(state, payload) {
   var piece = payload.piece
   var boardPiece = new BoardPiece({
-    piece: piece,
+    type: piece,
     coord: coord(Tetriminos[piece].spawnPosition),
   })
 
   return state.set('activePiece', boardPiece)
 }
 
-
-/**
- * Generates an Immutable Map with [x, y] coords as keys
- */
-function generateBlankBoard(width, height) {
-  var map = []
-  for (var x = 0; x < width; x++) {
-    for (var y = 0; y < height; y++) {
-      map.push([coord(x, y), null])
-    }
-  }
-
-  return Immutable.Map(map)
+function clearLines(state, payload) {
 }
