@@ -104,4 +104,63 @@ describe("board core", () => {
       })
     })
   })
+
+  describe("ROTATE_CW", () => {
+    describe("when there is room", () => {
+      var piece
+      beforeEach(() => {
+        piece = new BoardPiece({
+          type: 'I',
+          rotation: 0,
+          pos: coord(1, 1),
+        })
+        reactor.state = reactor.state
+          .updateIn(['game', 'activePiece'], x => piece)
+      })
+
+      it('rotate the piece successfully', () => {
+        reactor.action('game').rotateClockwise()
+
+        var board = reactor.getImmutable('game.board')
+
+        expect(board.get(coord(1, 1))).toBe('I')
+        expect(board.get(coord(1, 2))).toBe('I')
+        expect(board.get(coord(1, 3))).toBe('I')
+        expect(board.get(coord(1, 4))).toBe('I')
+        expect(board.get(coord(1, 0))).toBe(null)
+        expect(board.get(coord(0, 1))).toBe(null)
+        expect(board.get(coord(2, 1))).toBe(null)
+      })
+    })
+
+    describe("when there is no room", () => {
+      var piece
+      beforeEach(() => {
+        piece = new BoardPiece({
+          type: 'I',
+          rotation: 1,
+          pos: coord(1, 1),
+        })
+        reactor.state = reactor.state
+          .updateIn(['game', 'activePiece'], x => piece)
+          .updateIn(['game', 'existingBoard'], board => {
+            return board.set(coord(2, 1), 'J')
+          })
+      })
+
+      it.only('rotate the piece successfully', () => {
+        reactor.action('game').rotateClockwise()
+        var board = reactor.getImmutable('game.board')
+
+        expect(board.get(coord(1, 2))).toBe('I')
+        expect(board.get(coord(2, 2))).toBe('I')
+        expect(board.get(coord(3, 2))).toBe('I')
+        expect(board.get(coord(4, 2))).toBe('I')
+        expect(board.get(coord(2, 1))).toBe('J')
+        expect(board.get(coord(1, 0))).toBe(null)
+        expect(board.get(coord(0, 1))).toBe(null)
+        expect(board.get(coord(1, 3))).toBe(null)
+      })
+    })
+  })
 })

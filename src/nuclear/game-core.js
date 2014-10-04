@@ -19,6 +19,7 @@ module.exports = Nuclear.createCore({
     this.on(Const.LEFT, moveLeft)
     this.on(Const.RIGHT, moveRight)
     this.on(Const.TICK, tick)
+    this.on(Const.ROTATE, rotate)
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     // initial state
@@ -54,7 +55,7 @@ function tick(state, payload) {
   var board = state.get('board')
   if (piece) {
     // move piece down and check if is valid
-    var newPiece = pieceHelpers.movePiece(piece, [0, -1])
+    var newPiece = pieceHelpers.move(piece, [0, -1])
     if (boardHelpers.isValidPosition(newPiece, board)) {
       newState = state
         .set('activePiece', newPiece)
@@ -101,7 +102,7 @@ function moveLeft(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = pieceHelpers.movePiece(activePiece, [-1, 0])
+  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
   if (boardHelpers.isValidPosition(movedPiece, board)) {
     return state.set('activePiece', movedPiece)
   }
@@ -116,9 +117,43 @@ function moveRight(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = pieceHelpers.movePiece(activePiece, [1, 0])
+  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
   if (boardHelpers.isValidPosition(movedPiece, board)) {
     return state.set('activePiece', movedPiece)
+  }
+
+  return state
+}
+
+/**
+ * Rotates a piece an arbitrary number of times
+ */
+function rotate(state, payload) {
+  var newState
+  var board = state.get('existingBoard')
+  var piece = state.get('activePiece')
+  if (!piece) {
+    return
+  }
+
+  var rotatedPiece = pieceHelpers.rotate(piece, payload.diff)
+  var translations = [
+    [0,0],
+    [0,1],
+    [0,2],
+    [1,0],
+    [2,0],
+    [3,0],
+    [0,1],
+    [0,2],
+    [0,3],
+  ]
+
+  for (var i = 0; i < translations.length; i++) {
+    rotatedPiece = pieceHelpers.move(rotatedPiece, translations[i])
+    if (boardHelpers.isValidPosition(rotatedPiece, board)) {
+      return state.set('activePiece', rotatedPiece)
+    }
   }
 
   return state

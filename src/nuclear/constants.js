@@ -6,4 +6,5 @@ module.exports = keyMirror({
   LEFT: null,
   RIGHT: null,
   TICK: null,
+  ROTATE: null,
 })

@@ -44,3 +44,12 @@ exports.moveRight = function(reactor) {
     payload: {}
   })
 }
+
+exports.rotateClockwise = function(reactor) {
+  reactor.cycle({
+    type: Const.ROTATE,
+    payload: {
+      diff: 1
+    }
+  })
+}

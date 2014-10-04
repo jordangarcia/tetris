@@ -10,7 +10,7 @@ var isArray = require('lodash').isArray
  * @param {number} diff
  * @return {BoardPiece}
  */
-exports.rotatePiece = function(piece, diff) {
+exports.rotate = function(piece, diff) {
   var rotationLen = Tetriminos[piece.type].structure.length
   var newRotation = (piece.rotation + diff) % rotationLen
 
@@ -26,7 +26,7 @@ exports.rotatePiece = function(piece, diff) {
  * Returns the position of a board piece if moved down one
  * @param {BoardPiece} piece
  */
-exports.movePiece = function(piece, vector) {
+exports.move = function(piece, vector) {
   return new BoardPiece({
     type: piece.type,
     rotation: piece.rotation,
