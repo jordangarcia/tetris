@@ -1,7 +1,7 @@
 var Nuclear = require('nuclear-js')
 
 var reactor = Nuclear.createReactor()
-reactor.attachCore('board', require('./board-core'))
+reactor.attachCore('game', require('./game-core'))
 
 reactor.bindActions('game', require('./game-actions'))
 

@@ -1,22 +1,6 @@
 var Tetriminos = require('../tetriminos')
-var BoardPiece = require('../records/board-piece')
 var Map = require('immutable').Map
 var coord = require('../coord')
-var isArray = require('lodash').isArray
-var partial = require('lodash').partial
-
-
-/**
- * Returns a new BoardPiece that has been moved down one
- * Returns the position of a board piece if moved down one
- * @param {BoardPiece} piece
- */
-exports.movePiece = function(piece, vector) {
-  return new BoardPiece({
-    type: piece.type,
-    coord: addCoords(piece.coord, vector)
-  })
-}
 
 /**
  * @param {Array<Coord>} coords
@@ -24,8 +8,8 @@ exports.movePiece = function(piece, vector) {
  * @return {Boolean}
  */
 exports.isValidPosition = function(piece, board) {
-  return exports.getPieceCoords(piece).every(pos => {
-    return (pos.y >= 0 && board.get(pos) === null)
+  return piece.getCoords().every(pos => {
+    return board.get(pos) === null
   })
 }
 
@@ -36,7 +20,7 @@ exports.isValidPosition = function(piece, board) {
  */
 exports.addPieceToBoard = function(piece, board) {
   return board.withMutations(board => {
-    exports.getPieceCoords(piece).forEach(coord => {
+    piece.getCoords().forEach(coord => {
       board.set(coord, piece.type)
     })
   })
@@ -57,22 +41,78 @@ exports.generateBlankBoard = function(width, height) {
 }
 
 /**
- * Given a piece type and its bottom left position
- * returns an array of coords that the piece occupies
- * @param {BoardPiece}
+ * Check if there is a line at a given Y-level i
  */
-exports.getPieceCoords = function(boardPiece) {
-  return Tetriminos[boardPiece.type].structure.map(x => {
-    return addCoords(boardPiece.coord, x)
+exports.isLine = function(board, y, width) {
+  return coordRange(y, width).every(x => {
+    return board.get(x) !== null
   })
 }
 
-function addCoords(c1, c2) {
-  if (isArray(c1)) {
-    c1 = coord(c1[0], c1[1])
-  }
-  if (isArray(c2)) {
-    c2 = coord(c2[0], c2[1])
-  }
-  return coord(c1.x + c2.x, c1.y + c2.y)
+/**
+ * Check if there is an empty row
+ */
+exports.isEmptyRow = function(board, y, width) {
+  return coordRange(y, width).every(x => {
+    return board.get(x) === null
+  })
 }
+
+/**
+ * Returns a new board state with a specific row nulled out
+ */
+exports.clearRow = function(board, y, width) {
+  return board.withMutations(board => {
+    coordRange(y, width).forEach(coord => {
+      board.set(coord, null)
+    })
+  })
+}
+
+/**
+ * Returns a new board state with a specific row nulled out
+ */
+exports.collapseRow = function(board, y, width, height) {
+  var vertRange = []
+  for (var i = y+1; i < height; i++) {
+    vertRange.push(i)
+  }
+
+  return board.withMutations(board => {
+    vertRange.forEach(y => {
+      coordRange(y, width).forEach(pos => {
+        var existing = board.get(pos)
+        var replacePos = coord({
+          x: pos.x - 1,
+          y: y,
+        })
+        board.set(replacePos, existing)
+      })
+    })
+    return board
+  })
+}
+
+/**
+ * Clears all lines and returns a new board
+ */
+exports.clearLines = function(board, width, height) {
+  var ind = 0
+  var counter = 0
+
+  while (counter < height) {
+
+  }
+}
+
+/**
+ * Returns an array of coord for a given Y-level
+ */
+function coordRange(y, width) {
+  var coords = []
+  for(var i = 0; i < width; i++) {
+    coords.push(coord(i, y))
+  }
+  return coords
+}
+

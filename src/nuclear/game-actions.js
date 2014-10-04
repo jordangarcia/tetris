@@ -17,6 +17,13 @@ exports.spawnRandomPiece = function(reactor) {
   })
 }
 
+exports.clearLines = function(reactor) {
+  reactor.cycle({
+    type: Const.CLEAR_LINES,
+    payload: {}
+  })
+}
+
 exports.tick = function(reactor) {
   reactor.cycle({
     type: Const.TICK,

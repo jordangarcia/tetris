@@ -2,7 +2,7 @@ jest.autoMockOff()
 
 var Immutable = require('immutable')
 var Nuclear = require('nuclear-js')
-var boardCore = require('../src/nuclear/board-core')
+var gameCore = require('../src/nuclear/game-core')
 var gameActions = require('../src/nuclear/game-actions')
 var Const = require('../src/nuclear/constants')
 var BoardPiece = require('../src/records/board-piece')
@@ -13,7 +13,7 @@ describe("board core", () => {
 
   beforeEach(() => {
     reactor = Nuclear.createReactor()
-    reactor.attachCore('board', boardCore)
+    reactor.attachCore('game', gameCore)
     reactor.bindActions('game', gameActions)
   })
 
@@ -22,17 +22,18 @@ describe("board core", () => {
       beforeEach(() => {
         var piece = new BoardPiece({
           type: 'I',
-          coord: coord(0, 1)
+          rotation: 0,
+          pos: coord(0, 1),
         })
         reactor.state = reactor.state
-          .updateIn(['board', 'activePiece'], x => piece)
+          .updateIn(['game', 'activePiece'], x => piece)
       })
 
       it('should drop the piece', () => {
         reactor.action('game').tick()
 
-        var board = reactor.getImmutable('board.board')
-        var activeCoord = reactor.getImmutable('board.activePiece').get('coord')
+        var board = reactor.getImmutable('game.board')
+        var activeCoord = reactor.getImmutable('game.activePiece').get('pos')
         expect(Immutable.is(activeCoord, coord(0, 0))).toBe(true)
 
         expect(board.get(coord(0, 0))).toBe('I')
@@ -45,20 +46,24 @@ describe("board core", () => {
     })
 
     describe("when the piece is at the bottom", () => {
+      var piece
       beforeEach(() => {
-        var piece = new BoardPiece({
+        piece = new BoardPiece({
           type: 'I',
-          coord: coord(0, 0)
+          rotation: 0,
+          pos: coord(0, 0),
         })
         reactor.state = reactor.state
-          .updateIn(['board', 'activePiece'], x => piece)
+          .updateIn(['game', 'activePiece'], x => piece)
       })
 
       it('should drop the piece', () => {
         reactor.action('game').tick()
 
-        var board = reactor.getImmutable('board.board')
-        var activePiece = reactor.getImmutable('board.activePiece')
+        var board = reactor.getImmutable('game.board')
+        var activePiece = reactor.getImmutable('game.activePiece')
+        var recentPiece = reactor.getImmutable('game.recentPiece')
+        expect(recentPiece).toBe(piece)
         expect(activePiece).toBe(null)
 
         expect(board.get(coord(0, 0))).toBe('I')
@@ -76,17 +81,18 @@ describe("board core", () => {
       beforeEach(() => {
         var piece = new BoardPiece({
           type: 'I',
-          coord: coord(1, 1)
+          rotation: 0,
+          pos: coord(1, 1),
         })
         reactor.state = reactor.state
-          .updateIn(['board', 'activePiece'], x => piece)
+          .updateIn(['game', 'activePiece'], x => piece)
       })
 
       it('should move left', () => {
         reactor.action('game').moveLeft()
 
-        var board = reactor.getImmutable('board.board')
-        var activeCoord = reactor.getImmutable('board.activePiece').get('coord')
+        var board = reactor.getImmutable('game.board')
+        var activeCoord = reactor.getImmutable('game.activePiece').get('pos')
         expect(Immutable.is(activeCoord, coord(0, 1))).toBe(true)
 
         expect(board.get(coord(0, 1))).toBe('I')
@@ -95,7 +101,6 @@ describe("board core", () => {
         expect(board.get(coord(3, 1))).toBe('I')
         expect(board.get(coord(4, 1))).toBe(null)
         expect(board.get(coord(0, 0))).toBe(null)
-
       })
     })
   })

@@ -2,9 +2,9 @@ var Nuclear = require('nuclear-js')
 var Immutable = require('immutable')
 var Const = require('./constants')
 var Tetriminos = require('../tetriminos')
-var coord = require('../coord')
 var BoardPiece = require('../records/board-piece')
 var boardHelpers = require('./board-helpers')
+var pieceHelpers = require('./piece-helpers')
 
 var WIDTH = 10
 var HEIGHT = 22
@@ -23,7 +23,12 @@ module.exports = Nuclear.createCore({
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     // initial state
     return {
+      stats: {
+        lines: 0,
+        score: 0
+      },
       activePiece: null,
+      recentPiece: null,
       existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
     }
   }
@@ -49,12 +54,15 @@ function tick(state, payload) {
   var board = state.get('board')
   if (piece) {
     // move piece down and check if is valid
-    var newPiece = boardHelpers.movePiece(piece, [0, -1])
+    var newPiece = pieceHelpers.movePiece(piece, [0, -1])
     if (boardHelpers.isValidPosition(newPiece, board)) {
-      newState = state.set('activePiece', newPiece)
+      newState = state
+        .set('activePiece', newPiece)
+        .set('recentPiece', null)
     } else {
       newState = state
         .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
+        .set('recentPiece', piece)
         .set('activePiece', null)
     }
   }
@@ -68,13 +76,22 @@ function addPiece(state, payload) {
   var piece = payload.piece
   var boardPiece = new BoardPiece({
     type: piece,
-    coord: coord(Tetriminos[piece].spawnPosition),
+    rotation: 0,
+    pos: Tetriminos[piece].spawnPosition,
   })
 
   return state.set('activePiece', boardPiece)
 }
 
+/**
+ * Clears all existing lines
+ */
 function clearLines(state, payload) {
+  var board = state.get('existingBoard')
+  var counter = 0
+  while (counter < HEIGHT) {
+
+  }
 }
 
 /**
@@ -84,7 +101,7 @@ function moveLeft(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = boardHelpers.movePiece(activePiece, [-1, 0])
+  var movedPiece = pieceHelpers.movePiece(activePiece, [-1, 0])
   if (boardHelpers.isValidPosition(movedPiece, board)) {
     return state.set('activePiece', movedPiece)
   }
@@ -99,7 +116,7 @@ function moveRight(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = boardHelpers.movePiece(activePiece, [1, 0])
+  var movedPiece = pieceHelpers.movePiece(activePiece, [1, 0])
   if (boardHelpers.isValidPosition(movedPiece, board)) {
     return state.set('activePiece', movedPiece)
   }
