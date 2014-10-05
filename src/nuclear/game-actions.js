@@ -8,27 +8,29 @@ function randInt(max) {
  return Math.floor((Math.random() * max))
 }
 
-exports.spawnRandomPiece = function(reactor) {
-  reactor.cycle({
-    type: Const.SPAWN_PIECE,
-    payload: {
-      piece: Tetriminos.pieces[randInt(7)]
-    }
-  })
-}
-
-exports.clearLines = function(reactor) {
-  reactor.cycle({
-    type: Const.CLEAR_LINES,
-    payload: {}
-  })
-}
-
+/**
+ * Main game tick action
+ */
 exports.tick = function(reactor) {
-  reactor.cycle({
-    type: Const.TICK,
-    payload: {}
-  })
+  var activePiece = reactor.getImmutable('game.activePiece')
+
+  if (!activePiece) {
+    reactor.cycle({
+      type: Const.CLEAR_LINES,
+      payload: {}
+    })
+    reactor.cycle({
+      type: Const.SPAWN_PIECE,
+      payload: {
+        piece: Tetriminos.pieces[randInt(7)]
+      }
+    })
+  } else {
+    reactor.cycle({
+      type: Const.MOVE_DOWN,
+      payload: {}
+    })
+  }
 }
 
 exports.moveLeft = function(reactor) {

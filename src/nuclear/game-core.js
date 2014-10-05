@@ -15,10 +15,10 @@ var HEIGHT = 22
 module.exports = Nuclear.createCore({
   initialize() {
     this.on(Const.SPAWN_PIECE, addPiece)
-    this.on(Const.CLEAR_LINES, clearLines)
+    //this.on(Const.CLEAR_LINES, clearLines)
     this.on(Const.LEFT, moveLeft)
     this.on(Const.RIGHT, moveRight)
-    this.on(Const.TICK, tick)
+    this.on(Const.MOVE_DOWN, moveDown)
     this.on(Const.ROTATE, rotate)
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
@@ -48,15 +48,14 @@ function calculateBoard(activePiece, board) {
 /**
  * Game tick, move piece down
  */
-function tick(state, payload) {
-  var newState
+function moveDown(state, payload) {
+  var newState = state
   var piece = state.get('activePiece')
   var existingBoard = state.get('existingBoard')
-  var board = state.get('board')
   if (piece) {
     // move piece down and check if is valid
     var newPiece = pieceHelpers.move(piece, [0, -1])
-    if (boardHelpers.isValidPosition(newPiece, board)) {
+    if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
       newState = state
         .set('activePiece', newPiece)
         .set('recentPiece', null)
@@ -99,41 +98,46 @@ function clearLines(state, payload) {
  * Moves the active piece left
  */
 function moveLeft(state, payload) {
+  var newState = state
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
-  if (boardHelpers.isValidPosition(movedPiece, board)) {
-    return state.set('activePiece', movedPiece)
+  if (activePiece) {
+    var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
+    if (boardHelpers.isValidPosition(movedPiece, board)) {
+      newState = state.set('activePiece', movedPiece)
+    }
   }
 
-  return state
+  return newState
 }
 
 /**
  * Moves the active piece left
  */
 function moveRight(state, payload) {
+  var newState = state
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
-  if (boardHelpers.isValidPosition(movedPiece, board)) {
-    return state.set('activePiece', movedPiece)
+  if (activePiece) {
+    var movedPiece = pieceHelpers.move(activePiece, [1, 0])
+    if (boardHelpers.isValidPosition(movedPiece, board)) {
+      newState = state.set('activePiece', movedPiece)
+    }
   }
 
-  return state
+  return newState
 }
 
 /**
  * Rotates a piece an arbitrary number of times
  */
 function rotate(state, payload) {
-  var newState
   var board = state.get('existingBoard')
   var piece = state.get('activePiece')
   if (!piece) {
-    return
+    return state
   }
 
   var rotatedPiece = pieceHelpers.rotate(piece, payload.diff)
@@ -144,9 +148,9 @@ function rotate(state, payload) {
     [1,0],
     [2,0],
     [3,0],
-    [0,1],
-    [0,2],
-    [0,3],
+    [-1,0],
+    [-2,0],
+    [-3,0],
   ]
 
   for (var i = 0; i < translations.length; i++) {
