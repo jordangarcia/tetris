@@ -15,25 +15,59 @@ var HEIGHT = 22
 module.exports = Nuclear.createCore({
   initialize() {
     this.on(Const.SPAWN_PIECE, addPiece)
-    //this.on(Const.CLEAR_LINES, clearLines)
+    this.on(Const.CLEAR_LINES, clearLines)
     this.on(Const.LEFT, moveLeft)
     this.on(Const.RIGHT, moveRight)
     this.on(Const.MOVE_DOWN, moveDown)
+    this.on(Const.SOFT_DROP, softDrop)
     this.on(Const.ROTATE, rotate)
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
+    this.computed('score', ['clears'], calculateScore)
     // initial state
     return {
-      stats: {
-        lines: 0,
-        score: 0
-      },
+      clears: [],
       activePiece: null,
       recentPiece: null,
       existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
     }
   }
 })
+
+/**
+ * Calculates the score based on the history of all cleared lines
+ * @param {Immutable.Vector} clears
+ * @return {Immutable.Map}
+ */
+function calculateScore(clears) {
+  var score = {
+    lines: 0,
+    single: 0,
+    double: 0,
+    triple: 0,
+    tetris: 0,
+  }
+
+  clears.forEach(num => {
+    score.lines += num
+    switch(num) {
+      case 1:
+        score.single++
+        break
+      case 2:
+        score.double++
+        break
+      case 3:
+        score.triple++
+        break
+      case 4:
+        score.tetris++
+        break
+    }
+  })
+
+  return score
+}
 
 /**
  * @param {Immutable.Vector}
@@ -48,7 +82,7 @@ function calculateBoard(activePiece, board) {
 /**
  * Game tick, move piece down
  */
-function moveDown(state, payload) {
+function moveDown(state) {
   var newState = state
   var piece = state.get('activePiece')
   var existingBoard = state.get('existingBoard')
@@ -58,7 +92,6 @@ function moveDown(state, payload) {
     if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
       newState = state
         .set('activePiece', newPiece)
-        .set('recentPiece', null)
     } else {
       newState = state
         .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
@@ -67,6 +100,32 @@ function moveDown(state, payload) {
     }
   }
   return newState
+}
+
+function softDrop(state) {
+  var piece = state.get('activePiece')
+  var existingBoard = state.get('existingBoard')
+
+  if (piece) {
+    var deltaY = -1
+    var newPiece = pieceHelpers.move(piece, [0, deltaY])
+    if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
+      // if the piece is at the bottom of the board simulate a moveDown
+      return moveDown(state)
+    }
+
+    // move the piece down until its no longer valid
+    while (boardHelpers.isValidPosition(newPiece, existingBoard)) {
+      deltaY--
+      newPiece = pieceHelpers.move(piece, [0, deltaY])
+    }
+
+    // move one above the invalid position
+    newPiece = pieceHelpers.move(piece, [0, deltaY + 1])
+    return state.set('activePiece', newPiece)
+  }
+
+  return state
 }
 
 /**
@@ -86,12 +145,23 @@ function addPiece(state, payload) {
 /**
  * Clears all existing lines
  */
-function clearLines(state, payload) {
+function clearLines(state) {
+  debugger
   var board = state.get('existingBoard')
-  var counter = 0
-  while (counter < HEIGHT) {
-
+  var recentPiece = state.get('recentPiece')
+  if (!recentPiece) {
+    return state
   }
+
+  var lines = boardHelpers.getLines(board, WIDTH, HEIGHT)
+  if (lines.length === 0) {
+    return state
+  }
+
+  // add the number of lines to the record of clears
+  return state
+    .update('clears', vect => vect.push(lines.length))
+    .set('existingBoard', boardHelpers.removeLines(board, lines, WIDTH, HEIGHT))
 }
 
 /**
@@ -151,6 +221,9 @@ function rotate(state, payload) {
     [-1,0],
     [-2,0],
     [-3,0],
+    [0,-1],
+    [0,-2],
+    [0,-3],
   ]
 
   for (var i = 0; i < translations.length; i++) {

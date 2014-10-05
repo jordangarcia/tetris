@@ -2,6 +2,7 @@ var BoardPiece = require('../records/board-piece')
 var Tetriminos = require('../tetriminos')
 var coord = require('../coord')
 var isArray = require('lodash').isArray
+var uniq = require('lodash').uniq
 
 /**
  * Takes an inputted BoardPiece and rotates it some number of turns

@@ -1,6 +1,7 @@
 var Tetriminos = require('../tetriminos')
 var Map = require('immutable').Map
 var coord = require('../coord')
+var range = require('lodash').range
 
 /**
  * @param {Array<Coord>} coords
@@ -41,68 +42,43 @@ exports.generateBlankBoard = function(width, height) {
 }
 
 /**
- * Check if there is a line at a given Y-level i
+ * Returns an array of all Y values that are lines
  */
-exports.isLine = function(board, y, width) {
-  return coordRange(y, width).every(x => {
-    return board.get(x) !== null
-  })
-}
-
-/**
- * Check if there is an empty row
- */
-exports.isEmptyRow = function(board, y, width) {
-  return coordRange(y, width).every(x => {
-    return board.get(x) === null
-  })
+exports.getLines = function(board, width, height) {
+  return range(height).filter(y => isLine(board, y, width))
 }
 
 /**
  * Returns a new board state with a specific row nulled out
  */
-exports.clearRow = function(board, y, width) {
-  return board.withMutations(board => {
-    coordRange(y, width).forEach(coord => {
-      board.set(coord, null)
-    })
-  })
-}
-
-/**
- * Returns a new board state with a specific row nulled out
- */
-exports.collapseRow = function(board, y, width, height) {
-  var vertRange = []
-  for (var i = y+1; i < height; i++) {
-    vertRange.push(i)
-  }
+exports.removeLines = function(board, toRemove, width, height) {
+  var numRemoved = 0
 
   return board.withMutations(board => {
-    vertRange.forEach(y => {
-      coordRange(y, width).forEach(pos => {
-        var existing = board.get(pos)
-        var replacePos = coord({
-          x: pos.x - 1,
-          y: y,
+    toRemove.forEach(yVal => {
+      debugger
+      var y = yVal - numRemoved
+      var vertRange = []
+      for (var i = y+1; i < height; i++) {
+        vertRange.push(i)
+      }
+
+      vertRange.forEach(y => {
+        coordRange(y, width).forEach(pos => {
+          var existing = board.get(pos)
+          var replacePos = coord(
+            pos.x,
+            pos.y - 1
+          )
+          board.set(replacePos, existing)
         })
-        board.set(replacePos, existing)
       })
+
+      numRemoved++
     })
+
     return board
   })
-}
-
-/**
- * Clears all lines and returns a new board
- */
-exports.clearLines = function(board, width, height) {
-  var ind = 0
-  var counter = 0
-
-  while (counter < height) {
-
-  }
 }
 
 /**
@@ -116,3 +92,11 @@ function coordRange(y, width) {
   return coords
 }
 
+/**
+ * Check if there is a line at a given Y-level i
+ */
+function isLine(board, y, width) {
+  return coordRange(y, width).every(x => {
+    return board.get(x) !== null
+  })
+}

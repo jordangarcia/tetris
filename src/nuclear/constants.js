@@ -7,8 +7,5 @@ module.exports = keyMirror({
   RIGHT: null,
   MOVE_DOWN: null,
   ROTATE: null,
-
-  TIMER_TICK: null,
-  TIMER_SET_INTERVAL: null,
-  TIMER_SET_TIMEOUT_ID: null,
+  SOFT_DROP: null,
 })

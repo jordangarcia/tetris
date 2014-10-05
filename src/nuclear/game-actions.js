@@ -12,9 +12,12 @@ function randInt(max) {
  * Main game tick action
  */
 exports.tick = function(reactor) {
-  var activePiece = reactor.getImmutable('game.activePiece')
-
-  if (!activePiece) {
+  reactor.cycle({
+    type: Const.MOVE_DOWN,
+    payload: {}
+  })
+  if (!reactor.getImmutable('game.activePiece')) {
+    // after a move down if there is no active piece
     reactor.cycle({
       type: Const.CLEAR_LINES,
       payload: {}
@@ -24,11 +27,6 @@ exports.tick = function(reactor) {
       payload: {
         piece: Tetriminos.pieces[randInt(7)]
       }
-    })
-  } else {
-    reactor.cycle({
-      type: Const.MOVE_DOWN,
-      payload: {}
     })
   }
 }
@@ -53,5 +51,12 @@ exports.rotateClockwise = function(reactor) {
     payload: {
       diff: 1
     }
+  })
+}
+
+exports.softDrop = function(reactor) {
+  reactor.cycle({
+    type: Const.SOFT_DROP,
+    payload: {}
   })
 }

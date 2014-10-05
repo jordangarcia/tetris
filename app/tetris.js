@@ -58,6 +58,7 @@
 	var DOWN_ARROW = 40
 	var RIGHT_ARROW = 39
 	var ESCAPE_KEY = 27
+	var SPACE_KEY = 32
 
 	// render UI
 	React.renderComponent(Main(null), document.getElementById('main'))
@@ -85,6 +86,10 @@
 	      break
 	    case LEFT_ARROW:
 	      reactor.action('game').moveLeft()
+	      break
+	    case SPACE_KEY:
+	      reactor.action('game').softDrop()
+	      gameTimer.reset()
 	      break
 	    case ESCAPE_KEY:
 	      if (gameTimer.isRunning) {
@@ -245,25 +250,59 @@
 	module.exports = Nuclear.createCore({
 	  initialize:function() {
 	    this.on(Const.SPAWN_PIECE, addPiece)
-	    //this.on(Const.CLEAR_LINES, clearLines)
+	    this.on(Const.CLEAR_LINES, clearLines)
 	    this.on(Const.LEFT, moveLeft)
 	    this.on(Const.RIGHT, moveRight)
 	    this.on(Const.MOVE_DOWN, moveDown)
+	    this.on(Const.SOFT_DROP, softDrop)
 	    this.on(Const.ROTATE, rotate)
 
 	    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
+	    this.computed('score', ['clears'], calculateScore)
 	    // initial state
 	    return {
-	      stats: {
-	        lines: 0,
-	        score: 0
-	      },
+	      clears: [],
 	      activePiece: null,
 	      recentPiece: null,
 	      existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
 	    }
 	  }
 	})
+
+	/**
+	 * Calculates the score based on the history of all cleared lines
+	 * @param {Immutable.Vector} clears
+	 * @return {Immutable.Map}
+	 */
+	function calculateScore(clears) {
+	  var score = {
+	    lines: 0,
+	    single: 0,
+	    double: 0,
+	    triple: 0,
+	    tetris: 0,
+	  }
+
+	  clears.forEach(function(num)  {
+	    score.lines += num
+	    switch(num) {
+	      case 1:
+	        score.single++
+	        break
+	      case 2:
+	        score.double++
+	        break
+	      case 3:
+	        score.triple++
+	        break
+	      case 4:
+	        score.tetris++
+	        break
+	    }
+	  })
+
+	  return score
+	}
 
 	/**
 	 * @param {Immutable.Vector}
@@ -278,7 +317,7 @@
 	/**
 	 * Game tick, move piece down
 	 */
-	function moveDown(state, payload) {
+	function moveDown(state) {
 	  var newState = state
 	  var piece = state.get('activePiece')
 	  var existingBoard = state.get('existingBoard')
@@ -288,7 +327,6 @@
 	    if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
 	      newState = state
 	        .set('activePiece', newPiece)
-	        .set('recentPiece', null)
 	    } else {
 	      newState = state
 	        .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
@@ -297,6 +335,32 @@
 	    }
 	  }
 	  return newState
+	}
+
+	function softDrop(state) {
+	  var piece = state.get('activePiece')
+	  var existingBoard = state.get('existingBoard')
+
+	  if (piece) {
+	    var deltaY = -1
+	    var newPiece = pieceHelpers.move(piece, [0, deltaY])
+	    if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
+	      // if the piece is at the bottom of the board simulate a moveDown
+	      return moveDown(state)
+	    }
+
+	    // move the piece down until its no longer valid
+	    while (boardHelpers.isValidPosition(newPiece, existingBoard)) {
+	      deltaY--
+	      newPiece = pieceHelpers.move(piece, [0, deltaY])
+	    }
+
+	    // move one above the invalid position
+	    newPiece = pieceHelpers.move(piece, [0, deltaY + 1])
+	    return state.set('activePiece', newPiece)
+	  }
+
+	  return state
 	}
 
 	/**
@@ -316,12 +380,23 @@
 	/**
 	 * Clears all existing lines
 	 */
-	function clearLines(state, payload) {
+	function clearLines(state) {
+	  debugger
 	  var board = state.get('existingBoard')
-	  var counter = 0
-	  while (counter < HEIGHT) {
-
+	  var recentPiece = state.get('recentPiece')
+	  if (!recentPiece) {
+	    return state
 	  }
+
+	  var lines = boardHelpers.getLines(board, WIDTH, HEIGHT)
+	  if (lines.length === 0) {
+	    return state
+	  }
+
+	  // add the number of lines to the record of clears
+	  return state
+	    .update('clears', function(vect)  {return vect.push(lines.length);})
+	    .set('existingBoard', boardHelpers.removeLines(board, lines, WIDTH, HEIGHT))
 	}
 
 	/**
@@ -381,6 +456,9 @@
 	    [-1,0],
 	    [-2,0],
 	    [-3,0],
+	    [0,-1],
+	    [0,-2],
+	    [0,-3],
 	  ]
 
 	  for (var i = 0; i < translations.length; i++) {
@@ -412,9 +490,12 @@
 	 * Main game tick action
 	 */
 	exports.tick = function(reactor) {
-	  var activePiece = reactor.getImmutable('game.activePiece')
-
-	  if (!activePiece) {
+	  reactor.cycle({
+	    type: Const.MOVE_DOWN,
+	    payload: {}
+	  })
+	  if (!reactor.getImmutable('game.activePiece')) {
+	    // after a move down if there is no active piece
 	    reactor.cycle({
 	      type: Const.CLEAR_LINES,
 	      payload: {}
@@ -424,11 +505,6 @@
 	      payload: {
 	        piece: Tetriminos.pieces[randInt(7)]
 	      }
-	    })
-	  } else {
-	    reactor.cycle({
-	      type: Const.MOVE_DOWN,
-	      payload: {}
 	    })
 	  }
 	}
@@ -453,6 +529,13 @@
 	    payload: {
 	      diff: 1
 	    }
+	  })
+	}
+
+	exports.softDrop = function(reactor) {
+	  reactor.cycle({
+	    type: Const.SOFT_DROP,
+	    payload: {}
 	  })
 	}
 
@@ -682,10 +765,7 @@
 	  RIGHT: null,
 	  MOVE_DOWN: null,
 	  ROTATE: null,
-
-	  TIMER_TICK: null,
-	  TIMER_SET_INTERVAL: null,
-	  TIMER_SET_TIMEOUT_ID: null,
+	  SOFT_DROP: null,
 	})
 
 
@@ -779,6 +859,7 @@
 	var Tetriminos = __webpack_require__(12)
 	var Map = __webpack_require__(18).Map
 	var coord = __webpack_require__(16)
+	var range = __webpack_require__(17).range
 
 	/**
 	 * @param {Array<Coord>} coords
@@ -819,68 +900,43 @@
 	}
 
 	/**
-	 * Check if there is a line at a given Y-level i
+	 * Returns an array of all Y values that are lines
 	 */
-	exports.isLine = function(board, y, width) {
-	  return coordRange(y, width).every(function(x)  {
-	    return board.get(x) !== null
-	  })
-	}
-
-	/**
-	 * Check if there is an empty row
-	 */
-	exports.isEmptyRow = function(board, y, width) {
-	  return coordRange(y, width).every(function(x)  {
-	    return board.get(x) === null
-	  })
+	exports.getLines = function(board, width, height) {
+	  return range(height).filter(function(y)  {return isLine(board, y, width);})
 	}
 
 	/**
 	 * Returns a new board state with a specific row nulled out
 	 */
-	exports.clearRow = function(board, y, width) {
-	  return board.withMutations(function(board)  {
-	    coordRange(y, width).forEach(function(coord)  {
-	      board.set(coord, null)
-	    })
-	  })
-	}
-
-	/**
-	 * Returns a new board state with a specific row nulled out
-	 */
-	exports.collapseRow = function(board, y, width, height) {
-	  var vertRange = []
-	  for (var i = y+1; i < height; i++) {
-	    vertRange.push(i)
-	  }
+	exports.removeLines = function(board, toRemove, width, height) {
+	  var numRemoved = 0
 
 	  return board.withMutations(function(board)  {
-	    vertRange.forEach(function(y)  {
-	      coordRange(y, width).forEach(function(pos)  {
-	        var existing = board.get(pos)
-	        var replacePos = coord({
-	          x: pos.x - 1,
-	          y: y,
+	    toRemove.forEach(function(yVal)  {
+	      debugger
+	      var y = yVal - numRemoved
+	      var vertRange = []
+	      for (var i = y+1; i < height; i++) {
+	        vertRange.push(i)
+	      }
+
+	      vertRange.forEach(function(y)  {
+	        coordRange(y, width).forEach(function(pos)  {
+	          var existing = board.get(pos)
+	          var replacePos = coord(
+	            pos.x,
+	            pos.y - 1
+	          )
+	          board.set(replacePos, existing)
 	        })
-	        board.set(replacePos, existing)
 	      })
+
+	      numRemoved++
 	    })
+
 	    return board
 	  })
-	}
-
-	/**
-	 * Clears all lines and returns a new board
-	 */
-	exports.clearLines = function(board, width, height) {
-	  var ind = 0
-	  var counter = 0
-
-	  while (counter < height) {
-
-	  }
 	}
 
 	/**
@@ -894,6 +950,14 @@
 	  return coords
 	}
 
+	/**
+	 * Check if there is a line at a given Y-level i
+	 */
+	function isLine(board, y, width) {
+	  return coordRange(y, width).every(function(x)  {
+	    return board.get(x) !== null
+	  })
+	}
 
 
 /***/ },
@@ -904,6 +968,7 @@
 	var Tetriminos = __webpack_require__(12)
 	var coord = __webpack_require__(16)
 	var isArray = __webpack_require__(17).isArray
+	var uniq = __webpack_require__(17).uniq
 
 	/**
 	 * Takes an inputted BoardPiece and rotates it some number of turns

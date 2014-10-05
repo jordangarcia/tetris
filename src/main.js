@@ -12,6 +12,7 @@ var LEFT_ARROW = 37
 var DOWN_ARROW = 40
 var RIGHT_ARROW = 39
 var ESCAPE_KEY = 27
+var SPACE_KEY = 32
 
 // render UI
 React.renderComponent(<Main />, document.getElementById('main'))
@@ -39,6 +40,10 @@ window.addEventListener('keydown', e => {
       break
     case LEFT_ARROW:
       reactor.action('game').moveLeft()
+      break
+    case SPACE_KEY:
+      reactor.action('game').softDrop()
+      gameTimer.reset()
       break
     case ESCAPE_KEY:
       if (gameTimer.isRunning) {
