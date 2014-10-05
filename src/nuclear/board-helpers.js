@@ -57,7 +57,6 @@ exports.removeLines = function(board, toRemove, width, height) {
 
   return board.withMutations(board => {
     toRemove.forEach(yVal => {
-      debugger
       var y = yVal - numRemoved
       var vertRange = []
       for (var i = y+1; i < height; i++) {

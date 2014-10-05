@@ -203,7 +203,6 @@
 	  },
 
 	  render:function() {
-	    var blocks = []
 	    var style = {
 	      backgroundColor: '#ccc',
 	      height: (BLOCK_SIZE * HEIGHT),
@@ -211,31 +210,30 @@
 	      position: 'relative',
 	    }
 
-	    this.state.softDrop.forEach(function(coord)  {
-	      var props = {
-	        color: '#888',
-	        x: coord.x,
-	        y: coord.y,
-	        size: BLOCK_SIZE
-	      }
-	      blocks.push(Block(props))
-	    })
-	    this.state.board.forEach(function(val, coord)  {
-	      if (val === null) {
-	        return
-	      }
-	      var props = {
-	        color: 'black',
-	        x: coord.x,
-	        y: coord.y,
-	        size: BLOCK_SIZE
-	      }
-	      blocks.push(Block(props))
-	    })
+	    var previewBlocks = this.state.softDrop
+	      .map(function(coord)  {
+	        return Block({
+	          color: '#888',
+	          x: coord.x,
+	          y: coord.y,
+	          size: BLOCK_SIZE
+	        })
+	      })
+
+	    var realBlocks = this.state.board
+	      .filter(function(x)  {return x !== null;})
+	      .map(function(val, coord)  {
+	        return Block({
+	          color: 'black',
+	          x: coord.x,
+	          y: coord.y,
+	          size: BLOCK_SIZE
+	        })
+	      }).toVector().toJS()
 
 	    return React.DOM.div({
 	      style: style
-	    }, blocks)
+	    }, previewBlocks.concat(realBlocks))
 	  }
 	})
 
@@ -931,7 +929,6 @@
 
 	  return board.withMutations(function(board)  {
 	    toRemove.forEach(function(yVal)  {
-	      debugger
 	      var y = yVal - numRemoved
 	      var vertRange = []
 	      for (var i = y+1; i < height; i++) {

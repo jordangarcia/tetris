@@ -28,7 +28,6 @@ module.exports = React.createClass({
   },
 
   render() {
-    var blocks = []
     var style = {
       backgroundColor: '#ccc',
       height: (BLOCK_SIZE * HEIGHT),
@@ -36,30 +35,29 @@ module.exports = React.createClass({
       position: 'relative',
     }
 
-    this.state.softDrop.forEach(coord => {
-      var props = {
-        color: '#888',
-        x: coord.x,
-        y: coord.y,
-        size: BLOCK_SIZE
-      }
-      blocks.push(Block(props))
-    })
-    this.state.board.forEach((val, coord) => {
-      if (val === null) {
-        return
-      }
-      var props = {
-        color: 'black',
-        x: coord.x,
-        y: coord.y,
-        size: BLOCK_SIZE
-      }
-      blocks.push(Block(props))
-    })
+    var previewBlocks = this.state.softDrop
+      .map(coord => {
+        return Block({
+          color: '#888',
+          x: coord.x,
+          y: coord.y,
+          size: BLOCK_SIZE
+        })
+      })
+
+    var realBlocks = this.state.board
+      .filter(x => x !== null)
+      .map((val, coord) => {
+        return Block({
+          color: 'black',
+          x: coord.x,
+          y: coord.y,
+          size: BLOCK_SIZE
+        })
+      }).toVector().toJS()
 
     return React.DOM.div({
       style: style
-    }, blocks)
+    }, previewBlocks.concat(realBlocks))
   }
 })
