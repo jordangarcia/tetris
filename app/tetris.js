@@ -72,7 +72,6 @@
 
 	// setup keybinds
 	window.addEventListener('keydown', function(e)  {
-	  console.log('keydown', e.keyCode)
 	  switch (e.keyCode) {
 	    case UP_ARROW:
 	      reactor.action('game').rotateClockwise()
@@ -181,7 +180,8 @@
 
 	function getState() {
 	  return {
-	    board: reactor.getImmutable('game.board')
+	    board: reactor.getImmutable('game.board'),
+	    softDrop: reactor.getImmutable('game.softDropCoords'),
 	  }
 	}
 
@@ -210,11 +210,22 @@
 	      width: (BLOCK_SIZE * WIDTH),
 	      position: 'relative',
 	    }
+
+	    this.state.softDrop.forEach(function(coord)  {
+	      var props = {
+	        color: '#888',
+	        x: coord.x,
+	        y: coord.y,
+	        size: BLOCK_SIZE
+	      }
+	      blocks.push(Block(props))
+	    })
 	    this.state.board.forEach(function(val, coord)  {
 	      if (val === null) {
 	        return
 	      }
 	      var props = {
+	        color: 'black',
 	        x: coord.x,
 	        y: coord.y,
 	        size: BLOCK_SIZE
@@ -259,6 +270,7 @@
 
 	    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
 	    this.computed('score', ['clears'], calculateScore)
+	    this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
 	    // initial state
 	    return {
 	      clears: [],
@@ -268,6 +280,17 @@
 	    }
 	  }
 	})
+
+	/**
+	 * Returns an array of coords for the active piece if it was
+	 * soft-dropped
+	 */
+	function calculateSoftDrop(activePiece, board) {
+	  if (!activePiece) {
+	    return []
+	  }
+	  return boardHelpers.softDropPiece(activePiece, board).getCoords()
+	}
 
 	/**
 	 * Calculates the score based on the history of all cleared lines
@@ -342,21 +365,14 @@
 	  var existingBoard = state.get('existingBoard')
 
 	  if (piece) {
-	    var deltaY = -1
-	    var newPiece = pieceHelpers.move(piece, [0, deltaY])
+	    var newPiece = pieceHelpers.move(piece, [0, -1])
 	    if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
 	      // if the piece is at the bottom of the board simulate a moveDown
 	      return moveDown(state)
 	    }
 
-	    // move the piece down until its no longer valid
-	    while (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-	      deltaY--
-	      newPiece = pieceHelpers.move(piece, [0, deltaY])
-	    }
-
 	    // move one above the invalid position
-	    newPiece = pieceHelpers.move(piece, [0, deltaY + 1])
+	    newPiece = boardHelpers.softDropPiece(piece, existingBoard)
 	    return state.set('activePiece', newPiece)
 	  }
 
@@ -381,7 +397,6 @@
 	 * Clears all existing lines
 	 */
 	function clearLines(state) {
-	  debugger
 	  var board = state.get('existingBoard')
 	  var recentPiece = state.get('recentPiece')
 	  if (!recentPiece) {
@@ -492,34 +507,19 @@
 	exports.tick = function(reactor) {
 	  reactor.cycle({
 	    type: Const.MOVE_DOWN,
-	    payload: {}
 	  })
-	  if (!reactor.getImmutable('game.activePiece')) {
-	    // after a move down if there is no active piece
-	    reactor.cycle({
-	      type: Const.CLEAR_LINES,
-	      payload: {}
-	    })
-	    reactor.cycle({
-	      type: Const.SPAWN_PIECE,
-	      payload: {
-	        piece: Tetriminos.pieces[randInt(7)]
-	      }
-	    })
-	  }
+	  trySpawn(reactor)
 	}
 
 	exports.moveLeft = function(reactor) {
 	  reactor.cycle({
 	    type: Const.LEFT,
-	    payload: {}
 	  })
 	}
 
 	exports.moveRight = function(reactor) {
 	  reactor.cycle({
 	    type: Const.RIGHT,
-	    payload: {}
 	  })
 	}
 
@@ -534,9 +534,25 @@
 
 	exports.softDrop = function(reactor) {
 	  reactor.cycle({
-	    type: Const.SOFT_DROP,
-	    payload: {}
+	    type: Const.SOFT_DROP
 	  })
+	  trySpawn(reactor)
+	}
+
+	function trySpawn(reactor) {
+	  if (!reactor.getImmutable('game.activePiece')) {
+	    // after a move down if there is no active piece
+	    reactor.cycle({
+	      type: Const.CLEAR_LINES,
+	      payload: {}
+	    })
+	    reactor.cycle({
+	      type: Const.SPAWN_PIECE,
+	      payload: {
+	        piece: Tetriminos.pieces[randInt(7)]
+	      }
+	    })
+	  }
 	}
 
 
@@ -553,7 +569,7 @@
 	      height: this.props.size,
 	      left: (this.props.x * this.props.size),
 	      bottom: (this.props.y * this.props.size),
-	      backgroundColor: 'black',
+	      backgroundColor: this.props.color,
 	      position: 'absolute',
 	    }
 	    return React.DOM.div({
@@ -858,6 +874,7 @@
 
 	var Tetriminos = __webpack_require__(12)
 	var Map = __webpack_require__(18).Map
+	var pieceHelpers = __webpack_require__(14)
 	var coord = __webpack_require__(16)
 	var range = __webpack_require__(17).range
 
@@ -937,6 +954,23 @@
 
 	    return board
 	  })
+	}
+
+	/**
+	 * Returns a BoardPiece with the location of the piece after a soft
+	 * drop
+	 */
+	exports.softDropPiece = function(piece, board) {
+	  var newPiece = piece
+	  var deltaY = 0
+	  // move the piece down until its no longer valid
+	  while (exports.isValidPosition(newPiece, board)) {
+	    deltaY--
+	    newPiece = pieceHelpers.move(piece, [0, deltaY])
+	  }
+
+	  // move one above the invalid position
+	  return pieceHelpers.move(piece, [0, deltaY + 1])
 	}
 
 	/**

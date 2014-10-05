@@ -24,6 +24,7 @@ module.exports = Nuclear.createCore({
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     this.computed('score', ['clears'], calculateScore)
+    this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
     // initial state
     return {
       clears: [],
@@ -33,6 +34,17 @@ module.exports = Nuclear.createCore({
     }
   }
 })
+
+/**
+ * Returns an array of coords for the active piece if it was
+ * soft-dropped
+ */
+function calculateSoftDrop(activePiece, board) {
+  if (!activePiece) {
+    return []
+  }
+  return boardHelpers.softDropPiece(activePiece, board).getCoords()
+}
 
 /**
  * Calculates the score based on the history of all cleared lines
@@ -107,21 +119,14 @@ function softDrop(state) {
   var existingBoard = state.get('existingBoard')
 
   if (piece) {
-    var deltaY = -1
-    var newPiece = pieceHelpers.move(piece, [0, deltaY])
+    var newPiece = pieceHelpers.move(piece, [0, -1])
     if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
       // if the piece is at the bottom of the board simulate a moveDown
       return moveDown(state)
     }
 
-    // move the piece down until its no longer valid
-    while (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-      deltaY--
-      newPiece = pieceHelpers.move(piece, [0, deltaY])
-    }
-
     // move one above the invalid position
-    newPiece = pieceHelpers.move(piece, [0, deltaY + 1])
+    newPiece = boardHelpers.softDropPiece(piece, existingBoard)
     return state.set('activePiece', newPiece)
   }
 
@@ -146,7 +151,6 @@ function addPiece(state, payload) {
  * Clears all existing lines
  */
 function clearLines(state) {
-  debugger
   var board = state.get('existingBoard')
   var recentPiece = state.get('recentPiece')
   if (!recentPiece) {

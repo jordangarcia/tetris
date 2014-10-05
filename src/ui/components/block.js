@@ -7,7 +7,7 @@ module.exports = React.createClass({
       height: this.props.size,
       left: (this.props.x * this.props.size),
       bottom: (this.props.y * this.props.size),
-      backgroundColor: 'black',
+      backgroundColor: this.props.color,
       position: 'absolute',
     }
     return React.DOM.div({

@@ -1,5 +1,6 @@
 var Tetriminos = require('../tetriminos')
 var Map = require('immutable').Map
+var pieceHelpers = require('./piece-helpers')
 var coord = require('../coord')
 var range = require('lodash').range
 
@@ -79,6 +80,23 @@ exports.removeLines = function(board, toRemove, width, height) {
 
     return board
   })
+}
+
+/**
+ * Returns a BoardPiece with the location of the piece after a soft
+ * drop
+ */
+exports.softDropPiece = function(piece, board) {
+  var newPiece = piece
+  var deltaY = 0
+  // move the piece down until its no longer valid
+  while (exports.isValidPosition(newPiece, board)) {
+    deltaY--
+    newPiece = pieceHelpers.move(piece, [0, deltaY])
+  }
+
+  // move one above the invalid position
+  return pieceHelpers.move(piece, [0, deltaY + 1])
 }
 
 /**

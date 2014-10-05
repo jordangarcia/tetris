@@ -5,7 +5,8 @@ var Block = require('./block');
 
 function getState() {
   return {
-    board: reactor.getImmutable('game.board')
+    board: reactor.getImmutable('game.board'),
+    softDrop: reactor.getImmutable('game.softDropCoords'),
   }
 }
 
@@ -34,11 +35,22 @@ module.exports = React.createClass({
       width: (BLOCK_SIZE * WIDTH),
       position: 'relative',
     }
+
+    this.state.softDrop.forEach(coord => {
+      var props = {
+        color: '#888',
+        x: coord.x,
+        y: coord.y,
+        size: BLOCK_SIZE
+      }
+      blocks.push(Block(props))
+    })
     this.state.board.forEach((val, coord) => {
       if (val === null) {
         return
       }
       var props = {
+        color: 'black',
         x: coord.x,
         y: coord.y,
         size: BLOCK_SIZE

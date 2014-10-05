@@ -26,7 +26,6 @@ gameTimer.start(LOOP_TIME)
 
 // setup keybinds
 window.addEventListener('keydown', e => {
-  console.log('keydown', e.keyCode)
   switch (e.keyCode) {
     case UP_ARROW:
       reactor.action('game').rotateClockwise()

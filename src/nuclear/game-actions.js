@@ -14,34 +14,19 @@ function randInt(max) {
 exports.tick = function(reactor) {
   reactor.cycle({
     type: Const.MOVE_DOWN,
-    payload: {}
   })
-  if (!reactor.getImmutable('game.activePiece')) {
-    // after a move down if there is no active piece
-    reactor.cycle({
-      type: Const.CLEAR_LINES,
-      payload: {}
-    })
-    reactor.cycle({
-      type: Const.SPAWN_PIECE,
-      payload: {
-        piece: Tetriminos.pieces[randInt(7)]
-      }
-    })
-  }
+  trySpawn(reactor)
 }
 
 exports.moveLeft = function(reactor) {
   reactor.cycle({
     type: Const.LEFT,
-    payload: {}
   })
 }
 
 exports.moveRight = function(reactor) {
   reactor.cycle({
     type: Const.RIGHT,
-    payload: {}
   })
 }
 
@@ -56,7 +41,23 @@ exports.rotateClockwise = function(reactor) {
 
 exports.softDrop = function(reactor) {
   reactor.cycle({
-    type: Const.SOFT_DROP,
-    payload: {}
+    type: Const.SOFT_DROP
   })
+  trySpawn(reactor)
+}
+
+function trySpawn(reactor) {
+  if (!reactor.getImmutable('game.activePiece')) {
+    // after a move down if there is no active piece
+    reactor.cycle({
+      type: Const.CLEAR_LINES,
+      payload: {}
+    })
+    reactor.cycle({
+      type: Const.SPAWN_PIECE,
+      payload: {
+        piece: Tetriminos.pieces[randInt(7)]
+      }
+    })
+  }
 }
