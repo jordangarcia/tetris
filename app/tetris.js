@@ -50,23 +50,51 @@
 	var React = __webpack_require__(3)
 	var reactor = __webpack_require__(1)
 	var Main = __webpack_require__(2)
-	var keyHandler = __webpack_require__(197)
+	var Timer = __webpack_require__(201)
 
 	var LOOP_TIME = 1000
+	var UP_ARROW = 38
+	var LEFT_ARROW = 37
+	var DOWN_ARROW = 40
+	var RIGHT_ARROW = 39
+	var ESCAPE_KEY = 27
 
-	function start() {
-	  reactor.createChangeObserver()
-	    .onChange(['timer.count'], function(count)  {
-	      window.setTimeout(function()  {
-	        reactor.action('game').tick()
-	      },0)
-	    })
-	  reactor.action('timer').start(LOOP_TIME)
-	}
-
-	window.addEventListener('keydown', keyHandler)
+	// render UI
 	React.renderComponent(Main(null), document.getElementById('main'))
-	start()
+
+	// setup game timer
+	var gameTimer = new Timer()
+	gameTimer.onTick(function()  {
+	  reactor.action('game').tick()
+	})
+	gameTimer.start(LOOP_TIME)
+
+	// setup keybinds
+	window.addEventListener('keydown', function(e)  {
+	  console.log('keydown', e.keyCode)
+	  switch (e.keyCode) {
+	    case UP_ARROW:
+	      reactor.action('game').rotateClockwise()
+	      break
+	    case DOWN_ARROW:
+	      reactor.action('game').tick()
+	      gameTimer.reset()
+	      break
+	    case RIGHT_ARROW:
+	      reactor.action('game').moveRight()
+	      break
+	    case LEFT_ARROW:
+	      reactor.action('game').moveLeft()
+	      break
+	    case ESCAPE_KEY:
+	      if (gameTimer.isRunning) {
+	        gameTimer.stop()
+	      } else {
+	        gameTimer.start()
+	      }
+	      break
+	  }
+	})
 
 
 /***/ },
@@ -77,10 +105,7 @@
 
 	var reactor = Nuclear.createReactor()
 	reactor.attachCore('game', __webpack_require__(6))
-	reactor.attachCore('timer', __webpack_require__(198))
-
 	reactor.bindActions('game', __webpack_require__(7))
-	reactor.bindActions('timer', __webpack_require__(199))
 
 	module.exports = reactor
 
@@ -36378,119 +36403,58 @@
 
 
 /***/ },
-/* 197 */
+/* 197 */,
+/* 198 */,
+/* 199 */,
+/* 200 */,
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var reactor = __webpack_require__(1)
-
-	var UP_ARROW = 38
-	var LEFT_ARROW = 37
-	var DOWN_ARROW = 40
-	var RIGHT_ARROW = 39
-
-	function handle(e) {
-	  switch (e.keyCode) {
-	    case UP_ARROW:
-	      reactor.action('game').rotateClockwise()
-	      break
-	    case DOWN_ARROW:
-	      reactor.action('game').tick()
-	      reactor.action('timer').reset()
-	      break
-	    case RIGHT_ARROW:
-	      reactor.action('game').moveRight()
-	      break
-	    case LEFT_ARROW:
-	      reactor.action('game').moveLeft()
-	      break
+	
+	  function Timer(interval) {"use strict";
+	    this.count = 0
+	    this.interval = interval
+	    this.handlers = []
+	    this.timeoutId
+	    this.isRunning = false
 	  }
-	}
 
-	module.exports = handle
+	  Timer.prototype.onTick=function(handler) {"use strict";
+	    this.handlers.push(handler)
+	  };
 
-
-/***/ },
-/* 198 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Nuclear = __webpack_require__(10)
-	var Immutable = __webpack_require__(18)
-	var Const = __webpack_require__(11)
-
-	var DEFAULT_TICK = 1000 // default tick is 1000ms
-	/**
-	 * Core that keeps track of the games timer
-	 */
-	module.exports = Nuclear.createCore({
-	  initialize:function() {
-	    this.on(Const.TIMER_SET_INTERVAL, setInterval)
-	    this.on(Const.TIMER_SET_TIMEOUT_ID, setTimeoutId)
-	    this.on(Const.TIMER_TICK, tick)
-
-	    return {
-	      count: 0,
-	      interval: DEFAULT_TICK,
-	      timeoutId: null,
+	  Timer.prototype.start=function(interval) {"use strict";
+	    if (interval) {
+	      this.interval = interval
 	    }
-	  }
-	})
 
-	function tick(state) {
-	  return state.set('count', state.get('count') + 1)
-	}
+	    this.timeoutId = window.setTimeout(function()  {
+	      this.handlers.forEach(function(handler)  {
+	        handler()
+	      })
+	      this.count++
+	      this.start()
+	    }.bind(this), this.interval)
 
-	function setInterval(state, payload) {
-	  return state.set('interval', payload.interval)
-	}
+	    this.isRunning = true
+	  };
 
-	function setTimeoutId(state, payload) {
-	  return state.set('timeoutId', payload.id)
-	}
+	  Timer.prototype.stop=function() {"use strict";
+	    window.clearTimeout(this.timeoutId)
+	    this.isRunning = false
+	  };
+
+	  Timer.prototype.reset=function() {"use strict";
+	    this.stop()
+	    this.start()
+	  };
+
+	  Timer.prototype.setInterval=function(interval) {"use strict";
+	    this.interval = interval
+	  };
 
 
-/***/ },
-/* 199 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var Const = __webpack_require__(11)
-
-	exports.start = function(reactor, interval) {
-	  if (interval) {
-	    exports.setInterval(reactor, interval)
-	  }
-
-	  var id = window.setTimeout(function()  {
-	    reactor.cycle({
-	      type: Const.TIMER_TICK,
-	      payload: {}
-	    })
-	    exports.start(reactor)
-	  }, reactor.get('timer.interval'))
-
-	  reactor.cycle({
-	    type: Const.TIMER_SET_TIMEOUT_ID,
-	    payload: {
-	      id: id
-	    }
-	  })
-	}
-
-	exports.reset = function(reactor) {
-	  var id = reactor.get('timer.timeoutId')
-	  if (id) {
-	    window.clearTimeout(id)
-	  }
-	  exports.start(reactor)
-	}
-
-	exports.setInterval = function(reactor, interval) {
-	  reactor.cycle({
-	    type: Const.TIMER_SET_INTERVAL,
-	    payload: {
-	      interval: interval
-	    }
-	  })
-	}
+	module.exports = Timer
 
 
 /***/ }

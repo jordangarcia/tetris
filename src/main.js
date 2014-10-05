@@ -4,20 +4,48 @@
 var React = require('react')
 var reactor = require('./nuclear/reactor')
 var Main = require('./ui/components/main')
-var keyHandler = require('./ui/key-handler')
+var Timer = require('./timer')
 
 var LOOP_TIME = 1000
+var UP_ARROW = 38
+var LEFT_ARROW = 37
+var DOWN_ARROW = 40
+var RIGHT_ARROW = 39
+var ESCAPE_KEY = 27
 
-function start() {
-  reactor.createChangeObserver()
-    .onChange(['timer.count'], count => {
-      window.setTimeout(() => {
-        reactor.action('game').tick()
-      },0)
-    })
-  reactor.action('timer').start(LOOP_TIME)
-}
-
-window.addEventListener('keydown', keyHandler)
+// render UI
 React.renderComponent(<Main />, document.getElementById('main'))
-start()
+
+// setup game timer
+var gameTimer = new Timer()
+gameTimer.onTick(() => {
+  reactor.action('game').tick()
+})
+gameTimer.start(LOOP_TIME)
+
+// setup keybinds
+window.addEventListener('keydown', e => {
+  console.log('keydown', e.keyCode)
+  switch (e.keyCode) {
+    case UP_ARROW:
+      reactor.action('game').rotateClockwise()
+      break
+    case DOWN_ARROW:
+      reactor.action('game').tick()
+      gameTimer.reset()
+      break
+    case RIGHT_ARROW:
+      reactor.action('game').moveRight()
+      break
+    case LEFT_ARROW:
+      reactor.action('game').moveLeft()
+      break
+    case ESCAPE_KEY:
+      if (gameTimer.isRunning) {
+        gameTimer.stop()
+      } else {
+        gameTimer.start()
+      }
+      break
+  }
+})
