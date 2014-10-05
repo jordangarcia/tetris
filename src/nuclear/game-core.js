@@ -25,6 +25,7 @@ module.exports = Nuclear.createCore({
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     this.computed('score', ['clears'], calculateScore)
     this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
+
     // initial state
     return {
       clears: [],
@@ -97,19 +98,21 @@ function calculateBoard(activePiece, board) {
 function moveDown(state) {
   var newState = state
   var piece = state.get('activePiece')
+  if (!piece) {
+    return state
+  }
+
   var existingBoard = state.get('existingBoard')
-  if (piece) {
-    // move piece down and check if is valid
-    var newPiece = pieceHelpers.move(piece, [0, -1])
-    if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-      newState = state
-        .set('activePiece', newPiece)
-    } else {
-      newState = state
-        .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
-        .set('recentPiece', piece)
-        .set('activePiece', null)
-    }
+  // move piece down and check if is valid
+  var newPiece = pieceHelpers.move(piece, [0, -1])
+  if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
+    newState = state
+      .set('activePiece', newPiece)
+  } else {
+    newState = state
+      .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
+      .set('recentPiece', piece)
+      .set('activePiece', null)
   }
   return newState
 }
@@ -118,17 +121,15 @@ function softDrop(state) {
   var piece = state.get('activePiece')
   var existingBoard = state.get('existingBoard')
 
-  if (piece) {
-    var newPiece = pieceHelpers.move(piece, [0, -1])
-    if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
-      // if the piece is at the bottom of the board simulate a moveDown
-      return moveDown(state)
-    }
-
-    // move one above the invalid position
-    newPiece = boardHelpers.softDropPiece(piece, existingBoard)
-    return state.set('activePiece', newPiece)
+  var newPiece = pieceHelpers.move(piece, [0, -1])
+  if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
+    // if the piece is at the bottom of the board simulate a moveDown
+    return moveDown(state)
   }
+
+  // move one above the invalid position
+  newPiece = boardHelpers.softDropPiece(piece, existingBoard)
+  return state.set('activePiece', newPiece)
 
   return state
 }
@@ -176,11 +177,9 @@ function moveLeft(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  if (activePiece) {
-    var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
-    if (boardHelpers.isValidPosition(movedPiece, board)) {
-      newState = state.set('activePiece', movedPiece)
-    }
+  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
+  if (boardHelpers.isValidPosition(movedPiece, board)) {
+    newState = state.set('activePiece', movedPiece)
   }
 
   return newState
@@ -194,11 +193,9 @@ function moveRight(state, payload) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  if (activePiece) {
-    var movedPiece = pieceHelpers.move(activePiece, [1, 0])
-    if (boardHelpers.isValidPosition(movedPiece, board)) {
-      newState = state.set('activePiece', movedPiece)
-    }
+  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
+  if (boardHelpers.isValidPosition(movedPiece, board)) {
+    newState = state.set('activePiece', movedPiece)
   }
 
   return newState
@@ -210,9 +207,6 @@ function moveRight(state, payload) {
 function rotate(state, payload) {
   var board = state.get('existingBoard')
   var piece = state.get('activePiece')
-  if (!piece) {
-    return state
-  }
 
   var rotatedPiece = pieceHelpers.rotate(piece, payload.diff)
   var translations = [

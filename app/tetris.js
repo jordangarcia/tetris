@@ -247,6 +247,7 @@
 	    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
 	    this.computed('score', ['clears'], calculateScore)
 	    this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
+
 	    // initial state
 	    return {
 	      clears: [],
@@ -319,19 +320,21 @@
 	function moveDown(state) {
 	  var newState = state
 	  var piece = state.get('activePiece')
+	  if (!piece) {
+	    return state
+	  }
+
 	  var existingBoard = state.get('existingBoard')
-	  if (piece) {
-	    // move piece down and check if is valid
-	    var newPiece = pieceHelpers.move(piece, [0, -1])
-	    if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-	      newState = state
-	        .set('activePiece', newPiece)
-	    } else {
-	      newState = state
-	        .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
-	        .set('recentPiece', piece)
-	        .set('activePiece', null)
-	    }
+	  // move piece down and check if is valid
+	  var newPiece = pieceHelpers.move(piece, [0, -1])
+	  if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
+	    newState = state
+	      .set('activePiece', newPiece)
+	  } else {
+	    newState = state
+	      .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
+	      .set('recentPiece', piece)
+	      .set('activePiece', null)
 	  }
 	  return newState
 	}
@@ -340,17 +343,15 @@
 	  var piece = state.get('activePiece')
 	  var existingBoard = state.get('existingBoard')
 
-	  if (piece) {
-	    var newPiece = pieceHelpers.move(piece, [0, -1])
-	    if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
-	      // if the piece is at the bottom of the board simulate a moveDown
-	      return moveDown(state)
-	    }
-
-	    // move one above the invalid position
-	    newPiece = boardHelpers.softDropPiece(piece, existingBoard)
-	    return state.set('activePiece', newPiece)
+	  var newPiece = pieceHelpers.move(piece, [0, -1])
+	  if (!boardHelpers.isValidPosition(newPiece, existingBoard)) {
+	    // if the piece is at the bottom of the board simulate a moveDown
+	    return moveDown(state)
 	  }
+
+	  // move one above the invalid position
+	  newPiece = boardHelpers.softDropPiece(piece, existingBoard)
+	  return state.set('activePiece', newPiece)
 
 	  return state
 	}
@@ -398,11 +399,9 @@
 	  var activePiece = state.get('activePiece')
 	  var board = state.get('existingBoard')
 
-	  if (activePiece) {
-	    var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
-	    if (boardHelpers.isValidPosition(movedPiece, board)) {
-	      newState = state.set('activePiece', movedPiece)
-	    }
+	  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
+	  if (boardHelpers.isValidPosition(movedPiece, board)) {
+	    newState = state.set('activePiece', movedPiece)
 	  }
 
 	  return newState
@@ -416,11 +415,9 @@
 	  var activePiece = state.get('activePiece')
 	  var board = state.get('existingBoard')
 
-	  if (activePiece) {
-	    var movedPiece = pieceHelpers.move(activePiece, [1, 0])
-	    if (boardHelpers.isValidPosition(movedPiece, board)) {
-	      newState = state.set('activePiece', movedPiece)
-	    }
+	  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
+	  if (boardHelpers.isValidPosition(movedPiece, board)) {
+	    newState = state.set('activePiece', movedPiece)
 	  }
 
 	  return newState
@@ -432,9 +429,6 @@
 	function rotate(state, payload) {
 	  var board = state.get('existingBoard')
 	  var piece = state.get('activePiece')
-	  if (!piece) {
-	    return state
-	  }
 
 	  var rotatedPiece = pieceHelpers.rotate(piece, payload.diff)
 	  var translations = [
@@ -36640,7 +36634,7 @@
 
 	  componentDidMount:function() {
 	    this._changeObserver = reactor.createChangeObserver()
-	    this._changeObserver.onChange(['game.board'], function(board)  {
+	    this._changeObserver.onChange(['pieces.next'], function(piece)  {
 	      this.setState(getState())
 	    }.bind(this))
 	  },
@@ -36679,6 +36673,10 @@
 	var Const = __webpack_require__(11)
 	var Tetriminos = __webpack_require__(12)
 
+	// TODO: for some reason Immutable.IndexedSequence.get() isnt working
+	// must coerce to Vector
+	var pieces = Immutable.Sequence(Tetriminos.pieces).toVector()
+
 	/**
 	 * The core that tracks the state of the board
 	 */
@@ -36686,18 +36684,28 @@
 	  initialize:function() {
 	    this.on(Const.SPAWN_PIECE, nextPiece)
 
-	    return {
-	      next: randomPiece()
-	    }
+	    var initial = Immutable.Map({
+	      next: null,
+	      remaining: pieces
+	    })
+	    return nextPiece(initial)
 	  }
 	})
 
 	function nextPiece(state) {
-	  return state.set('next', randomPiece())
-	}
+	  return state.withMutations(function(state)  {
+	    var remaining = state.get('remaining')
+	    var ind = randInt(remaining.length)
 
-	function randomPiece() {
-	  return Tetriminos.pieces[randInt(7)]
+	    state.set('next', remaining.get(ind))
+	    state.set('remaining', remaining.splice(ind, 1))
+
+	    if (state.get('remaining').length === 0) {
+	      state.set('remaining', pieces)
+	    }
+
+	    return state
+	  })
 	}
 
 	/**

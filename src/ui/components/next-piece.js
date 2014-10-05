@@ -22,7 +22,7 @@ module.exports = React.createClass({
 
   componentDidMount() {
     this._changeObserver = reactor.createChangeObserver()
-    this._changeObserver.onChange(['game.board'], board => {
+    this._changeObserver.onChange(['pieces.next'], piece => {
       this.setState(getState())
     })
   },
