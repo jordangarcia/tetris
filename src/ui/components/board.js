@@ -29,6 +29,7 @@ module.exports = React.createClass({
 
   render() {
     var style = {
+      float: 'left',
       backgroundColor: '#ccc',
       height: (BLOCK_SIZE * HEIGHT),
       width: (BLOCK_SIZE * WIDTH),

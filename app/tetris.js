@@ -109,6 +109,7 @@
 
 	var reactor = Nuclear.createReactor()
 	reactor.attachCore('game', __webpack_require__(6))
+	reactor.attachCore('pieces', __webpack_require__(205))
 	reactor.bindActions('game', __webpack_require__(7))
 
 	module.exports = reactor
@@ -122,15 +123,15 @@
 	 * @jsx React.DOM
 	 */
 	var React = __webpack_require__(3);
-	var Controls = __webpack_require__(4);
 	var Board = __webpack_require__(5);
+	var Side = __webpack_require__(203);
 
 	module.exports = React.createClass({displayName: 'exports',
 	  render:function() {
 	    return (
 	      React.DOM.div(null, 
-	        Controls(null), 
-	        Board(null)
+	        Board(null), 
+	        Side(null)
 	      )
 	    )
 	  }
@@ -145,31 +146,7 @@
 
 
 /***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(3);
-	var reactor = __webpack_require__(1)
-	var game = reactor.action('game')
-
-	module.exports = React.createClass({displayName: 'exports',
-	  render:function() {
-	    return (
-	      React.DOM.div(null, 
-	        React.DOM.button({onClick: game.tick}, "Tick"), 
-	        React.DOM.button({onClick: game.moveLeft}, "Left"), 
-	        React.DOM.button({onClick: game.moveRight}, "Right"), 
-	        React.DOM.button({onClick: game.rotateClockwise}, "Rotate")
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
+/* 4 */,
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -204,6 +181,7 @@
 
 	  render:function() {
 	    var style = {
+	      float: 'left',
 	      backgroundColor: '#ccc',
 	      height: (BLOCK_SIZE * HEIGHT),
 	      width: (BLOCK_SIZE * WIDTH),
@@ -493,13 +471,6 @@
 	var Tetriminos = __webpack_require__(12)
 
 	/**
-	 * Generates random number 0 to (max - 1)
-	 */
-	function randInt(max) {
-	 return Math.floor((Math.random() * max))
-	}
-
-	/**
 	 * Main game tick action
 	 */
 	exports.tick = function(reactor) {
@@ -544,10 +515,11 @@
 	      type: Const.CLEAR_LINES,
 	      payload: {}
 	    })
+	    var nextPiece = reactor.get('pieces.next')
 	    reactor.cycle({
 	      type: Const.SPAWN_PIECE,
 	      payload: {
-	        piece: Tetriminos.pieces[randInt(7)]
+	        piece: nextPiece
 	      }
 	    })
 	  }
@@ -36551,6 +36523,189 @@
 
 
 	module.exports = Timer
+
+
+/***/ },
+/* 202 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(3);
+	var reactor = __webpack_require__(1)
+	var _ = __webpack_require__(17)
+
+	function getState() {
+	  return {
+	    score: reactor.get('game.score')
+	  }
+	}
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  getInitialState:function() {
+	    return getState()
+	  },
+
+	  componentDidMount:function() {
+	    this._changeObserver = reactor.createChangeObserver()
+	    this._changeObserver.onChange(['game.score'], function(score)  {
+	      this.setState(getState())
+	    }.bind(this))
+	  },
+
+	  render:function() {
+	    return (
+	      React.DOM.table(null, 
+	        React.DOM.tr(null, 
+	          React.DOM.td(null, "Lines:"), 
+	          React.DOM.td(null, this.state.score.lines)
+	        ), 
+	        React.DOM.tr(null, 
+	          React.DOM.td(null, "Singles:"), 
+	          React.DOM.td(null, this.state.score.single)
+	        ), 
+	        React.DOM.tr(null, 
+	          React.DOM.td(null, "Doubles:"), 
+	          React.DOM.td(null, this.state.score.double)
+	        ), 
+	        React.DOM.tr(null, 
+	          React.DOM.td(null, "Triples:"), 
+	          React.DOM.td(null, this.state.score.triple)
+	        ), 
+	        React.DOM.tr(null, 
+	          React.DOM.td(null, "Tetrises:"), 
+	          React.DOM.td(null, this.state.score.tetris)
+	        )
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
+/* 203 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(3);
+	var ScoreBoard = __webpack_require__(202);
+	var NextPiece = __webpack_require__(204);
+
+	module.exports = React.createClass({displayName: 'exports',
+	  render:function() {
+	    var style = {
+	      marginLeft: 20,
+	      float: 'left',
+	    }
+
+	    return (
+	      React.DOM.div({style: style}, 
+	        NextPiece(null), 
+	        ScoreBoard(null)
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
+/* 204 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(3);
+	var reactor = __webpack_require__(1)
+	var Tetriminos = __webpack_require__(12)
+	var Block = __webpack_require__(8);
+
+	var BLOCK_SIZE = 24
+
+	function getState() {
+	  return {
+	    nextPiece: reactor.getImmutable('pieces.next')
+	  }
+	}
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  getInitialState:function() {
+	    return getState()
+	  },
+
+	  componentDidMount:function() {
+	    this._changeObserver = reactor.createChangeObserver()
+	    this._changeObserver.onChange(['game.board'], function(board)  {
+	      this.setState(getState())
+	    }.bind(this))
+	  },
+
+	  render:function() {
+	    var style = {
+	      backgroundColor: '#ccc',
+	      height: (BLOCK_SIZE * 4),
+	      width: (BLOCK_SIZE * 4),
+	      position: 'relative',
+	    }
+
+	    var piece = this.state.nextPiece
+	    var blocks = Tetriminos[piece].structure[0].map(function(coord)  {
+	      return Block({
+	        color: 'black',
+	        x: coord.x,
+	        y: coord.y,
+	        size: BLOCK_SIZE
+	      })
+	    })
+
+	    return React.DOM.div({
+	      style: style
+	    }, blocks)
+	  }
+	})
+
+
+/***/ },
+/* 205 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Nuclear = __webpack_require__(10)
+	var Immutable = __webpack_require__(18)
+	var Const = __webpack_require__(11)
+	var Tetriminos = __webpack_require__(12)
+
+	/**
+	 * The core that tracks the state of the board
+	 */
+	module.exports = Nuclear.createCore({
+	  initialize:function() {
+	    this.on(Const.SPAWN_PIECE, nextPiece)
+
+	    return {
+	      next: randomPiece()
+	    }
+	  }
+	})
+
+	function nextPiece(state) {
+	  return state.set('next', randomPiece())
+	}
+
+	function randomPiece() {
+	  return Tetriminos.pieces[randInt(7)]
+	}
+
+	/**
+	 * Generates random number 0 to (max - 1)
+	 */
+	function randInt(max) {
+	 return Math.floor((Math.random() * max))
+	}
 
 
 /***/ }

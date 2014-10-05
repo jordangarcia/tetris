@@ -2,15 +2,15 @@
  * @jsx React.DOM
  */
 var React = require('react');
-var Controls = require('./controls');
 var Board = require('./board');
+var Side = require('./side');
 
 module.exports = React.createClass({
   render() {
     return (
       <div>
-        <Controls />
         <Board />
+        <Side />
       </div>
     )
   }

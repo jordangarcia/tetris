@@ -2,13 +2,6 @@ var Const = require('./constants')
 var Tetriminos = require('../tetriminos')
 
 /**
- * Generates random number 0 to (max - 1)
- */
-function randInt(max) {
- return Math.floor((Math.random() * max))
-}
-
-/**
  * Main game tick action
  */
 exports.tick = function(reactor) {
@@ -53,10 +46,11 @@ function trySpawn(reactor) {
       type: Const.CLEAR_LINES,
       payload: {}
     })
+    var nextPiece = reactor.get('pieces.next')
     reactor.cycle({
       type: Const.SPAWN_PIECE,
       payload: {
-        piece: Tetriminos.pieces[randInt(7)]
+        piece: nextPiece
       }
     })
   }
