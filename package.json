@@ -19,7 +19,8 @@
     "immutable": "^2.0.17",
     "lodash": "^2.4.1",
     "through": "^2.3.6",
-    "sass-loader": "^0.2.0"
+    "sass-loader": "^0.2.0",
+    "nuclear-react-mixin": "^1.0.0"
   },
   "devDependencies": {
     "jsx-loader": "^0.11.2",

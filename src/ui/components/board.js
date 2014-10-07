@@ -1,14 +1,8 @@
 var React = require('react');
+var ReactorMixin = require('nuclear-react-mixin')
 var reactor = require('../../nuclear/reactor')
 var _ = require('lodash')
 var Block = require('./block');
-
-function getState() {
-  return {
-    board: reactor.getImmutable('game.board'),
-    softDrop: reactor.getImmutable('game.softDropCoords'),
-  }
-}
 
 var BLOCK_SIZE = 32
 var WIDTH = 10
@@ -16,15 +10,13 @@ var HEIGHT = 22
 
 module.exports = React.createClass({
 
-  getInitialState() {
-    return getState()
-  },
+  mixins: [ReactorMixin(reactor)],
 
-  componentDidMount() {
-    this._changeObserver = reactor.createChangeObserver()
-    this._changeObserver.onChange(['game.board'], board => {
-      this.setState(getState())
-    })
+  getDataBindings() {
+    return {
+      'board': 'game.board',
+      'softDrop': 'game.softDropCoords',
+    }
   },
 
   render() {

@@ -151,16 +151,10 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var React = __webpack_require__(3);
+	var ReactorMixin = __webpack_require__(207)
 	var reactor = __webpack_require__(1)
 	var _ = __webpack_require__(17)
 	var Block = __webpack_require__(8);
-
-	function getState() {
-	  return {
-	    board: reactor.getImmutable('game.board'),
-	    softDrop: reactor.getImmutable('game.softDropCoords'),
-	  }
-	}
 
 	var BLOCK_SIZE = 32
 	var WIDTH = 10
@@ -168,15 +162,13 @@
 
 	module.exports = React.createClass({
 
-	  getInitialState:function() {
-	    return getState()
-	  },
+	  mixins: [ReactorMixin(reactor)],
 
-	  componentDidMount:function() {
-	    this._changeObserver = reactor.createChangeObserver()
-	    this._changeObserver.onChange(['game.board'], function(board)  {
-	      this.setState(getState())
-	    }.bind(this))
+	  getDataBindings:function() {
+	    return {
+	      'board': 'game.board',
+	      'softDrop': 'game.softDropCoords',
+	    }
 	  },
 
 	  render:function() {
@@ -36527,26 +36519,18 @@
 	 * @jsx React.DOM
 	 */
 	var React = __webpack_require__(3);
+	var ReactorMixin = __webpack_require__(207)
 	var reactor = __webpack_require__(1)
 	var _ = __webpack_require__(17)
 
-	function getState() {
-	  return {
-	    score: reactor.get('game.score')
-	  }
-	}
-
 	module.exports = React.createClass({displayName: 'exports',
 
-	  getInitialState:function() {
-	    return getState()
-	  },
+	  mixins: [ReactorMixin(reactor)],
 
-	  componentDidMount:function() {
-	    this._changeObserver = reactor.createChangeObserver()
-	    this._changeObserver.onChange(['game.score'], function(score)  {
-	      this.setState(getState())
-	    }.bind(this))
+	  getDataBindings:function() {
+	    return {
+	      score: 'game.score',
+	    }
 	  },
 
 	  render:function() {
@@ -36610,33 +36594,22 @@
 /* 204 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * @jsx React.DOM
-	 */
 	var React = __webpack_require__(3);
+	var ReactorMixin = __webpack_require__(207)
 	var reactor = __webpack_require__(1)
 	var Tetriminos = __webpack_require__(12)
 	var Block = __webpack_require__(8);
 
 	var BLOCK_SIZE = 24
 
-	function getState() {
-	  return {
-	    nextPiece: reactor.getImmutable('pieces.next')
-	  }
-	}
+	module.exports = React.createClass({
 
-	module.exports = React.createClass({displayName: 'exports',
+	  mixins: [ReactorMixin(reactor)],
 
-	  getInitialState:function() {
-	    return getState()
-	  },
-
-	  componentDidMount:function() {
-	    this._changeObserver = reactor.createChangeObserver()
-	    this._changeObserver.onChange(['pieces.next'], function(piece)  {
-	      this.setState(getState())
-	    }.bind(this))
+	  getDataBindings:function() {
+	    return {
+	      nextPiece: 'pieces.next',
+	    }
 	  },
 
 	  render:function() {
@@ -36713,6 +36686,76 @@
 	 */
 	function randInt(max) {
 	 return Math.floor((Math.random() * max))
+	}
+
+
+/***/ },
+/* 206 */,
+/* 207 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Automatically keeps a React component in sync with some data
+	 * from a Nuclear reactor
+	 *
+	 * Usage:
+	 * var reactor = require('./reactor')
+	 * var ReactorMixin = require('./reactor-mixin')
+	 *
+	 * Reactor.createClass({
+	 *   mixins: [ReactorMixin(reactor)],
+	 *
+	 *   getDataBindings() {
+	 *     return {
+	 *       board: 'game.board',
+	 *       player: ['game', 'players', this.props.playerId]
+	 *     }
+	 *   }
+	 * })
+	 */
+	/**
+	 * Returns a mapping of the getDataBinding keys to
+	 * the reactor values
+	 */
+	function getState(reactor, data) {
+	  var state = {}
+	  for (var key in data) {
+	    state[key] = reactor.getImmutable(data[key])
+	  }
+	  return state
+	}
+
+	/**
+	 * Gets the values for an object
+	 */
+	function objectValues(obj) {
+	  var values = []
+	  for (var prop in obj) {
+	    values.push(obj[prop])
+	  }
+	  return values
+	}
+
+	module.exports = function ReactorMixin(reactor) {
+
+	  return {
+	    getInitialState:function() {
+	      return getState(reactor, this.getDataBindings())
+	    },
+
+	    componentDidMount:function() {
+	      var dataBindings = this.getDataBindings()
+	      var deps = objectValues(dataBindings)
+	      this.__changeObserver = reactor.createChangeObserver()
+	      this.__changeObserver.onChange(deps, function()  {
+	        this.setState(getState(reactor, dataBindings))
+	      }.bind(this))
+	    },
+
+	    componentWillUnmount:function() {
+	      this.__changeObserver.destroy()
+	    }
+	  }
 	}
 
 

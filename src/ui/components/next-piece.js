@@ -1,30 +1,19 @@
-/**
- * @jsx React.DOM
- */
 var React = require('react');
+var ReactorMixin = require('nuclear-react-mixin')
 var reactor = require('../../nuclear/reactor')
 var Tetriminos = require('../../tetriminos')
 var Block = require('./block');
 
 var BLOCK_SIZE = 24
 
-function getState() {
-  return {
-    nextPiece: reactor.getImmutable('pieces.next')
-  }
-}
-
 module.exports = React.createClass({
 
-  getInitialState() {
-    return getState()
-  },
+  mixins: [ReactorMixin(reactor)],
 
-  componentDidMount() {
-    this._changeObserver = reactor.createChangeObserver()
-    this._changeObserver.onChange(['pieces.next'], piece => {
-      this.setState(getState())
-    })
+  getDataBindings() {
+    return {
+      nextPiece: 'pieces.next',
+    }
   },
 
   render() {

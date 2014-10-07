@@ -2,26 +2,18 @@
  * @jsx React.DOM
  */
 var React = require('react');
+var ReactorMixin = require('nuclear-react-mixin')
 var reactor = require('../../nuclear/reactor')
 var _ = require('lodash')
 
-function getState() {
-  return {
-    score: reactor.get('game.score')
-  }
-}
-
 module.exports = React.createClass({
 
-  getInitialState() {
-    return getState()
-  },
+  mixins: [ReactorMixin(reactor)],
 
-  componentDidMount() {
-    this._changeObserver = reactor.createChangeObserver()
-    this._changeObserver.onChange(['game.score'], score => {
-      this.setState(getState())
-    })
+  getDataBindings() {
+    return {
+      score: 'game.score',
+    }
   },
 
   render() {
