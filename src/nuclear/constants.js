@@ -8,4 +8,6 @@ module.exports = keyMirror({
   MOVE_DOWN: null,
   ROTATE: null,
   SOFT_DROP: null,
+  PAUSE: null,
+  UNPAUSE: null,
 })

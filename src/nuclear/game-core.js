@@ -14,13 +14,15 @@ var HEIGHT = 22
  */
 module.exports = Nuclear.createCore({
   initialize() {
-    this.on(Const.SPAWN_PIECE, addPiece)
+    this.on(Const.SPAWN_PIECE, spawnPiece)
     this.on(Const.CLEAR_LINES, clearLines)
     this.on(Const.LEFT, moveLeft)
     this.on(Const.RIGHT, moveRight)
     this.on(Const.MOVE_DOWN, moveDown)
     this.on(Const.SOFT_DROP, softDrop)
     this.on(Const.ROTATE, rotate)
+    this.on(Const.PAUSE, pause)
+    this.on(Const.UNPAUSE, unpause)
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     this.computed('score', ['clears'], calculateScore)
@@ -31,6 +33,7 @@ module.exports = Nuclear.createCore({
       clears: [],
       activePiece: null,
       recentPiece: null,
+      isOver: false,
       existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
     }
   }
@@ -137,15 +140,23 @@ function softDrop(state) {
 /**
  * Spawns a piece and adds to board
  */
-function addPiece(state, payload) {
+function spawnPiece(state, payload) {
   var piece = payload.piece
-  var boardPiece = new BoardPiece({
+  var existingBoard = state.get('existingBoard')
+  var spawnedPiece = new BoardPiece({
     type: piece,
     rotation: 0,
     pos: Tetriminos[piece].spawnPosition,
   })
 
-  return state.set('activePiece', boardPiece)
+  if (!boardHelpers.isValidPosition(spawnedPiece, existingBoard)) {
+    // if the spawned piece is invalid the game is over
+    return state
+      .set('activePiece', spawnedPiece)
+      .set('isOver', true)
+  }
+
+  return state.set('activePiece', spawnedPiece)
 }
 
 /**
@@ -232,4 +243,12 @@ function rotate(state, payload) {
   }
 
   return state
+}
+
+function pause(state) {
+  return state.set('isPaused', true)
+}
+
+function unpause(state) {
+  return state.set('isPaused', false)
 }

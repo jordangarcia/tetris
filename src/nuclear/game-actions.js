@@ -1,45 +1,30 @@
 var Const = require('./constants')
 var Tetriminos = require('../tetriminos')
+var timeout = require('../timeout')
+
+/**
+ * Starts the game timer
+ * @param {Reactor} reactor
+ */
+exports.start = function(reactor) {
+  exports.tick(reactor)
+}
 
 /**
  * Main game tick action
+ * @param {Reactor} reactor
+ * @param {Timer} gameTimer
  */
-exports.tick = function(reactor) {
+exports.tick = function tick(reactor) {
+  if (reactor.get('game.isOver')) {
+    return
+  }
+
   reactor.cycle({
     type: Const.MOVE_DOWN,
   })
-  trySpawn(reactor)
-}
 
-exports.moveLeft = function(reactor) {
-  reactor.cycle({
-    type: Const.LEFT,
-  })
-}
-
-exports.moveRight = function(reactor) {
-  reactor.cycle({
-    type: Const.RIGHT,
-  })
-}
-
-exports.rotateClockwise = function(reactor) {
-  reactor.cycle({
-    type: Const.ROTATE,
-    payload: {
-      diff: 1
-    }
-  })
-}
-
-exports.softDrop = function(reactor) {
-  reactor.cycle({
-    type: Const.SOFT_DROP
-  })
-  trySpawn(reactor)
-}
-
-function trySpawn(reactor) {
+  // if there is no piece spawn one
   if (!reactor.getImmutable('game.activePiece')) {
     // after a move down if there is no active piece
     reactor.cycle({
@@ -54,4 +39,78 @@ function trySpawn(reactor) {
       }
     })
   }
+
+  if (!reactor.get('game.isOver')) {
+    // queue next tick
+    queueTick(reactor, 1000)
+  }
+}
+
+exports.moveLeft = function(reactor) {
+  if (reactor.get('game.isOver')) {
+    return
+  }
+
+  reactor.cycle({
+    type: Const.LEFT,
+  })
+}
+
+exports.moveRight = function(reactor) {
+  if (reactor.get('game.isOver')) {
+    return
+  }
+
+  reactor.cycle({
+    type: Const.RIGHT,
+  })
+}
+
+exports.rotateClockwise = function(reactor) {
+  if (reactor.get('game.isOver')) {
+    return
+  }
+
+  reactor.cycle({
+    type: Const.ROTATE,
+    payload: {
+      diff: 1
+    }
+  })
+}
+
+exports.softDrop = function(reactor) {
+  if (reactor.get('game.isOver')) {
+    return
+  }
+  reactor.cycle({
+    type: Const.SOFT_DROP
+  })
+  // if the softdrop actually set the piece on the board
+  if (!reactor.getImmutable('game.activePiece')) {
+    exports.tick(reactor)
+  } else {
+    // if it was an actual soft drop defer the game tick
+    timeout.reset()
+  }
+}
+
+exports.pause = function(reactor) {
+  reactor.cycle({
+    type: Const.PAUSE
+  })
+  timeout.cancel()
+}
+
+exports.unpause = function(reactor) {
+  reactor.cycle({
+    type: Const.UNPAUSE
+  })
+  queueTick(reactor, 1000)
+}
+
+function queueTick(reactor, duration) {
+  timeout.queue(() => {
+    exports.tick(reactor)
+  }, duration)
 }
