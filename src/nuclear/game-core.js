@@ -34,6 +34,7 @@ module.exports = Nuclear.createCore({
       activePiece: null,
       recentPiece: null,
       isOver: false,
+      isPaused: false,
       existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
     }
   }

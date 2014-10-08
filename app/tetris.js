@@ -50,42 +50,20 @@
 	var React = __webpack_require__(3)
 	var reactor = __webpack_require__(1)
 	var Main = __webpack_require__(2)
-
-	var LOOP_TIME = 1000
-	var UP_ARROW = 38
-	var LEFT_ARROW = 37
-	var DOWN_ARROW = 40
-	var RIGHT_ARROW = 39
-	var ESCAPE_KEY = 27
-	var SPACE_KEY = 32
+	var keybindings = __webpack_require__(210)
 
 	// render UI
 	React.renderComponent(Main(null), document.getElementById('main'))
 
+	reactor
+	  .createChangeObserver()
+	  .onChange('keybind', function(type)  {
+	    window.removeEventListener('keydown')
+	    window.addEventListener('keydown', keybindings[type])
+	  })
 
-	// setup keybinds
-	window.addEventListener('keydown', function(e)  {
-	  switch (e.keyCode) {
-	    case UP_ARROW:
-	      reactor.action('game').rotateClockwise()
-	      break
-	    case DOWN_ARROW:
-	      reactor.action('game').tick()
-	      break
-	    case RIGHT_ARROW:
-	      reactor.action('game').moveRight()
-	      break
-	    case LEFT_ARROW:
-	      reactor.action('game').moveLeft()
-	      break
-	    case SPACE_KEY:
-	      reactor.action('game').softDrop()
-	      break
-	    case ESCAPE_KEY:
-	      reactor.action('game').pause()
-	      break
-	  }
-	})
+	debugger
+	window.addEventListener('keydown', keybindings[reactor.get('keybind')])
 
 	reactor.action('game').start()
 
@@ -97,6 +75,21 @@
 	var Nuclear = __webpack_require__(10)
 
 	var reactor = Nuclear.createReactor()
+
+	reactor.computed(
+	  'keybind',
+	  ['game.isOver', 'game.isPaused'],
+	  function(isOver, isPaused)  {
+	    debugger
+	    if (isOver) {
+	      return 'gameOver'
+	    } else if (isPaused) {
+	      return 'paused'
+	    } else {
+	      return 'game'
+	    }
+	  })
+
 	reactor.attachCore('game', __webpack_require__(6))
 	reactor.attachCore('pieces', __webpack_require__(205))
 	reactor.bindActions('game', __webpack_require__(7))
@@ -258,6 +251,7 @@
 	      activePiece: null,
 	      recentPiece: null,
 	      isOver: false,
+	      isPaused: false,
 	      existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
 	    }
 	  }
@@ -36866,6 +36860,63 @@
 	    return React.DOM.div({style: style}, this.props.message)
 	  }
 	})
+
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var reactor = __webpack_require__(1)
+
+	var UP_ARROW = 38
+	var LEFT_ARROW = 37
+	var DOWN_ARROW = 40
+	var RIGHT_ARROW = 39
+	var ESCAPE_KEY = 27
+	var SPACE_KEY = 32
+	var ENTER_KEY = 32
+
+	exports.paused = function(e) {
+	  switch (e.keyCode) {
+	    case ENTER_KEY:
+	    case ESCAPE_KEY:
+	      reactor.action('game').unpause()
+	      reactor.action('game').pause()
+	      break
+	  }
+	}
+
+	exports.gameOver = function(e) {
+	  switch (e.keyCode) {
+	    case ENTER_KEY:
+	    case ESCAPE_KEY:
+	      reactor.action('game').restart()
+	      break
+	  }
+	}
+
+	exports.game = function(e) {
+	  switch (e.keyCode) {
+	    case UP_ARROW:
+	      reactor.action('game').rotateClockwise()
+	      break
+	    case DOWN_ARROW:
+	      reactor.action('game').tick()
+	      break
+	    case RIGHT_ARROW:
+	      reactor.action('game').moveRight()
+	      break
+	    case LEFT_ARROW:
+	      reactor.action('game').moveLeft()
+	      break
+	    case SPACE_KEY:
+	      reactor.action('game').softDrop()
+	      break
+	    case ESCAPE_KEY:
+	      reactor.action('game').pause()
+	      break
+	  }
+	}
 
 
 /***/ }
