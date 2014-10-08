@@ -50,7 +50,6 @@
 	var React = __webpack_require__(3)
 	var reactor = __webpack_require__(1)
 	var Main = __webpack_require__(2)
-	var Timer = __webpack_require__(201)
 
 	var LOOP_TIME = 1000
 	var UP_ARROW = 38
@@ -63,12 +62,6 @@
 	// render UI
 	React.renderComponent(Main(null), document.getElementById('main'))
 
-	// setup game timer
-	var gameTimer = new Timer()
-	gameTimer.onTick(function()  {
-	  reactor.action('game').tick()
-	})
-	gameTimer.start(LOOP_TIME)
 
 	// setup keybinds
 	window.addEventListener('keydown', function(e)  {
@@ -78,7 +71,6 @@
 	      break
 	    case DOWN_ARROW:
 	      reactor.action('game').tick()
-	      gameTimer.reset()
 	      break
 	    case RIGHT_ARROW:
 	      reactor.action('game').moveRight()
@@ -88,17 +80,14 @@
 	      break
 	    case SPACE_KEY:
 	      reactor.action('game').softDrop()
-	      gameTimer.reset()
 	      break
 	    case ESCAPE_KEY:
-	      if (gameTimer.isRunning) {
-	        gameTimer.stop()
-	      } else {
-	        gameTimer.start()
-	      }
+	      reactor.action('game').pause()
 	      break
 	  }
 	})
+
+	reactor.action('game').start()
 
 
 /***/ },
@@ -155,6 +144,7 @@
 	var reactor = __webpack_require__(1)
 	var _ = __webpack_require__(17)
 	var Block = __webpack_require__(8);
+	var BoardMessage = __webpack_require__(209);
 
 	var BLOCK_SIZE = 32
 	var WIDTH = 10
@@ -167,6 +157,8 @@
 	  getDataBindings:function() {
 	    return {
 	      'board': 'game.board',
+	      'isOver': 'game.isOver',
+	      'isPaused': 'game.isPaused',
 	      'softDrop': 'game.softDropCoords',
 	    }
 	  },
@@ -201,9 +193,27 @@
 	        })
 	      }).toVector().toJS()
 
-	    return React.DOM.div({
+	    var children = []
+	      .concat(previewBlocks)
+	      .concat(realBlocks)
+
+	    if (this.state.isOver) {
+	      children.push(BoardMessage({
+	        message: 'Game Over!'
+	      }))
+	    }
+
+	    if (this.state.isPaused) {
+	      children.push(BoardMessage({
+	        message: 'Paused'
+	      }))
+	    }
+
+	    var props = {
 	      style: style
-	    }, previewBlocks.concat(realBlocks))
+	    }
+
+	    return React.DOM.div(props, children)
 	  }
 	})
 
@@ -228,13 +238,15 @@
 	 */
 	module.exports = Nuclear.createCore({
 	  initialize:function() {
-	    this.on(Const.SPAWN_PIECE, addPiece)
+	    this.on(Const.SPAWN_PIECE, spawnPiece)
 	    this.on(Const.CLEAR_LINES, clearLines)
 	    this.on(Const.LEFT, moveLeft)
 	    this.on(Const.RIGHT, moveRight)
 	    this.on(Const.MOVE_DOWN, moveDown)
 	    this.on(Const.SOFT_DROP, softDrop)
 	    this.on(Const.ROTATE, rotate)
+	    this.on(Const.PAUSE, pause)
+	    this.on(Const.UNPAUSE, unpause)
 
 	    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
 	    this.computed('score', ['clears'], calculateScore)
@@ -245,6 +257,7 @@
 	      clears: [],
 	      activePiece: null,
 	      recentPiece: null,
+	      isOver: false,
 	      existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
 	    }
 	  }
@@ -351,15 +364,23 @@
 	/**
 	 * Spawns a piece and adds to board
 	 */
-	function addPiece(state, payload) {
+	function spawnPiece(state, payload) {
 	  var piece = payload.piece
-	  var boardPiece = new BoardPiece({
+	  var existingBoard = state.get('existingBoard')
+	  var spawnedPiece = new BoardPiece({
 	    type: piece,
 	    rotation: 0,
 	    pos: Tetriminos[piece].spawnPosition,
 	  })
 
-	  return state.set('activePiece', boardPiece)
+	  if (!boardHelpers.isValidPosition(spawnedPiece, existingBoard)) {
+	    // if the spawned piece is invalid the game is over
+	    return state
+	      .set('activePiece', spawnedPiece)
+	      .set('isOver', true)
+	  }
+
+	  return state.set('activePiece', spawnedPiece)
 	}
 
 	/**
@@ -448,6 +469,14 @@
 	  return state
 	}
 
+	function pause(state) {
+	  return state.set('isPaused', true)
+	}
+
+	function unpause(state) {
+	  return state.set('isPaused', false)
+	}
+
 
 /***/ },
 /* 7 */
@@ -455,46 +484,31 @@
 
 	var Const = __webpack_require__(11)
 	var Tetriminos = __webpack_require__(12)
+	var timeout = __webpack_require__(208)
+
+	/**
+	 * Starts the game timer
+	 * @param {Reactor} reactor
+	 */
+	exports.start = function(reactor) {
+	  exports.tick(reactor)
+	}
 
 	/**
 	 * Main game tick action
+	 * @param {Reactor} reactor
+	 * @param {Timer} gameTimer
 	 */
-	exports.tick = function(reactor) {
+	exports.tick = function tick(reactor) {
+	  if (reactor.get('game.isOver')) {
+	    return
+	  }
+
 	  reactor.cycle({
 	    type: Const.MOVE_DOWN,
 	  })
-	  trySpawn(reactor)
-	}
 
-	exports.moveLeft = function(reactor) {
-	  reactor.cycle({
-	    type: Const.LEFT,
-	  })
-	}
-
-	exports.moveRight = function(reactor) {
-	  reactor.cycle({
-	    type: Const.RIGHT,
-	  })
-	}
-
-	exports.rotateClockwise = function(reactor) {
-	  reactor.cycle({
-	    type: Const.ROTATE,
-	    payload: {
-	      diff: 1
-	    }
-	  })
-	}
-
-	exports.softDrop = function(reactor) {
-	  reactor.cycle({
-	    type: Const.SOFT_DROP
-	  })
-	  trySpawn(reactor)
-	}
-
-	function trySpawn(reactor) {
+	  // if there is no piece spawn one
 	  if (!reactor.getImmutable('game.activePiece')) {
 	    // after a move down if there is no active piece
 	    reactor.cycle({
@@ -509,6 +523,76 @@
 	      }
 	    })
 	  }
+
+	  if (!reactor.get('game.isOver')) {
+	    // queue next tick
+	    var loopDuration = 1000
+	    timeout.queue(function()  {
+	      tick(reactor)
+	    }, loopDuration)
+	  }
+	}
+
+	exports.moveLeft = function(reactor) {
+	  if (reactor.get('game.isOver')) {
+	    return
+	  }
+
+	  reactor.cycle({
+	    type: Const.LEFT,
+	  })
+	}
+
+	exports.moveRight = function(reactor) {
+	  if (reactor.get('game.isOver')) {
+	    return
+	  }
+
+	  reactor.cycle({
+	    type: Const.RIGHT,
+	  })
+	}
+
+	exports.rotateClockwise = function(reactor) {
+	  if (reactor.get('game.isOver')) {
+	    return
+	  }
+
+	  reactor.cycle({
+	    type: Const.ROTATE,
+	    payload: {
+	      diff: 1
+	    }
+	  })
+	}
+
+	exports.softDrop = function(reactor) {
+	  if (reactor.get('game.isOver')) {
+	    return
+	  }
+	  reactor.cycle({
+	    type: Const.SOFT_DROP
+	  })
+	  // if the softdrop actually set the piece on the board
+	  if (!reactor.getImmutable('game.activePiece')) {
+	    exports.tick(reactor)
+	  } else {
+	    // if it was an actual soft drop defer the game tick
+	    timeout.reset()
+	  }
+	}
+
+	exports.pause = function(reactor) {
+	  reactor.cycle({
+	    type: Const.PAUSE
+	  })
+	  timeout.cancel()
+	}
+
+	exports.unpause = function(reactor) {
+	  reactor.cycle({
+	    type: Const.UNPAUSE
+	  })
 	}
 
 
@@ -738,6 +822,8 @@
 	  MOVE_DOWN: null,
 	  ROTATE: null,
 	  SOFT_DROP: null,
+	  PAUSE: null,
+	  UNPAUSE: null,
 	})
 
 
@@ -36461,57 +36547,7 @@
 /* 198 */,
 /* 199 */,
 /* 200 */,
-/* 201 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	  function Timer(interval) {"use strict";
-	    this.count = 0
-	    this.interval = interval
-	    this.handlers = []
-	    this.timeoutId
-	    this.isRunning = false
-	  }
-
-	  Timer.prototype.onTick=function(handler) {"use strict";
-	    this.handlers.push(handler)
-	  };
-
-	  Timer.prototype.start=function(interval) {"use strict";
-	    if (interval) {
-	      this.interval = interval
-	    }
-
-	    this.timeoutId = window.setTimeout(function()  {
-	      this.handlers.forEach(function(handler)  {
-	        handler()
-	      })
-	      this.count++
-	      this.start()
-	    }.bind(this), this.interval)
-
-	    this.isRunning = true
-	  };
-
-	  Timer.prototype.stop=function() {"use strict";
-	    window.clearTimeout(this.timeoutId)
-	    this.isRunning = false
-	  };
-
-	  Timer.prototype.reset=function() {"use strict";
-	    this.stop()
-	    this.start()
-	  };
-
-	  Timer.prototype.setInterval=function(interval) {"use strict";
-	    this.interval = interval
-	  };
-
-
-	module.exports = Timer
-
-
-/***/ },
+/* 201 */,
 /* 202 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -36757,6 +36793,79 @@
 	    }
 	  }
 	}
+
+
+/***/ },
+/* 208 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	  function Timeout(interval) {"use strict";
+	    this.id
+	    this.interval
+	    this.fn
+	    this.isRunning = false
+	  }
+
+	  Timeout.prototype.queue=function(fn, interval) {"use strict";
+	    if (this.id) {
+	      // only allow one queued timeout at once
+	      this.cancel()
+	    }
+	    this.fn = fn
+	    this.interval = interval
+	    this.id = window.setTimeout(fn, interval)
+
+	    this.isRunning = true
+	  };
+
+	  Timeout.prototype.cancel=function() {"use strict";
+	    window.clearTimeout(this.id)
+	    this.id = null
+	    this.fn = null
+	    this.interval = null
+	    this.isRunning = false
+	  };
+
+	  /**
+	   * Resets the timeoue duration, but keeps the same interval / function
+	   */
+	  Timeout.prototype.reset=function() {"use strict";
+	    this.queue(this.fn, this.interval)
+	  };
+
+
+	module.exports = new Timeout()
+
+
+/***/ },
+/* 209 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(3);
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  render:function() {
+	    var style = {
+	      backgroundColor: 'rgba(255,255,255,.85)',
+	      color: 'black',
+	      position: 'absolute',
+	      top: '50%',
+	      width: '80%',
+	      marginLeft: '10%',
+	      padding: '10px',
+	      fontSize: 24,
+	      boxSizing: 'border-box',
+	      textAlign: 'center',
+	    }
+
+	    return React.DOM.div({style: style}, this.props.message)
+	  }
+	})
 
 
 /***/ }

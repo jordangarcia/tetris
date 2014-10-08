@@ -3,6 +3,7 @@ var ReactorMixin = require('nuclear-react-mixin')
 var reactor = require('../../nuclear/reactor')
 var _ = require('lodash')
 var Block = require('./block');
+var BoardMessage = require('./board-message');
 
 var BLOCK_SIZE = 32
 var WIDTH = 10
@@ -15,6 +16,8 @@ module.exports = React.createClass({
   getDataBindings() {
     return {
       'board': 'game.board',
+      'isOver': 'game.isOver',
+      'isPaused': 'game.isPaused',
       'softDrop': 'game.softDropCoords',
     }
   },
@@ -49,8 +52,26 @@ module.exports = React.createClass({
         })
       }).toVector().toJS()
 
-    return React.DOM.div({
+    var children = []
+      .concat(previewBlocks)
+      .concat(realBlocks)
+
+    if (this.state.isOver) {
+      children.push(BoardMessage({
+        message: 'Game Over!'
+      }))
+    }
+
+    if (this.state.isPaused) {
+      children.push(BoardMessage({
+        message: 'Paused'
+      }))
+    }
+
+    var props = {
       style: style
-    }, previewBlocks.concat(realBlocks))
+    }
+
+    return React.DOM.div(props, children)
   }
 })
