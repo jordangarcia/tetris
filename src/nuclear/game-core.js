@@ -133,8 +133,6 @@ function softDrop(state) {
   // move one above the invalid position
   newPiece = boardHelpers.softDropPiece(piece, existingBoard)
   return state.set('activePiece', newPiece)
-
-  return state
 }
 
 /**
