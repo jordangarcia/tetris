@@ -10,6 +10,7 @@ module.exports = {
   I: {
     color: 'cyan',
     spawnPosition: coord(3, 20),
+    // structure defines all rotations for a piece type
     structure: [
       [coord(0,0), coord(1,0), coord(2,0), coord(3,0)],
       [coord(0,0), coord(0,1), coord(0,2), coord(0,3)],

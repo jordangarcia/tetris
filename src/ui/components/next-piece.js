@@ -1,20 +1,10 @@
 var React = require('react');
-var ReactorMixin = require('nuclear-react-mixin')
-var reactor = require('../../nuclear/reactor')
 var Tetriminos = require('../../tetriminos')
 var Block = require('./block');
 
 var BLOCK_SIZE = 24
 
 module.exports = React.createClass({
-
-  mixins: [ReactorMixin(reactor)],
-
-  getDataBindings() {
-    return {
-      nextPiece: 'pieces.next',
-    }
-  },
 
   render() {
     var style = {
@@ -24,8 +14,8 @@ module.exports = React.createClass({
       position: 'relative',
     }
 
-    var piece = this.state.nextPiece
-    var blocks = Tetriminos[piece].structure[0].map(coord => {
+    var tetrimino = Tetriminos[this.props.piece]
+    var blocks = tetrimino.structure[0].map(coord => {
       return Block({
         color: 'black',
         x: coord.x,

@@ -64,7 +64,8 @@ exports.removeLines = function(board, toRemove, width, height) {
       }
 
       vertRange.forEach(y => {
-        coordRange(y, width).forEach(pos => {
+        range(width).forEach(x => {
+          var pos = coord(x, y)
           var existing = board.get(pos)
           var replacePos = coord(
             pos.x,
@@ -99,21 +100,10 @@ exports.softDropPiece = function(piece, board) {
 }
 
 /**
- * Returns an array of coord for a given Y-level
- */
-function coordRange(y, width) {
-  var coords = []
-  for(var i = 0; i < width; i++) {
-    coords.push(coord(i, y))
-  }
-  return coords
-}
-
-/**
  * Check if there is a line at a given Y-level i
  */
 function isLine(board, y, width) {
-  return coordRange(y, width).every(x => {
-    return board.get(x) !== null
+  return range(width).every(x => {
+    return board.get(coord(x, y)) !== null;
   })
 }

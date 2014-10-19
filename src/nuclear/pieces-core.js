@@ -22,6 +22,10 @@ module.exports = Nuclear.createCore({
   }
 })
 
+/**
+ * Pick from the bag of remaining pieces, if the bag is empty
+ * refill
+ */
 function nextPiece(state) {
   return state.withMutations(state => {
     var remaining = state.get('remaining')

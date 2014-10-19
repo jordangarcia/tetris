@@ -1,13 +1,10 @@
-/**
- * @jsx React.DOM
- */
 var React = require('react')
 var reactor = require('./nuclear/reactor')
 var Main = require('./ui/components/main')
 var keybindings = require('./ui/keybindings')
 
 // render UI
-React.renderComponent(<Main />, document.getElementById('main'))
+React.renderComponent(Main(), document.getElementById('main'))
 
 reactor
   .createChangeObserver()
@@ -16,7 +13,6 @@ reactor
     window.addEventListener('keydown', keybindings[type])
   })
 
-debugger
 window.addEventListener('keydown', keybindings[reactor.get('keybind')])
 
 reactor.action('game').start()

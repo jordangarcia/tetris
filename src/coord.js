@@ -1,3 +1,6 @@
+/**
+ * Convenience function to create Coord records
+ */
 var Record = require('immutable').Record
 var isArray = require('lodash').isArray
 

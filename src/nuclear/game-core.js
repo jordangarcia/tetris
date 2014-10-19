@@ -32,6 +32,7 @@ module.exports = Nuclear.createCore({
     return {
       clears: [],
       activePiece: null,
+      // the piece that was locked to the board on the last tick
       recentPiece: null,
       isOver: false,
       isPaused: false,
@@ -87,7 +88,10 @@ function calculateScore(clears) {
 }
 
 /**
- * @param {Immutable.Vector}
+ * Returns a new board with the active piece on it
+ *
+ * This is the computed state of the actual state of the board
+ * is at any given time
  */
 function calculateBoard(activePiece, board) {
   if (activePiece) {
@@ -110,9 +114,9 @@ function moveDown(state) {
   // move piece down and check if is valid
   var newPiece = pieceHelpers.move(piece, [0, -1])
   if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-    newState = state
-      .set('activePiece', newPiece)
+    newState = state.set('activePiece', newPiece)
   } else {
+    // cannot move down, lock piece on board
     newState = state
       .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
       .set('recentPiece', piece)
@@ -121,6 +125,11 @@ function moveDown(state) {
   return newState
 }
 
+/**
+ * Soft dropping is moving a piece straight down to its lowest
+ * valid position.  If the piece is already in its lowest position
+ * then lock it to the board
+ */
 function softDrop(state) {
   var piece = state.get('activePiece')
   var existingBoard = state.get('existingBoard')
@@ -131,11 +140,8 @@ function softDrop(state) {
     return moveDown(state)
   }
 
-  // move one above the invalid position
   newPiece = boardHelpers.softDropPiece(piece, existingBoard)
   return state.set('activePiece', newPiece)
-
-  return state
 }
 
 /**
@@ -182,35 +188,32 @@ function clearLines(state) {
 }
 
 /**
- * Moves the active piece left
+ * Tries to move a piece some vector [deltaX, deltaY]
+ * if the new position is valid, returns updated state
  */
-function moveLeft(state, payload) {
-  var newState = state
+function move(state, vector) {
   var activePiece = state.get('activePiece')
   var board = state.get('existingBoard')
 
-  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
+  var movedPiece = pieceHelpers.move(activePiece, vector)
   if (boardHelpers.isValidPosition(movedPiece, board)) {
-    newState = state.set('activePiece', movedPiece)
+    return state.set('activePiece', movedPiece)
   }
+  return state
+}
 
-  return newState
+/**
+ * Moves the active piece left
+ */
+function moveLeft(state) {
+  return move(state, [-1, 0])
 }
 
 /**
  * Moves the active piece left
  */
 function moveRight(state, payload) {
-  var newState = state
-  var activePiece = state.get('activePiece')
-  var board = state.get('existingBoard')
-
-  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
-  if (boardHelpers.isValidPosition(movedPiece, board)) {
-    newState = state.set('activePiece', movedPiece)
-  }
-
-  return newState
+  return move(state, [1, 0])
 }
 
 /**
@@ -236,6 +239,9 @@ function rotate(state, payload) {
     [0,-3],
   ]
 
+  // when rotating pieces against walls or other pieces, a translation may
+  // be necessary to "bounce off the walls".  Iterate through the translations
+  // until a valid position is found
   for (var i = 0; i < translations.length; i++) {
     rotatedPiece = pieceHelpers.move(rotatedPiece, translations[i])
     if (boardHelpers.isValidPosition(rotatedPiece, board)) {

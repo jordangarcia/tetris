@@ -42,10 +42,7 @@ exports.tick = function tick(reactor) {
 
   if (!reactor.get('game.isOver')) {
     // queue next tick
-    var loopDuration = 1000
-    timeout.queue(() => {
-      tick(reactor)
-    }, loopDuration)
+    queueTick(reactor, 1000)
   }
 }
 
@@ -109,4 +106,11 @@ exports.unpause = function(reactor) {
   reactor.cycle({
     type: Const.UNPAUSE
   })
+  queueTick(reactor, 1000)
+}
+
+function queueTick(reactor, duration) {
+  timeout.queue(() => {
+    exports.tick(reactor)
+  }, duration)
 }
