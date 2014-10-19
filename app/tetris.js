@@ -44,9 +44,6 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * @jsx React.DOM
-	 */
 	var React = __webpack_require__(3)
 	var reactor = __webpack_require__(1)
 	var Main = __webpack_require__(2)
@@ -60,7 +57,7 @@
 	var SPACE_KEY = 32
 
 	// render UI
-	React.renderComponent(Main(null), document.getElementById('main'))
+	React.renderComponent(Main(), document.getElementById('main'))
 
 
 	// setup keybinds
@@ -117,7 +114,8 @@
 	 */
 	var React = __webpack_require__(3);
 	var Board = __webpack_require__(4);
-	var Side = __webpack_require__(5);
+	var NextPiece = __webpack_require__(16);
+	var Scoreboard = __webpack_require__(15);
 
 	var ReactorMixin = __webpack_require__(21)
 	var reactor = __webpack_require__(1)
@@ -128,14 +126,21 @@
 
 	  getDataBindings:function() {
 	    return {
-	      'board': 'game.board',
-	      'isOver': 'game.isOver',
-	      'isPaused': 'game.isPaused',
-	      'softDrop': 'game.softDropCoords',
+	      board: 'game.board',
+	      isOver: 'game.isOver',
+	      isPaused: 'game.isPaused',
+	      nextPiece: 'pieces.next',
+	      score: 'game.score',
+	      softDrop: 'game.softDropCoords',
 	    }
 	  },
 
 	  render:function() {
+	    var sidebarStyle = {
+	      marginLeft: 20,
+	      float: 'left'
+	    }
+
 	    return (
 	      React.DOM.div(null, 
 	        Board({
@@ -144,7 +149,10 @@
 	          isPaused: this.state.isPaused, 
 	          softDrop: this.state.softDrop}
 	        ), 
-	        Side(null)
+	        React.DOM.div({style: sidebarStyle}, 
+	          NextPiece({piece: this.state.nextPiece}), 
+	          Scoreboard({score: this.state.score})
+	        )
 	      )
 	    )
 	  }
@@ -228,34 +236,7 @@
 
 
 /***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(3);
-	var ScoreBoard = __webpack_require__(15);
-	var NextPiece = __webpack_require__(16);
-
-	module.exports = React.createClass({displayName: 'exports',
-	  render:function() {
-	    var style = {
-	      marginLeft: 20,
-	      float: 'left',
-	    }
-
-	    return (
-	      React.DOM.div({style: style}, 
-	        NextPiece(null), 
-	        ScoreBoard(null)
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
+/* 5 */,
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -293,6 +274,7 @@
 	    return {
 	      clears: [],
 	      activePiece: null,
+	      // the piece that was locked to the board on the last tick
 	      recentPiece: null,
 	      isOver: false,
 	      existingBoard: boardHelpers.generateBlankBoard(WIDTH, HEIGHT),
@@ -347,7 +329,10 @@
 	}
 
 	/**
-	 * @param {Immutable.Vector}
+	 * Returns a new board with the active piece on it
+	 *
+	 * This is the computed state of the actual state of the board
+	 * is at any given time
 	 */
 	function calculateBoard(activePiece, board) {
 	  if (activePiece) {
@@ -370,9 +355,9 @@
 	  // move piece down and check if is valid
 	  var newPiece = pieceHelpers.move(piece, [0, -1])
 	  if (boardHelpers.isValidPosition(newPiece, existingBoard)) {
-	    newState = state
-	      .set('activePiece', newPiece)
+	    newState = state.set('activePiece', newPiece)
 	  } else {
+	    // cannot move down, lock piece on board
 	    newState = state
 	      .set('existingBoard', boardHelpers.addPieceToBoard(piece, existingBoard))
 	      .set('recentPiece', piece)
@@ -381,6 +366,11 @@
 	  return newState
 	}
 
+	/**
+	 * Soft dropping is moving a piece straight down to its lowest
+	 * valid position.  If the piece is already in its lowest position
+	 * then lock it to the board
+	 */
 	function softDrop(state) {
 	  var piece = state.get('activePiece')
 	  var existingBoard = state.get('existingBoard')
@@ -391,7 +381,6 @@
 	    return moveDown(state)
 	  }
 
-	  // move one above the invalid position
 	  newPiece = boardHelpers.softDropPiece(piece, existingBoard)
 	  return state.set('activePiece', newPiece)
 	}
@@ -440,35 +429,32 @@
 	}
 
 	/**
-	 * Moves the active piece left
+	 * Tries to move a piece some vector [deltaX, deltaY]
+	 * if the new position is valid, returns updated state
 	 */
-	function moveLeft(state, payload) {
-	  var newState = state
+	function move(state, vector) {
 	  var activePiece = state.get('activePiece')
 	  var board = state.get('existingBoard')
 
-	  var movedPiece = pieceHelpers.move(activePiece, [-1, 0])
+	  var movedPiece = pieceHelpers.move(activePiece, vector)
 	  if (boardHelpers.isValidPosition(movedPiece, board)) {
-	    newState = state.set('activePiece', movedPiece)
+	    return state.set('activePiece', movedPiece)
 	  }
+	  return state
+	}
 
-	  return newState
+	/**
+	 * Moves the active piece left
+	 */
+	function moveLeft(state) {
+	  return move(state, [-1, 0])
 	}
 
 	/**
 	 * Moves the active piece left
 	 */
 	function moveRight(state, payload) {
-	  var newState = state
-	  var activePiece = state.get('activePiece')
-	  var board = state.get('existingBoard')
-
-	  var movedPiece = pieceHelpers.move(activePiece, [1, 0])
-	  if (boardHelpers.isValidPosition(movedPiece, board)) {
-	    newState = state.set('activePiece', movedPiece)
-	  }
-
-	  return newState
+	  return move(state, [1, 0])
 	}
 
 	/**
@@ -494,6 +480,9 @@
 	    [0,-3],
 	  ]
 
+	  // when rotating pieces against walls or other pieces, a translation may
+	  // be necessary to "bounce off the walls".  Iterate through the translations
+	  // until a valid position is found
 	  for (var i = 0; i < translations.length; i++) {
 	    rotatedPiece = pieceHelpers.move(rotatedPiece, translations[i])
 	    if (boardHelpers.isValidPosition(rotatedPiece, board)) {
@@ -541,6 +530,10 @@
 	  }
 	})
 
+	/**
+	 * Pick from the bag of remaining pieces, if the bag is empty
+	 * refill
+	 */
 	function nextPiece(state) {
 	  return state.withMutations(function(state)  {
 	    var remaining = state.get('remaining')
@@ -775,6 +768,7 @@
 	  I: {
 	    color: 'cyan',
 	    spawnPosition: coord(3, 20),
+	    // structure defines all rotations for a piece type
 	    structure: [
 	      [coord(0,0), coord(1,0), coord(2,0), coord(3,0)],
 	      [coord(0,0), coord(0,1), coord(0,2), coord(0,3)],
@@ -912,7 +906,8 @@
 	      }
 
 	      vertRange.forEach(function(y)  {
-	        coordRange(y, width).forEach(function(pos)  {
+	        range(width).forEach(function(x)  {
+	          var pos = coord(x, y)
 	          var existing = board.get(pos)
 	          var replacePos = coord(
 	            pos.x,
@@ -947,22 +942,11 @@
 	}
 
 	/**
-	 * Returns an array of coord for a given Y-level
-	 */
-	function coordRange(y, width) {
-	  var coords = []
-	  for(var i = 0; i < width; i++) {
-	    coords.push(coord(i, y))
-	  }
-	  return coords
-	}
-
-	/**
 	 * Check if there is a line at a given Y-level i
 	 */
 	function isLine(board, y, width) {
-	  return coordRange(y, width).every(function(x)  {
-	    return board.get(x) !== null
+	  return range(width).every(function(x)  {
+	    return board.get(coord(x, y)) !== null;
 	  })
 	}
 
@@ -1027,42 +1011,30 @@
 	 * @jsx React.DOM
 	 */
 	var React = __webpack_require__(3);
-	var ReactorMixin = __webpack_require__(21)
-	var reactor = __webpack_require__(1)
-	var _ = __webpack_require__(50)
 
 	module.exports = React.createClass({displayName: 'exports',
-
-	  mixins: [ReactorMixin(reactor)],
-
-	  getDataBindings:function() {
-	    return {
-	      score: 'game.score',
-	    }
-	  },
-
 	  render:function() {
 	    return (
 	      React.DOM.table(null, 
 	        React.DOM.tr(null, 
 	          React.DOM.td(null, "Lines:"), 
-	          React.DOM.td(null, this.state.score.lines)
+	          React.DOM.td(null, this.props.score.lines)
 	        ), 
 	        React.DOM.tr(null, 
 	          React.DOM.td(null, "Singles:"), 
-	          React.DOM.td(null, this.state.score.single)
+	          React.DOM.td(null, this.props.score.single)
 	        ), 
 	        React.DOM.tr(null, 
 	          React.DOM.td(null, "Doubles:"), 
-	          React.DOM.td(null, this.state.score.double)
+	          React.DOM.td(null, this.props.score.double)
 	        ), 
 	        React.DOM.tr(null, 
 	          React.DOM.td(null, "Triples:"), 
-	          React.DOM.td(null, this.state.score.triple)
+	          React.DOM.td(null, this.props.score.triple)
 	        ), 
 	        React.DOM.tr(null, 
 	          React.DOM.td(null, "Tetrises:"), 
-	          React.DOM.td(null, this.state.score.tetris)
+	          React.DOM.td(null, this.props.score.tetris)
 	        )
 	      )
 	    )
@@ -1075,22 +1047,12 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var React = __webpack_require__(3);
-	var ReactorMixin = __webpack_require__(21)
-	var reactor = __webpack_require__(1)
 	var Tetriminos = __webpack_require__(12)
 	var Block = __webpack_require__(9);
 
 	var BLOCK_SIZE = 24
 
 	module.exports = React.createClass({
-
-	  mixins: [ReactorMixin(reactor)],
-
-	  getDataBindings:function() {
-	    return {
-	      nextPiece: 'pieces.next',
-	    }
-	  },
 
 	  render:function() {
 	    var style = {
@@ -1100,8 +1062,8 @@
 	      position: 'relative',
 	    }
 
-	    var piece = this.state.nextPiece
-	    var blocks = Tetriminos[piece].structure[0].map(function(coord)  {
+	    var tetrimino = Tetriminos[this.props.piece]
+	    var blocks = tetrimino.structure[0].map(function(coord)  {
 	      return Block({
 	        color: 'black',
 	        x: coord.x,
@@ -1121,7 +1083,11 @@
 /* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	/**
+	 * Wrapper around set timeout that can be reset or deferred
+	 * to postpone the function without repassing
+	 */
+
 	  function Timeout(interval) {"use strict";
 	    this.id
 	    this.interval
@@ -1457,6 +1423,9 @@
 /* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * Convenience function to create Coord records
+	 */
 	var Record = __webpack_require__(28).Record
 	var isArray = __webpack_require__(50).isArray
 

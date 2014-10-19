@@ -1,3 +1,7 @@
+/**
+ * Wrapper around set timeout that can be reset or deferred
+ * to postpone the function without repassing
+ */
 class Timeout {
   constructor(interval) {
     this.id

@@ -1,6 +1,3 @@
-/**
- * @jsx React.DOM
- */
 var React = require('react')
 var reactor = require('./nuclear/reactor')
 var Main = require('./ui/components/main')
@@ -14,7 +11,7 @@ var ESCAPE_KEY = 27
 var SPACE_KEY = 32
 
 // render UI
-React.renderComponent(<Main />, document.getElementById('main'))
+React.renderComponent(Main(), document.getElementById('main'))
 
 
 // setup keybinds
