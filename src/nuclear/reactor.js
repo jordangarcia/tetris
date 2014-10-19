@@ -6,7 +6,6 @@ reactor.computed(
   'keybind',
   ['game.isOver', 'game.isPaused'],
   (isOver, isPaused) => {
-    debugger
     if (isOver) {
       return 'gameOver'
     } else if (isPaused) {

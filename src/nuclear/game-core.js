@@ -27,8 +27,9 @@ module.exports = Nuclear.createCore({
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     this.computed('score', ['clears'], calculateScore)
     this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
+  },
 
-    // initial state
+  getInitialState() {
     return {
       clears: [],
       activePiece: null,

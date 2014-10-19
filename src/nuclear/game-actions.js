@@ -20,23 +20,15 @@ exports.tick = function tick(reactor) {
     return
   }
 
-  reactor.cycle({
-    type: Const.MOVE_DOWN,
-  })
+  reactor.dispatch(Const.MOVE_DOWN)
 
   // if there is no piece spawn one
-  if (!reactor.getImmutable('game.activePiece')) {
+  if (!reactor.get('game.activePiece')) {
     // after a move down if there is no active piece
-    reactor.cycle({
-      type: Const.CLEAR_LINES,
-      payload: {}
-    })
+    reactor.dispatch(Const.CLEAR_LINES)
     var nextPiece = reactor.get('pieces.next')
-    reactor.cycle({
-      type: Const.SPAWN_PIECE,
-      payload: {
-        piece: nextPiece
-      }
+    reactor.dispatch(Const.SPAWN_PIECE, {
+      piece: nextPiece
     })
   }
 
@@ -50,32 +42,22 @@ exports.moveLeft = function(reactor) {
   if (reactor.get('game.isOver')) {
     return
   }
-
-  reactor.cycle({
-    type: Const.LEFT,
-  })
+  reactor.dispatch(Const.LEFT)
 }
 
 exports.moveRight = function(reactor) {
   if (reactor.get('game.isOver')) {
     return
   }
-
-  reactor.cycle({
-    type: Const.RIGHT,
-  })
+  reactor.dispatch(Const.RIGHT)
 }
 
 exports.rotateClockwise = function(reactor) {
   if (reactor.get('game.isOver')) {
     return
   }
-
-  reactor.cycle({
-    type: Const.ROTATE,
-    payload: {
-      diff: 1
-    }
+  reactor.dispatch(Const.ROTATE, {
+    diff: 1
   })
 }
 
@@ -83,11 +65,9 @@ exports.softDrop = function(reactor) {
   if (reactor.get('game.isOver')) {
     return
   }
-  reactor.cycle({
-    type: Const.SOFT_DROP
-  })
+  reactor.dispatch(Const.SOFT_DROP)
   // if the softdrop actually set the piece on the board
-  if (!reactor.getImmutable('game.activePiece')) {
+  if (!reactor.get('game.activePiece')) {
     exports.tick(reactor)
   } else {
     // if it was an actual soft drop defer the game tick
@@ -96,17 +76,13 @@ exports.softDrop = function(reactor) {
 }
 
 exports.pause = function(reactor) {
-  reactor.cycle({
-    type: Const.PAUSE
-  })
+  reactor.dispatch(Const.PAUSE)
   timeout.cancel()
 }
 
 exports.unpause = function(reactor) {
-  reactor.cycle({
-    type: Const.UNPAUSE
-  })
-  queueTick(reactor, 1000)
+  reactor.dispatch(Const.UNPAUSE)
+  exports.start(reactor)
 }
 
 function queueTick(reactor, duration) {

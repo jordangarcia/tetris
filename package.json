@@ -12,15 +12,14 @@
     "scriptPreprocessor": "jestPreprocessor.js"
   },
   "dependencies": {
-    "nuclear-js": "^0.3.x",
+    "nuclear-js": "^0.4.x-rc",
     "webpack": "^1.4.4",
     "react": "^0.11.2",
     "keymirror": "^0.1.0",
-    "immutable": "^2.0.17",
+    "immutable": "^2.5.x",
     "lodash": "^2.4.1",
     "through": "^2.3.6",
-    "sass-loader": "^0.2.0",
-    "nuclear-react-mixin": "^1.0.0",
+    "nuclear-react-mixin": "^2.0.0",
     "transit-js": "^0.8.726"
   },
   "devDependencies": {
