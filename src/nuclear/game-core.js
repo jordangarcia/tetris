@@ -26,6 +26,7 @@ module.exports = Nuclear.createCore({
 
     this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
     this.computed('score', ['clears'], calculateScore)
+    this.computed('status', ['isPaused', 'isOver'], calculateGameStatus)
     this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
   },
 
@@ -41,6 +42,19 @@ module.exports = Nuclear.createCore({
     }
   }
 })
+
+/**
+ * Returns the game status ('running', 'paused', 'over')
+ */
+function calculateGameStatus(isPaused, isOver) {
+  if (isOver) {
+    return 'over'
+  } else if (isPaused) {
+    return 'paused'
+  } else {
+    return 'running'
+  }
+}
 
 /**
  * Returns an array of coords for the active piece if it was
