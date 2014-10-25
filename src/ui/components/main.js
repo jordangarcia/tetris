@@ -19,7 +19,7 @@ module.exports = React.createClass({
       isOver: 'game.isOver',
       isPaused: 'game.isPaused',
       nextPiece: 'pieces.next',
-      score: 'game.score',
+      score: 'score',
       softDrop: 'game.softDropCoords',
     }
   },

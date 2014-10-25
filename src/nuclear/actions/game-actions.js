@@ -1,6 +1,6 @@
-var Const = require('./constants')
-var Tetriminos = require('../tetriminos')
-var timeout = require('../timeout')
+var Const = require('../constants')
+var Tetriminos = require('../../tetriminos')
+var timeout = require('../../timeout')
 
 /**
  * Starts the game timer

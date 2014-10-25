@@ -12,7 +12,7 @@
     "scriptPreprocessor": "jestPreprocessor.js"
   },
   "dependencies": {
-    "nuclear-js": "^0.4.x-rc",
+    "nuclear-js": "^0.4.x-rc3",
     "webpack": "^1.4.4",
     "react": "^0.11.2",
     "keymirror": "^0.1.0",

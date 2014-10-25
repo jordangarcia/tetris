@@ -1,10 +1,11 @@
 var Nuclear = require('nuclear-js')
+var Getter = Nuclear.Getter
 var Immutable = require('immutable')
-var Const = require('./constants')
-var Tetriminos = require('../tetriminos')
-var BoardPiece = require('../records/board-piece')
-var boardHelpers = require('./board-helpers')
-var pieceHelpers = require('./piece-helpers')
+var Const = require('./../constants')
+var Tetriminos = require('../../tetriminos')
+var BoardPiece = require('../../records/board-piece')
+var boardHelpers = require('../board-helpers')
+var pieceHelpers = require('../piece-helpers')
 
 var WIDTH = 10
 var HEIGHT = 22
@@ -24,10 +25,15 @@ module.exports = Nuclear.createCore({
     this.on(Const.PAUSE, pause)
     this.on(Const.UNPAUSE, unpause)
 
-    this.computed('board', ['activePiece', 'existingBoard'], calculateBoard)
-    this.computed('score', ['clears'], calculateScore)
-    this.computed('status', ['isPaused', 'isOver'], calculateGameStatus)
-    this.computed('softDropCoords', ['activePiece', 'existingBoard'], calculateSoftDrop)
+    this.computed('board', Getter({
+      deps: ['activePiece', 'existingBoard'],
+      compute: calculateBoard
+    }))
+
+    this.computed('softDropCoords', Getter({
+      deps: ['activePiece', 'existingBoard'],
+      compute: calculateSoftDrop
+    }))
   },
 
   getInitialState() {
@@ -44,19 +50,6 @@ module.exports = Nuclear.createCore({
 })
 
 /**
- * Returns the game status ('running', 'paused', 'over')
- */
-function calculateGameStatus(isPaused, isOver) {
-  if (isOver) {
-    return 'over'
-  } else if (isPaused) {
-    return 'paused'
-  } else {
-    return 'running'
-  }
-}
-
-/**
  * Returns an array of coords for the active piece if it was
  * soft-dropped
  */
@@ -65,41 +58,6 @@ function calculateSoftDrop(activePiece, board) {
     return []
   }
   return boardHelpers.softDropPiece(activePiece, board).getCoords()
-}
-
-/**
- * Calculates the score based on the history of all cleared lines
- * @param {Immutable.Vector} clears
- * @return {Immutable.Map}
- */
-function calculateScore(clears) {
-  var score = {
-    lines: 0,
-    single: 0,
-    double: 0,
-    triple: 0,
-    tetris: 0,
-  }
-
-  clears.forEach(num => {
-    score.lines += num
-    switch(num) {
-      case 1:
-        score.single++
-        break
-      case 2:
-        score.double++
-        break
-      case 3:
-        score.triple++
-        break
-      case 4:
-        score.tetris++
-        break
-    }
-  })
-
-  return score
 }
 
 /**

@@ -1,8 +1,8 @@
 var Nuclear = require('nuclear-js')
 var Map = require('immutable').Map
 var Sequence = require('immutable').Sequence
-var Const = require('./constants')
-var Tetriminos = require('../tetriminos')
+var Const = require('../constants')
+var Tetriminos = require('../../tetriminos')
 
 // TODO: for some reason Immutable.IndexedSequence.get() isnt working
 // must coerce to Vector
