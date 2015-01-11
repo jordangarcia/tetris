@@ -1,7 +1,7 @@
 /**
  * Convenience function to create Coord records
  */
-var Record = require('immutable').Record
+var Record = require('nuclear-js').Immutable.Record
 var isArray = require('lodash').isArray
 
 var Coord = Record({ x: 0, y: 0})

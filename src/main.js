@@ -1,15 +1,15 @@
 var React = require('react')
-var reactor = require('./nuclear/reactor')
-var Main = require('./ui/components/main')
 
-reactor.initialize()
+var Game = require('./modules/game')
+
+//var Main = require('./ui/components/main')
 
 // setup keydown handler
 window.addEventListener('keydown', e => {
-  reactor.action('keybinds').handleKeydown(e.keyCode);
+  Game.actions.handleKeyDown(e.keyCode)
 })
 
 // render UI
-React.renderComponent(Main(), document.getElementById('main'))
+//React.renderComponent(Main(), document.getElementById('main'))
 
-reactor.action('game').start()
+Game.actions.start()

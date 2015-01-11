@@ -1,4 +1,4 @@
-var BoardPiece = require('../records/board-piece')
+var BoardPiece = require('../board-piece')
 var Tetriminos = require('../tetriminos')
 var coord = require('../coord')
 var isArray = require('lodash').isArray

@@ -1,8 +1,8 @@
 var Nuclear = require('nuclear-js')
-var Map = require('immutable').Map
+var Map = Nuclear.Immutable.Map
 var Sequence = require('immutable').Sequence
-var Const = require('../constants')
-var Tetriminos = require('../../tetriminos')
+var actionTypes = require('../action-types')
+var Tetriminos = require('../tetriminos')
 
 // TODO: for some reason Immutable.IndexedSequence.get() isnt working
 // must coerce to Vector
@@ -11,17 +11,17 @@ var pieces = Sequence(Tetriminos.pieces).toVector()
 /**
  * The core that tracks the state of the board
  */
-module.exports = Nuclear.createCore({
-  initialize() {
-    this.on(Const.SPAWN_PIECE, nextPiece)
+module.exports = Nuclear.Store({
+  initialize: function() {
+    this.on(actionTypes.SPAWN_PIECE, nextPiece)
   },
-  getInitialState() {
+
+  getInitialState: function() {
     return nextPiece(Map({
       next: null,
       remaining: pieces
     }))
-  }
-
+  },
 })
 
 /**

@@ -1,6 +1,6 @@
 var Tetriminos = require('../tetriminos')
-var Map = require('immutable').Map
-var pieceHelpers = require('./piece-helpers')
+var Map = require('nuclear-js').Immutable.Map
+var pieceHelper = require('./piece-helper')
 var coord = require('../coord')
 var range = require('lodash').range
 
@@ -92,11 +92,11 @@ exports.softDropPiece = function(piece, board) {
   // move the piece down until its no longer valid
   while (exports.isValidPosition(newPiece, board)) {
     deltaY--
-    newPiece = pieceHelpers.move(piece, [0, deltaY])
+    newPiece = pieceHelper.move(piece, [0, deltaY])
   }
 
   // move one above the invalid position
-  return pieceHelpers.move(piece, [0, deltaY + 1])
+  return pieceHelper.move(piece, [0, deltaY + 1])
 }
 
 /**

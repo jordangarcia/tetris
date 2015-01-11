@@ -1,6 +1,6 @@
-var Tetriminos = require('../tetriminos')
-var coord = require('../coord')
-var Record = require('immutable').Record
+var Tetriminos = require('./tetriminos')
+var coord = require('./coord')
+var Record = require('nuclear-js').Immutable.Record
 
 var PieceStruct = Record({
   type: null,
