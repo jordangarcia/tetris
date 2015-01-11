@@ -10,6 +10,9 @@ module.exports = {
     ['game', 'activePiece'],
     ['game', 'board'],
     function(piece, board) {
+      if (!piece) {
+        return board
+      }
       return boardHelper.addPieceToBoard(piece, board)
     }
   ],
@@ -32,6 +35,16 @@ module.exports = {
   ],
 
   /**
+   * @return {boolean} should spawn a new piece
+   */
+  shouldSpawnPiece: [
+    ['game', 'activePiece'],
+    function(piece) {
+      return !piece
+    }
+  ],
+
+  /**
    * @return {string} piece key
    */
   nextPiece: ['pieceBag', 'next'],
@@ -40,7 +53,7 @@ module.exports = {
    * @return {object} score
    */
   score: [
-    ['game.clears'],
+    ['game', 'clears'],
     /**
      * @param {array<number>} clears history of all line clears
      */

@@ -13,21 +13,20 @@
   },
   "dependencies": {
     "nuclear-js": "optimizely/nuclear-js#next",
-    "webpack": "^1.4.4",
     "react": "^0.11.2",
     "keymirror": "^0.1.0",
     "lodash": "^2.4.1",
-    "through": "^2.3.6",
-    "nuclear-react-mixin": "^2.0.0",
-    "transit-js": "^0.8.726"
+    "nuclear-react-mixin": "jordangarcia/nuclear-react-mixin#next"
   },
   "devDependencies": {
+    "webpack": "^1.4.4",
     "jsx-loader": "^0.11.2",
     "jstransform-loader": "^0.1.1",
     "jstransform": "^6.3.2",
     "gulp": "^3.8.8",
     "gulp-connect": "^2.0.6",
     "gulp-shell": "^0.2.9",
+    "through": "^2.3.6",
     "jest": "^0.1.37"
   }
 }

@@ -2,46 +2,49 @@
  * @jsx React.DOM
  */
 var React = require('react');
-var Board = require('./board');
-var NextPiece = require('./next-piece');
-var Scoreboard = require('./scoreboard');
 
-var ReactorMixin = require('nuclear-react-mixin')
-var reactor = require('../../nuclear/reactor')
+var Game = require('../../modules/game')
+var flux = require('../../flux')
+var NuclearReactMixin = require('nuclear-react-mixin')
+
+var BLOCK_SIZE = 20
 
 module.exports = React.createClass({
 
-  mixins: [ReactorMixin(reactor)],
+  mixins: [NuclearReactMixin(flux)],
 
-  getDataBindings() {
+  getDataBindings: function() {
     return {
-      board: 'game.board',
-      isOver: 'game.isOver',
-      isPaused: 'game.isPaused',
-      nextPiece: 'pieces.next',
-      score: 'score',
-      softDrop: 'game.softDropCoords',
+      board: Game.getters.board
     }
   },
 
-  render() {
-    var sidebarStyle = {
-      marginLeft: 20,
-      float: 'left'
+  render: function() {
+    var boardWidth = 10 * BLOCK_SIZE
+    var boardHeight = 22 * BLOCK_SIZE
+    var boardStyle = {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -(boardHeight / 2),
+      marginLeft: -(boardWidth / 2),
+      height: boardHeight,
+      width: boardWidth,
     }
 
+    var blocks = this.state.board.map(function(piece, coord) {
+      var style = {
+        position: 'absolute',
+        left: (coord.x * BLOCK_SIZE),
+        bottom: (coord.y * BLOCK_SIZE)
+      }
+      piece = piece || '_'
+      return <div style={style}>{piece}</div>
+    }).toJS()
+
     return (
-      <div>
-        <Board
-          board={this.state.board}
-          isOver={this.state.isOver}
-          isPaused={this.state.isPaused}
-          softDrop={this.state.softDrop}
-        />
-        <div style={sidebarStyle}>
-          <NextPiece piece={this.state.nextPiece} />
-          <Scoreboard score={this.state.score} />
-        </div>
+      <div style={boardStyle}>
+        {blocks}
       </div>
     )
   }

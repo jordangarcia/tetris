@@ -13,6 +13,16 @@ var ESCAPE_KEY = 27
 var SPACE_KEY = 32
 
 module.exports = {
+  /**
+   * Starts the game loop
+   */
+  start: function() {
+    tick()
+  },
+  /**
+   * Handle for key down events
+   * @param {number} keyCode
+   */
   handleKeyDown: function(keyCode) {
     switch (keyCode) {
       case UP_ARROW:
@@ -35,9 +45,6 @@ module.exports = {
         break
     }
   },
-  start: function() {
-    tick()
-  }
 }
 
 /**
@@ -50,20 +57,28 @@ function tick() {
     return
   }
 
+  pieceDown()
+
+  if (gameStatus === 'running') {
+    // queue next tick
+    timeout.queue(tick, TICK_DURATION)
+  }
+}
+
+/**
+ * Sends an action to move the piece down.  Will clear lines and spawn
+ * piece if the piece was set in place.
+ */
+function pieceDown() {
   flux.dispatch(actionTypes.MOVE_DOWN)
 
   // if there is no piece spawn one
-  if (!flux.evaluate(['game', 'activePiece'])) {
+  if (flux.evaluate(getters.shouldSpawnPiece)) {
     // after a move down if there is no active piece
     flux.dispatch(actionTypes.CLEAR_LINES)
     flux.dispatch(actionTypes.SPAWN_PIECE, {
       piece: flux.evaluate(getters.nextPiece)
     })
-  }
-
-  if (gameStatus === 'running') {
-    // queue next tick
-    timeout.queue(tick, TICK_DURATION)
   }
 }
 
@@ -109,8 +124,8 @@ function softDrop() {
 
   flux.dispatch(actionTypes.SOFT_DROP)
   // if the softdrop actually set the piece on the board
-  if (!flux.evaluate(['game', 'activePiece'])) {
-    this.tick()
+  if (flux.evaluate(getters.shouldSpawnPiece)) {
+    tick()
   } else {
     // if it was an actual soft drop defer the game tick
     timeout.reset()
@@ -127,7 +142,7 @@ function togglePause() {
     timeout.cancel()
   } else if (status === 'paused') {
     flux.dispatch(actionTypes.UNPAUSE)
-    this.tick()
+    tick()
   }
 }
 

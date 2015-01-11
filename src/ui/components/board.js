@@ -1,12 +1,27 @@
+/**
+ * @jsx React.DOM
+ */
 var React = require('react');
+
+var Game = require('../../modules/game')
+var flux = require('../../flux')
+var NuclearReactMixin = require('nuclear-react-mixin')
+
 var Block = require('./block');
-var BoardMessage = require('./board-message');
 
 var BLOCK_SIZE = 32
 var WIDTH = 10
 var HEIGHT = 22
 
 module.exports = React.createClass({
+
+  mixins: [NuclearReactMixin(flux)],
+
+  getDataBindings() {
+    return {
+      board: Game.getters.board
+    }
+  },
 
   render() {
     var style = {
@@ -41,18 +56,6 @@ module.exports = React.createClass({
     var children = []
       .concat(previewBlocks)
       .concat(realBlocks)
-
-    if (this.props.isOver) {
-      children.push(BoardMessage({
-        message: 'Game Over!'
-      }))
-    }
-
-    if (this.props.isPaused) {
-      children.push(BoardMessage({
-        message: 'Paused'
-      }))
-    }
 
     var props = {
       style: style

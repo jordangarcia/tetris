@@ -9,4 +9,4 @@ npm install
 gulp
 ```
 
-Then goto **http://localhost:8003**
+Then goto **http://localhost:1337**
