@@ -44,28 +44,80 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * @jsx React.DOM
+	 */
 	var React = __webpack_require__(4)
 
 	// flux + flux modules
 	var flux = __webpack_require__(1)
 	var Game = __webpack_require__(2)
+	var NuclearReactMixin = __webpack_require__(5)
 
-	// React components
-	var Main = __webpack_require__(3)
+	var StateViewer = React.createClass({displayName: 'StateViewer',
+	  mixins: [NuclearReactMixin(flux)],
 
-	// setup keydown handler
-	window.addEventListener('keydown', function(e) {
-	  Game.actions.handleKeyDown(e.keyCode)
+	  getDataBindings: function() {
+	    return {
+	      gameStateString: [
+	        ['game'],
+	        function(gameMap) {
+	          var gameState = gameMap.toJS()
+	          return JSON.stringify(gameState, null, '  ')
+	        }
+	      ]
+	    }
+	  },
+
+	  render: function() {
+	    return React.DOM.pre(null, this.state.gameStateString)
+	  }
+	})
+
+	var ActionRemote = React.createClass({displayName: 'ActionRemote',
+	  mixins: [NuclearReactMixin(flux)],
+
+	  getDataBindings: function() {
+	    return {
+	      gameStateString: [
+	        ['game'],
+	        function(gameMap) {
+	          return gameMap.toString()
+	        }
+	      ]
+	    }
+	  },
+
+	  doAction: function(action) {
+	    Game.actions[action]()
+	  },
+
+	  render: function() {
+	    return (
+	      React.DOM.ul(null, 
+	        React.DOM.li(null, 
+	          React.DOM.button({onClick: this.doAction.bind(this, 'down')}, "Down")
+	        ), 
+	        React.DOM.li(null, 
+	          React.DOM.button({onClick: this.doAction.bind(this, 'left')}, "Left")
+	        ), 
+	        React.DOM.li(null, 
+	          React.DOM.button({onClick: this.doAction.bind(this, 'right')}, "Right")
+	        ), 
+	        React.DOM.li(null, 
+	          React.DOM.button({onClick: this.doAction.bind(this, 'rotate')}, "Rotate")
+	        )
+	      )
+	    )
+	  }
 	})
 
 	// render UI
-	React.renderComponent(Main(), document.getElementById('main'))
+	React.renderComponent(StateViewer(null), document.getElementById('state'))
+	React.renderComponent(ActionRemote(null), document.getElementById('controls'))
 
 	window.flux = flux
 	window.Game = Game
-
-	// start the game loop
-	Game.actions.start()
 
 
 /***/ },
@@ -99,63 +151,7 @@
 
 
 /***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(4);
-
-	var Game = __webpack_require__(2)
-	var flux = __webpack_require__(1)
-	var NuclearReactMixin = __webpack_require__(5)
-
-	var BLOCK_SIZE = 20
-
-	module.exports = React.createClass({displayName: 'exports',
-
-	  mixins: [NuclearReactMixin(flux)],
-
-	  getDataBindings: function() {
-	    return {
-	      board: Game.getters.board
-	    }
-	  },
-
-	  render: function() {
-	    var boardWidth = 10 * BLOCK_SIZE
-	    var boardHeight = 22 * BLOCK_SIZE
-	    var boardStyle = {
-	      position: 'absolute',
-	      top: '50%',
-	      left: '50%',
-	      marginTop: -(boardHeight / 2),
-	      marginLeft: -(boardWidth / 2),
-	      height: boardHeight,
-	      width: boardWidth,
-	    }
-
-	    var blocks = this.state.board.map(function(piece, coord) {
-	      var style = {
-	        position: 'absolute',
-	        left: (coord.x * BLOCK_SIZE),
-	        bottom: (coord.y * BLOCK_SIZE)
-	      }
-	      piece = piece || '_'
-	      return React.DOM.div({style: style}, piece)
-	    }).toJS()
-
-	    return (
-	      React.DOM.div({style: boardStyle}, 
-	        blocks
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
+/* 3 */,
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 

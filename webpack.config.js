@@ -1,7 +1,12 @@
 module.exports = {
-  entry: './src/main.js',
+  entry: {
+    tetris: './src/main.js',
+    example: './src/example/main.js',
+  },
+
   output: {
-    filename: "./app/tetris.js",
+    path: './app/',
+    filename: "[name].js",
   },
   module: {
     loaders: [

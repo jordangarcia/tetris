@@ -45,6 +45,12 @@ module.exports = {
         break
     }
   },
+
+  // example actions
+  down: pieceDown,
+  left: moveLeft,
+  right: moveRight,
+  rotate: rotateClockwise,
 }
 
 /**
