@@ -17,14 +17,42 @@ var StateViewer = React.createClass({
         ['game'],
         function(gameMap) {
           var gameState = gameMap.toJS()
+          var board = gameState.board
+          delete gameState.board
           return JSON.stringify(gameState, null, '  ')
+        }
+      ],
+
+      board: [
+        Game.getters.board,
+        function(board) {
+          var plane = []
+          var res = {}
+          board.forEach(function(val, coord) {
+            if (plane[coord.y] === undefined) {
+              plane[coord.y] = []
+            }
+            plane[coord.y][coord.x] = val
+          })
+
+          plane.forEach(function(xs, y) {
+            xs.forEach(function(val, x) {
+              res['y=' + y + ', x=' + x] = val
+            })
+          })
+          return JSON.stringify(res, null, '  ')
         }
       ]
     }
   },
 
   render: function() {
-    return <pre>{this.state.gameStateString}</pre>
+    return (
+      <div>
+        <pre>{this.state.gameStateString}</pre>
+        <pre>{this.state.board}</pre>
+      </div>
+    )
   }
 })
 
@@ -60,6 +88,9 @@ var ActionRemote = React.createClass({
         </li>
         <li>
           <button onClick={this.doAction.bind(this, 'rotate')}>Rotate</button>
+        </li>
+        <li>
+          <button onClick={this.doAction.bind(this, 'softDrop')}>Soft Drop</button>
         </li>
       </ul>
     )

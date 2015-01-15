@@ -3,8 +3,8 @@
  */
 var React = require('react');
 
-var Game = require('../../modules/game')
-var flux = require('../../flux')
+var Game = require('./modules/game')
+var flux = require('./flux')
 var NuclearReactMixin = require('nuclear-react-mixin')
 
 var BLOCK_SIZE = 20

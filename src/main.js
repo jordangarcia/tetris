@@ -5,7 +5,7 @@ var flux = require('./flux')
 var Game = require('./modules/game')
 
 // React components
-var Main = require('./ui/components/main')
+var UI = require('./ui')
 
 // setup keydown handler
 window.addEventListener('keydown', function(e) {
@@ -13,7 +13,7 @@ window.addEventListener('keydown', function(e) {
 })
 
 // render UI
-React.renderComponent(Main(), document.getElementById('main'))
+React.renderComponent(UI(), document.getElementById('main'))
 
 window.flux = flux
 window.Game = Game

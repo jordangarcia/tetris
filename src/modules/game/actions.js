@@ -50,6 +50,7 @@ module.exports = {
   down: pieceDown,
   left: moveLeft,
   right: moveRight,
+  softDrop: softDrop,
   rotate: rotateClockwise,
 }
 

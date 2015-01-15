@@ -51,7 +51,7 @@
 	var Game = __webpack_require__(2)
 
 	// React components
-	var Main = __webpack_require__(3)
+	var UI = __webpack_require__(165)
 
 	// setup keydown handler
 	window.addEventListener('keydown', function(e) {
@@ -59,7 +59,7 @@
 	})
 
 	// render UI
-	React.renderComponent(Main(), document.getElementById('main'))
+	React.renderComponent(UI(), document.getElementById('main'))
 
 	window.flux = flux
 	window.Game = Game
@@ -99,63 +99,7 @@
 
 
 /***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(4);
-
-	var Game = __webpack_require__(2)
-	var flux = __webpack_require__(1)
-	var NuclearReactMixin = __webpack_require__(5)
-
-	var BLOCK_SIZE = 20
-
-	module.exports = React.createClass({displayName: 'exports',
-
-	  mixins: [NuclearReactMixin(flux)],
-
-	  getDataBindings: function() {
-	    return {
-	      board: Game.getters.board
-	    }
-	  },
-
-	  render: function() {
-	    var boardWidth = 10 * BLOCK_SIZE
-	    var boardHeight = 22 * BLOCK_SIZE
-	    var boardStyle = {
-	      position: 'absolute',
-	      top: '50%',
-	      left: '50%',
-	      marginTop: -(boardHeight / 2),
-	      marginLeft: -(boardWidth / 2),
-	      height: boardHeight,
-	      width: boardWidth,
-	    }
-
-	    var blocks = this.state.board.map(function(piece, coord) {
-	      var style = {
-	        position: 'absolute',
-	        left: (coord.x * BLOCK_SIZE),
-	        bottom: (coord.y * BLOCK_SIZE)
-	      }
-	      piece = piece || '_'
-	      return React.DOM.div({style: style}, piece)
-	    }).toJS()
-
-	    return (
-	      React.DOM.div({style: boardStyle}, 
-	        blocks
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
+/* 3 */,
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -294,6 +238,7 @@
 	  down: pieceDown,
 	  left: moveLeft,
 	  right: moveRight,
+	  softDrop: softDrop,
 	  rotate: rotateClockwise,
 	}
 
@@ -39572,6 +39517,63 @@
 	module.exports = toArray;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+
+/***/ },
+/* 165 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(4);
+
+	var Game = __webpack_require__(2)
+	var flux = __webpack_require__(1)
+	var NuclearReactMixin = __webpack_require__(5)
+
+	var BLOCK_SIZE = 20
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  mixins: [NuclearReactMixin(flux)],
+
+	  getDataBindings: function() {
+	    return {
+	      board: Game.getters.board
+	    }
+	  },
+
+	  render: function() {
+	    var boardWidth = 10 * BLOCK_SIZE
+	    var boardHeight = 22 * BLOCK_SIZE
+	    var boardStyle = {
+	      position: 'absolute',
+	      top: '50%',
+	      left: '50%',
+	      marginTop: -(boardHeight / 2),
+	      marginLeft: -(boardWidth / 2),
+	      height: boardHeight,
+	      width: boardWidth,
+	    }
+
+	    var blocks = this.state.board.map(function(piece, coord) {
+	      var style = {
+	        position: 'absolute',
+	        left: (coord.x * BLOCK_SIZE),
+	        bottom: (coord.y * BLOCK_SIZE)
+	      }
+	      piece = piece || '_'
+	      return React.DOM.div({style: style}, piece)
+	    }).toJS()
+
+	    return (
+	      React.DOM.div({style: boardStyle}, 
+	        blocks
+	      )
+	    )
+	  }
+	})
+
 
 /***/ }
 /******/ ])
