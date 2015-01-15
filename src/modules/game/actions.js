@@ -75,7 +75,6 @@ function pieceDown() {
   // if there is no piece spawn one
   if (flux.evaluate(getters.shouldSpawnPiece)) {
     // after a move down if there is no active piece
-    flux.dispatch(actionTypes.CLEAR_LINES)
     flux.dispatch(actionTypes.SPAWN_PIECE, {
       piece: flux.evaluate(getters.nextPiece)
     })

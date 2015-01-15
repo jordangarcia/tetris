@@ -1,12 +1,10 @@
 var Nuclear = require('nuclear-js')
 var Map = Nuclear.Immutable.Map
-var Sequence = require('immutable').Sequence
+var Immutable = Nuclear.Immutable
 var actionTypes = require('../action-types')
 var Tetriminos = require('../tetriminos')
 
-// TODO: for some reason Immutable.IndexedSequence.get() isnt working
-// must coerce to Vector
-var pieces = Sequence(Tetriminos.pieces).toVector()
+var pieces = Immutable.List(Tetriminos.pieces)
 
 /**
  * The core that tracks the state of the board

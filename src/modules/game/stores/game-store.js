@@ -15,7 +15,6 @@ var HEIGHT = 22
 module.exports = Nuclear.Store({
   initialize: function() {
     this.on(actionTypes.SPAWN_PIECE, spawnPiece)
-    this.on(actionTypes.CLEAR_LINES, clearLines)
     this.on(actionTypes.LEFT, moveLeft)
     this.on(actionTypes.RIGHT, moveRight)
     this.on(actionTypes.MOVE_DOWN, moveDown)
@@ -29,8 +28,6 @@ module.exports = Nuclear.Store({
     return toImmutable({
       clears: [],
       activePiece: null,
-      // the piece that was locked to the board on the last tick
-      lastPiece: null,
       isOver: false,
       isPaused: false,
       board: boardHelper.generateBlankBoard(WIDTH, HEIGHT),
@@ -57,8 +54,9 @@ function moveDown(state) {
     // cannot move down, lock piece on board
     newState = state
       .set('board', boardHelper.addPieceToBoard(piece, board))
-      .set('lastPiece', piece)
       .set('activePiece', null)
+
+    return clearLines(newState)
   }
   return newState
 }
@@ -102,27 +100,6 @@ function spawnPiece(state, payload) {
   }
 
   return state.set('activePiece', spawnedPiece)
-}
-
-/**
- * Clears all existing lines
- */
-function clearLines(state) {
-  var board = state.get('board')
-  var lastPiece = state.get('lastPiece')
-  if (!lastPiece) {
-    return state
-  }
-
-  var lines = boardHelper.getLines(board, WIDTH, HEIGHT)
-  if (lines.length === 0) {
-    return state
-  }
-
-  // add the number of lines to the record of clears
-  return state
-    .update('clears', vect => vect.push(lines.length))
-    .set('board', boardHelper.removeLines(board, lines, WIDTH, HEIGHT))
 }
 
 /**
@@ -197,3 +174,21 @@ function pause(state) {
 function unpause(state) {
   return state.set('isPaused', false)
 }
+
+/**
+ * Clears all existing lines
+ */
+function clearLines(state) {
+  var board = state.get('board')
+
+  var lines = boardHelper.getLines(board, WIDTH, HEIGHT)
+  if (lines.length === 0) {
+    return state
+  }
+
+  // add the number of lines to the record of clears
+  return state
+    .update('clears', vect => vect.push(lines.length))
+    .set('board', boardHelper.removeLines(board, lines, WIDTH, HEIGHT))
+}
+
