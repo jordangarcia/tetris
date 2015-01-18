@@ -53,54 +53,7 @@
 	var flux = __webpack_require__(1)
 	var Game = __webpack_require__(2)
 	var NuclearReactMixin = __webpack_require__(5)
-
-	var StateViewer = React.createClass({displayName: 'StateViewer',
-	  mixins: [NuclearReactMixin(flux)],
-
-	  getDataBindings: function() {
-	    return {
-	      gameStateString: [
-	        ['game'],
-	        function(gameMap) {
-	          var gameState = gameMap.toJS()
-	          var board = gameState.board
-	          delete gameState.board
-	          return JSON.stringify(gameState, null, '  ')
-	        }
-	      ],
-
-	      board: [
-	        Game.getters.board,
-	        function(board) {
-	          var plane = []
-	          var res = {}
-	          board.forEach(function(val, coord) {
-	            if (plane[coord.y] === undefined) {
-	              plane[coord.y] = []
-	            }
-	            plane[coord.y][coord.x] = val
-	          })
-
-	          plane.forEach(function(xs, y) {
-	            xs.forEach(function(val, x) {
-	              res['y=' + y + ', x=' + x] = val
-	            })
-	          })
-	          return JSON.stringify(res, null, '  ')
-	        }
-	      ]
-	    }
-	  },
-
-	  render: function() {
-	    return (
-	      React.DOM.div(null, 
-	        React.DOM.pre(null, this.state.gameStateString), 
-	        React.DOM.pre(null, this.state.board)
-	      )
-	    )
-	  }
-	})
+	var StateViewer = __webpack_require__(166)
 
 	var ActionRemote = React.createClass({displayName: 'ActionRemote',
 	  mixins: [NuclearReactMixin(flux)],
@@ -437,22 +390,61 @@
 
 	var boardHelper = __webpack_require__(14)
 
+	var boardGetter = [
+	  ['game', 'activePiece'],
+	  ['game', 'board'],
+	  function(piece, board) {
+	    if (!piece) {
+	      return board
+	    }
+	    return boardHelper.addPieceToBoard(piece, board)
+	  }
+	]
+
+	var activeMolecule = [
+	  ['ui', 'selectedNode'],
+	  ['molecules'],
+	  function(node, molecues) {
+	    return findMoleculeFromNode(molecues, node)
+	  }
+	]
+
+
+	var getDataAtNode = [
+	  ['ui', 'selectedNode'],
+	  [
+	    ['ui', 'selectedNode'],
+	    ['molecules'],
+	    function(node, molecues) {
+	      return findMoleculeFromNode(molecues, node)
+	    }
+	  ],
+	  function(selectedNode, molecule) {
+	    return getDataAtMolecule(molecule, selectedNode)
+	  }
+	]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	module.exports = {
 	  /**
 	   * Combines the active piece with the current board and returns a Map keyed by coordinates
 	   *
 	   * @return {Immutable.Map} coord => string (ex: 'I', 'L', 'J')
 	   */
-	  board: [
-	    ['game', 'activePiece'],
-	    ['game', 'board'],
-	    function(piece, board) {
-	      if (!piece) {
-	        return board
-	      }
-	      return boardHelper.addPieceToBoard(piece, board)
-	    }
-	  ],
+	  board: boardGetter,
 
 	  /**
 	   * @return {string} game
@@ -522,6 +514,31 @@
 	      })
 
 	      return score
+	    }
+	  ],
+
+	  gameStateString: [
+	    ['game'],
+	    boardGetter,
+	    function(gameMap, board) {
+	      var gameState = gameMap.toJS()
+	      delete gameState.board
+	      var plane = []
+	      var res = {}
+	      board.forEach(function(val, coord) {
+	        if (plane[coord.y] === undefined) {
+	          plane[coord.y] = []
+	        }
+	        plane[coord.y][coord.x] = val
+	      })
+
+	      plane.forEach(function(xs, y) {
+	        xs.forEach(function(val, x) {
+	          res['y=' + y + ', x=' + x] = val
+	        })
+	      })
+	      gameState.board = res
+	      return JSON.stringify(gameState, null, '  ')
 	    }
 	  ],
 	}
@@ -39600,6 +39617,40 @@
 	module.exports = toArray;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+
+/***/ },
+/* 165 */,
+/* 166 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(4)
+	// flux + flux modules
+	var flux = __webpack_require__(1)
+	var Game = __webpack_require__(2)
+	var NuclearReactMixin = __webpack_require__(5)
+	var StateViewer = __webpack_require__(166)
+
+	module.exports = React.createClass({displayName: 'exports',
+	  mixins: [NuclearReactMixin(flux)],
+
+	  getDataBindings: function() {
+	    return {
+	      gameStateString: Game.getters.gameStateString
+	    }
+	  },
+
+	  render: function() {
+	    return (
+	      React.DOM.div(null, 
+	        React.DOM.pre(null, this.state.gameStateString)
+	      )
+	    )
+	  }
+	})
+
 
 /***/ }
 /******/ ])

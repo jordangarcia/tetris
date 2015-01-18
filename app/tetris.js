@@ -354,22 +354,61 @@
 
 	var boardHelper = __webpack_require__(14)
 
+	var boardGetter = [
+	  ['game', 'activePiece'],
+	  ['game', 'board'],
+	  function(piece, board) {
+	    if (!piece) {
+	      return board
+	    }
+	    return boardHelper.addPieceToBoard(piece, board)
+	  }
+	]
+
+	var activeMolecule = [
+	  ['ui', 'selectedNode'],
+	  ['molecules'],
+	  function(node, molecues) {
+	    return findMoleculeFromNode(molecues, node)
+	  }
+	]
+
+
+	var getDataAtNode = [
+	  ['ui', 'selectedNode'],
+	  [
+	    ['ui', 'selectedNode'],
+	    ['molecules'],
+	    function(node, molecues) {
+	      return findMoleculeFromNode(molecues, node)
+	    }
+	  ],
+	  function(selectedNode, molecule) {
+	    return getDataAtMolecule(molecule, selectedNode)
+	  }
+	]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	module.exports = {
 	  /**
 	   * Combines the active piece with the current board and returns a Map keyed by coordinates
 	   *
 	   * @return {Immutable.Map} coord => string (ex: 'I', 'L', 'J')
 	   */
-	  board: [
-	    ['game', 'activePiece'],
-	    ['game', 'board'],
-	    function(piece, board) {
-	      if (!piece) {
-	        return board
-	      }
-	      return boardHelper.addPieceToBoard(piece, board)
-	    }
-	  ],
+	  board: boardGetter,
 
 	  /**
 	   * @return {string} game
@@ -439,6 +478,31 @@
 	      })
 
 	      return score
+	    }
+	  ],
+
+	  gameStateString: [
+	    ['game'],
+	    boardGetter,
+	    function(gameMap, board) {
+	      var gameState = gameMap.toJS()
+	      delete gameState.board
+	      var plane = []
+	      var res = {}
+	      board.forEach(function(val, coord) {
+	        if (plane[coord.y] === undefined) {
+	          plane[coord.y] = []
+	        }
+	        plane[coord.y][coord.x] = val
+	      })
+
+	      plane.forEach(function(xs, y) {
+	        xs.forEach(function(val, x) {
+	          res['y=' + y + ', x=' + x] = val
+	        })
+	      })
+	      gameState.board = res
+	      return JSON.stringify(gameState, null, '  ')
 	    }
 	  ],
 	}
@@ -39527,11 +39591,73 @@
 	 */
 	var React = __webpack_require__(4);
 
+	var StateViewer = __webpack_require__(166)
+	var Game = __webpack_require__(167)
+
+	var BLOCK_SIZE = 20
+
+	module.exports = React.createClass({displayName: 'exports',
+	  render: function() {
+	    return (
+	      React.DOM.div(null, 
+	        Game(null)
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
+/* 166 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(4)
+	// flux + flux modules
+	var flux = __webpack_require__(1)
+	var Game = __webpack_require__(2)
+	var NuclearReactMixin = __webpack_require__(5)
+	var StateViewer = __webpack_require__(166)
+
+	module.exports = React.createClass({displayName: 'exports',
+	  mixins: [NuclearReactMixin(flux)],
+
+	  getDataBindings: function() {
+	    return {
+	      gameStateString: Game.getters.gameStateString
+	    }
+	  },
+
+	  render: function() {
+	    return (
+	      React.DOM.div(null, 
+	        React.DOM.pre(null, this.state.gameStateString)
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
+/* 167 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(4);
+
 	var Game = __webpack_require__(2)
 	var flux = __webpack_require__(1)
 	var NuclearReactMixin = __webpack_require__(5)
 
 	var BLOCK_SIZE = 20
+	var WIDTH = 10
+	var HEIGHT = 22
+	var BOARD_WIDTH = BLOCK_SIZE * WIDTH
+	var BOARD_HEIGHT = BLOCK_SIZE * HEIGHT
 
 	module.exports = React.createClass({displayName: 'exports',
 
@@ -39544,26 +39670,31 @@
 	  },
 
 	  render: function() {
-	    var boardWidth = 10 * BLOCK_SIZE
-	    var boardHeight = 22 * BLOCK_SIZE
 	    var boardStyle = {
+	      width: BOARD_WIDTH,
+	      height: BOARD_HEIGHT,
 	      position: 'absolute',
-	      top: '50%',
 	      left: '50%',
-	      marginTop: -(boardHeight / 2),
-	      marginLeft: -(boardWidth / 2),
-	      height: boardHeight,
-	      width: boardWidth,
+	      top: '50%',
+	      marginTop: -(BOARD_HEIGHT / 2),
+	      marginLeft: -(BOARD_WIDTH / 2),
+	      backgroundColor: '#bada55',
 	    }
 
-	    var blocks = this.state.board.map(function(piece, coord) {
-	      var style = {
+	    var blocks = this.state.board
+	    .filter(function(val) {
+	      return !!val
+	    })
+	    .map(function(val, coord) {
+	      var blockStyle = {
+	        width: BLOCK_SIZE,
+	        height: BLOCK_SIZE,
 	        position: 'absolute',
-	        left: (coord.x * BLOCK_SIZE),
-	        bottom: (coord.y * BLOCK_SIZE)
+	        left: coord.x * BLOCK_SIZE,
+	        bottom: coord.y * BLOCK_SIZE,
+	        backgroundColor: 'goldenrod',
 	      }
-	      piece = piece || '_'
-	      return React.DOM.div({style: style}, piece)
+	      return React.DOM.div({style: blockStyle})
 	    }).toJS()
 
 	    return (
@@ -39571,6 +39702,7 @@
 	        blocks
 	      )
 	    )
+
 	  }
 	})
 
