@@ -11,43 +11,6 @@ var boardGetter = [
   }
 ]
 
-var activeMolecule = [
-  ['ui', 'selectedNode'],
-  ['molecules'],
-  function(node, molecues) {
-    return findMoleculeFromNode(molecues, node)
-  }
-]
-
-
-var getDataAtNode = [
-  ['ui', 'selectedNode'],
-  [
-    ['ui', 'selectedNode'],
-    ['molecules'],
-    function(node, molecues) {
-      return findMoleculeFromNode(molecues, node)
-    }
-  ],
-  function(selectedNode, molecule) {
-    return getDataAtMolecule(molecule, selectedNode)
-  }
-]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 module.exports = {
   /**
    * Combines the active piece with the current board and returns a Map keyed by coordinates
