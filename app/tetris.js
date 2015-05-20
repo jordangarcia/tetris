@@ -44,14 +44,14 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var React = __webpack_require__(4)
+	var React = __webpack_require__(5)
 
 	// flux + flux modules
 	var flux = __webpack_require__(1)
-	var Game = __webpack_require__(2)
+	var Game = __webpack_require__(4)
 
 	// React components
-	var UI = __webpack_require__(165)
+	var UI = __webpack_require__(2)
 
 	// setup keydown handler
 	window.addEventListener('keydown', function(e) {
@@ -72,7 +72,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Nuclear = __webpack_require__(10)
+	var Nuclear = __webpack_require__(12)
 
 	module.exports = new Nuclear.Reactor({
 	  debug: true
@@ -83,113 +83,183 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Nuclear = __webpack_require__(10)
-	var flux = __webpack_require__(1)
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(5);
 
-	flux.registerStores({
-	  game: __webpack_require__(8),
-	  pieceBag: __webpack_require__(9),
+	var StateViewer = __webpack_require__(3)
+	var Game = __webpack_require__(6)
+
+	var BLOCK_SIZE = 20
+
+	module.exports = React.createClass({displayName: 'exports',
+	  render: function() {
+	    return (
+	      React.DOM.div(null, 
+	        Game(null)
+	      )
+	    )
+	  }
 	})
-
-	module.exports = {
-	  actions: __webpack_require__(6),
-
-	  getters: __webpack_require__(7),
-	}
 
 
 /***/ },
-/* 3 */,
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(5)
+	// flux + flux modules
+	var flux = __webpack_require__(1)
+	var Game = __webpack_require__(4)
+	var StateViewer = __webpack_require__(3)
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  mixins: [flux.ReactMixin],
+
+	  getDataBindings: function() {
+	    return {
+	      gameStateString: [
+	        ['game'],
+	        Game.getters.board,
+	        function(gameMap, board) {
+	          var gameState = gameMap.toJS()
+	          delete gameState.board
+	          var plane = []
+	          var res = {}
+	          board.forEach(function(val, coord) {
+	            if (plane[coord.y] === undefined) {
+	              plane[coord.y] = []
+	            }
+	            plane[coord.y][coord.x] = val
+	          })
+
+	          plane.forEach(function(xs, y) {
+	            xs.forEach(function(val, x) {
+	              res['y=' + y + ', x=' + x] = val
+	            })
+	          })
+	          gameState.board = res
+	          return JSON.stringify(gameState, null, '  ')
+	        }
+	      ]
+	    }
+	  },
+
+	  render: function() {
+	    return (
+	      React.DOM.div(null, 
+	        React.DOM.pre(null, this.state.gameStateString)
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(13);
+	var Nuclear = __webpack_require__(12)
+	var flux = __webpack_require__(1)
+
+	flux.registerStores({
+	  game: __webpack_require__(10),
+	  pieceBag: __webpack_require__(11),
+	})
+
+	module.exports = {
+	  actions: __webpack_require__(8),
+
+	  getters: __webpack_require__(9),
+	}
 
 
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * Automatically keeps a React component in sync with some data
-	 * from a Nuclear reactor
-	 *
-	 * Usage:
-	 * var reactor = require('./reactor')
-	 * var ReactorMixin = require('./reactor-mixin')
-	 *
-	 * Reactor.createClass({
-	 *   mixins: [ReactorMixin(reactor)],
-	 *
-	 *   getDataBindings() {
-	 *     return {
-	 *       board: 'game.board',
-	 *       player: ['game', 'players', this.props.playerId],
-	 *       // can pass it a getter
-	 *       playerCount: Nuclear.Getter('game.players', function(players) {
-	 *         return players.size
-	 *       })
-	 *     }
-	 *   }
-	 * })
-	 */
-	/**
-	 * Returns a mapping of the getDataBinding keys to
-	 * the reactor values
-	 */
-	function getState(reactor, data) {
-	  var state = {}
-	  for (var key in data) {
-	    state[key] = reactor.evaluate(data[key])
-	  }
-	  return state
-	}
-
-	function each(obj, fn) {
-	  for (var key in obj) {
-	    fn(obj[key], key)
-	  }
-	}
-
-	module.exports = function ReactorMixin(reactor) {
-
-	  return {
-	    getInitialState: function() {
-	      return getState(reactor, this.getDataBindings())
-	    },
-
-	    componentDidMount: function() {
-	      var component = this
-	      var dataBindings = this.getDataBindings()
-	      component.__unwatchFns = []
-	      each(this.getDataBindings(), function(getter, key) {
-	        var unwatchFn = reactor.observe(getter, function(val) {
-	          var newState = {};
-	          newState[key] = val;
-	          component.setState(newState)
-	        })
-
-	        component.__unwatchFns.push(unwatchFn)
-	      })
-	    },
-
-	    componentWillUnmount: function() {
-	      while (this.__unwatchFns.length) {
-	        this.__unwatchFns.shift()()
-	      }
-	    }
-	  }
-	}
+	module.exports = __webpack_require__(15);
 
 
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * @jsx React.DOM
+	 */
+	var React = __webpack_require__(5);
+
+	var Game = __webpack_require__(4)
 	var flux = __webpack_require__(1)
-	var timeout = __webpack_require__(11)
-	var actionTypes = __webpack_require__(12)
-	var getters = __webpack_require__(7)
+
+	var BLOCK_SIZE = 20
+	var WIDTH = 10
+	var HEIGHT = 22
+	var BOARD_WIDTH = BLOCK_SIZE * WIDTH
+	var BOARD_HEIGHT = BLOCK_SIZE * HEIGHT
+
+	module.exports = React.createClass({displayName: 'exports',
+
+	  mixins: [flux.ReactMixin],
+
+	  getDataBindings: function() {
+	    return {
+	      board: Game.getters.board,
+	    }
+	  },
+
+	  render: function() {
+	    var boardStyle = {
+	      width: BOARD_WIDTH,
+	      height: BOARD_HEIGHT,
+	      position: 'absolute',
+	      left: '50%',
+	      top: '50%',
+	      marginTop: -(BOARD_HEIGHT / 2),
+	      marginLeft: -(BOARD_WIDTH / 2),
+	      backgroundColor: '#bada55',
+	    }
+
+	    var blocks = this.state.board
+	      .filter(function(val) {
+	        return !!val
+	      })
+	      .map(function(val, coord) {
+	        var blockStyle = {
+	          width: BLOCK_SIZE,
+	          height: BLOCK_SIZE,
+	          position: 'absolute',
+	          left: coord.x * BLOCK_SIZE,
+	          bottom: coord.y * BLOCK_SIZE,
+	          backgroundColor: 'goldenrod',
+	        }
+	        return React.DOM.div({style: blockStyle})
+	      }).toList()
+
+	    return (
+	      React.DOM.div({style: boardStyle}, 
+	        blocks.toJS()
+	      )
+	    )
+	  }
+	})
+
+
+/***/ },
+/* 7 */,
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var flux = __webpack_require__(1)
+	var timeout = __webpack_require__(13)
+	var actionTypes = __webpack_require__(14)
+	var getters = __webpack_require__(9)
 
 	var TICK_DURATION = 1000
 
@@ -349,10 +419,11 @@
 
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var boardHelper = __webpack_require__(14)
+	var Immutable = __webpack_require__(12).Immutable
+	var boardHelper = __webpack_require__(16)
 
 	var boardGetter = [
 	  ['game', 'activePiece'],
@@ -364,43 +435,6 @@
 	    return boardHelper.addPieceToBoard(piece, board)
 	  }
 	]
-
-	var activeMolecule = [
-	  ['ui', 'selectedNode'],
-	  ['molecules'],
-	  function(node, molecues) {
-	    return findMoleculeFromNode(molecues, node)
-	  }
-	]
-
-
-	var getDataAtNode = [
-	  ['ui', 'selectedNode'],
-	  [
-	    ['ui', 'selectedNode'],
-	    ['molecules'],
-	    function(node, molecues) {
-	      return findMoleculeFromNode(molecues, node)
-	    }
-	  ],
-	  function(selectedNode, molecule) {
-	    return getDataAtMolecule(molecule, selectedNode)
-	  }
-	]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	module.exports = {
 	  /**
@@ -480,45 +514,20 @@
 	      return score
 	    }
 	  ],
-
-	  gameStateString: [
-	    ['game'],
-	    boardGetter,
-	    function(gameMap, board) {
-	      var gameState = gameMap.toJS()
-	      delete gameState.board
-	      var plane = []
-	      var res = {}
-	      board.forEach(function(val, coord) {
-	        if (plane[coord.y] === undefined) {
-	          plane[coord.y] = []
-	        }
-	        plane[coord.y][coord.x] = val
-	      })
-
-	      plane.forEach(function(xs, y) {
-	        xs.forEach(function(val, x) {
-	          res['y=' + y + ', x=' + x] = val
-	        })
-	      })
-	      gameState.board = res
-	      return JSON.stringify(gameState, null, '  ')
-	    }
-	  ],
 	}
 
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Nuclear = __webpack_require__(10)
+	var Nuclear = __webpack_require__(12)
 	var toImmutable = Nuclear.toImmutable
-	var boardHelper = __webpack_require__(14)
-	var pieceHelper = __webpack_require__(15)
-	var actionTypes = __webpack_require__(12)
-	var BoardPiece = __webpack_require__(16)
-	var Tetriminos = __webpack_require__(17)
+	var boardHelper = __webpack_require__(16)
+	var pieceHelper = __webpack_require__(17)
+	var actionTypes = __webpack_require__(14)
+	var BoardPiece = __webpack_require__(18)
+	var Tetriminos = __webpack_require__(19)
 
 	var WIDTH = 10
 	var HEIGHT = 22
@@ -709,14 +718,14 @@
 
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Nuclear = __webpack_require__(10)
+	var Nuclear = __webpack_require__(12)
 	var Map = Nuclear.Immutable.Map
 	var Immutable = Nuclear.Immutable
-	var actionTypes = __webpack_require__(12)
-	var Tetriminos = __webpack_require__(17)
+	var actionTypes = __webpack_require__(14)
+	var Tetriminos = __webpack_require__(19)
 
 	var pieces = Immutable.List(Tetriminos.pieces)
 
@@ -743,12 +752,12 @@
 	function nextPiece(state) {
 	  return state.withMutations(function(state)  {
 	    var remaining = state.get('remaining')
-	    var ind = randInt(remaining.length)
+	    var ind = randInt(remaining.size)
 
 	    state.set('next', remaining.get(ind))
 	    state.set('remaining', remaining.splice(ind, 1))
 
-	    if (state.get('remaining').length === 0) {
+	    if (state.get('remaining').size === 0) {
 	      state.set('remaining', pieces)
 	    }
 
@@ -765,7 +774,7 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function webpackUniversalModuleDefinition(root, factory) {
@@ -781,41 +790,41 @@
 	return /******/ (function(modules) { // webpackBootstrap
 	/******/ 	// The module cache
 	/******/ 	var installedModules = {};
-	/******/
+
 	/******/ 	// The require function
 	/******/ 	function __webpack_require__(moduleId) {
-	/******/
+
 	/******/ 		// Check if module is in cache
 	/******/ 		if(installedModules[moduleId])
 	/******/ 			return installedModules[moduleId].exports;
-	/******/
+
 	/******/ 		// Create a new module (and put it into the cache)
 	/******/ 		var module = installedModules[moduleId] = {
 	/******/ 			exports: {},
 	/******/ 			id: moduleId,
 	/******/ 			loaded: false
 	/******/ 		};
-	/******/
+
 	/******/ 		// Execute the module function
 	/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-	/******/
+
 	/******/ 		// Flag the module as loaded
 	/******/ 		module.loaded = true;
-	/******/
+
 	/******/ 		// Return the exports of the module
 	/******/ 		return module.exports;
 	/******/ 	}
-	/******/
-	/******/
+
+
 	/******/ 	// expose the modules object (__webpack_modules__)
 	/******/ 	__webpack_require__.m = modules;
-	/******/
+
 	/******/ 	// expose the module cache
 	/******/ 	__webpack_require__.c = installedModules;
-	/******/
+
 	/******/ 	// __webpack_public_path__
 	/******/ 	__webpack_require__.p = "";
-	/******/
+
 	/******/ 	// Load entry module and return exports
 	/******/ 	return __webpack_require__(0);
 	/******/ })
@@ -837,7 +846,7 @@
 		exports.Store = __webpack_require__(3)
 
 		// export the immutable library
-		exports.Immutable = __webpack_require__(10)
+		exports.Immutable = __webpack_require__(7)
 
 		/**
 		 * @return {boolean}
@@ -854,13 +863,15 @@
 		exports.toImmutable = helpers.toImmutable
 		exports.isImmutable = helpers.isImmutable
 
+		exports.createReactMixin = __webpack_require__(6)
+
 
 	/***/ },
 	/* 1 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Immutable = __webpack_require__(10)
-		var isObject = __webpack_require__(6).isObject
+		var Immutable = __webpack_require__(7)
+		var isObject = __webpack_require__(8).isObject
 
 		/**
 		 * A collection of helpers for the ImmutableJS library
@@ -918,18 +929,18 @@
 	/* 2 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Immutable = __webpack_require__(10)
-		var logging = __webpack_require__(7)
-		var ChangeObserver = __webpack_require__(8)
+		var Immutable = __webpack_require__(7)
+		var logging = __webpack_require__(9)
+		var ChangeObserver = __webpack_require__(10)
 		var Getter = __webpack_require__(5)
 		var KeyPath = __webpack_require__(4)
-		var Evaluator = __webpack_require__(9)
+		var Evaluator = __webpack_require__(11)
+		var createReactMixin = __webpack_require__(6)
 
 		// helper fns
 		var toJS = __webpack_require__(1).toJS
-		var toImmutable = __webpack_require__(1).toImmutable
 		var isImmutableValue = __webpack_require__(1).isImmutableValue
-		var each = __webpack_require__(6).each
+		var each = __webpack_require__(8).each
 
 
 		/**
@@ -950,6 +961,7 @@
 
 		    this.debug = !!config.debug
 
+		    this.ReactMixin = createReactMixin(this)
 		    /**
 		     * The state for the whole cluster
 		     */
@@ -1032,13 +1044,15 @@
 		        var newState = store.handle(currState, actionType, payload)
 
 		        if (debug && newState === undefined) {
-		          throw new Error("Store handler must return a value, did you forget a return statement")
+		          var error = "Store handler must return a value, did you forget a return statement"
+		          logging.dispatchError(error)
+		          throw new Error(error)
 		        }
 
 		        state.set(id, newState)
 
 		        if (this.debug) {
-		          logging.coreReact(id, currState, newState)
+		          logging.storeHandled(id, currState, newState)
 		        }
 		      }.bind(this))
 
@@ -1054,41 +1068,37 @@
 		  };
 
 		  /**
-		   * Attachs a store to a non-running or running nuclear reactor.  Will emit change
-		   * @param {string} id
+		   * @deprecated
+		   * @param {String} id
 		   * @param {Store} store
-		   * @param {boolean} silent should not notify observers of state change
 		   */
-		  Reactor.prototype.registerStore=function(id, store, silent) {"use strict";
-		    if (this.__stores.get(id)) {
-		      console.warn("Store already defined for id=" + id)
-		    }
-
-		    var initialState = store.getInitialState()
-
-		    if (this.debug && !isImmutableValue(initialState)) {
-		      throw new Error("Store getInitialState() must return an immutable value, did you forget to call toImmutable")
-		    }
-
-		    this.__stores = this.__stores.set(id, store)
-		    this.__state = this.__state.set(id, initialState)
-
-		    if (!silent) {
-		      this.__changeObserver.notifyObservers(this.__state)
-		    }
+		  Reactor.prototype.registerStore=function(id, store) {"use strict";
+		    console.warn('Deprecation warning: `registerStore` will no longer be supported in 1.1, use `registerStores` instead')
+		    var stores = {}
+		    stores[id] = store
+		    this.registerStores(stores)
 		  };
 
 		  /**
-		   * @param {Array.<string, Store>} stores
-		   * @param {boolean} silent should not notify observers of state change
+		   * @param {Store[]} stores
 		   */
-		  Reactor.prototype.registerStores=function(stores, silent) {"use strict";
+		  Reactor.prototype.registerStores=function(stores) {"use strict";
 		    each(stores, function(store, id)  {
-		      this.registerStore(id, store, true)
+		      if (this.__stores.get(id)) {
+		        console.warn("Store already defined for id=" + id)
+		      }
+
+		      var initialState = store.getInitialState()
+
+		      if (this.debug && !isImmutableValue(initialState)) {
+		        throw new Error("Store getInitialState() must return an immutable value, did you forget to call toImmutable")
+		      }
+
+		      this.__stores = this.__stores.set(id, store)
+		      this.__state = this.__state.set(id, initialState)
 		    }.bind(this))
-		    if (!silent) {
-		      this.__changeObserver.notifyObservers(this.__state)
-		    }
+
+		    this.__changeObserver.notifyObservers(this.__state)
 		  };
 
 		  /**
@@ -1124,8 +1134,8 @@
 	/* 3 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Map = __webpack_require__(10).Map
-		var extend = __webpack_require__(6).extend
+		var Map = __webpack_require__(7).Map
+		var extend = __webpack_require__(8).extend
 
 		/**
 		 * Stores define how a certain domain of the application should respond to actions
@@ -1140,7 +1150,10 @@
 
 		    this.__handlers = Map({})
 
-		    extend(this, config)
+		    if (config) {
+		      // allow `MyStore extends Store` syntax without throwing error
+		      extend(this, config)
+		    }
 
 		    this.initialize()
 		  }
@@ -1208,8 +1221,8 @@
 	/* 4 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var isArray = __webpack_require__(6).isArray
-		var isFunction = __webpack_require__(6).isFunction
+		var isArray = __webpack_require__(8).isArray
+		var isFunction = __webpack_require__(8).isFunction
 
 		/**
 		 * Checks if something is simply a keyPath and not a getter
@@ -1228,9 +1241,9 @@
 	/* 5 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Immutable = __webpack_require__(10)
-		var isFunction = __webpack_require__(6).isFunction
-		var isArray = __webpack_require__(6).isArray
+		var Immutable = __webpack_require__(7)
+		var isFunction = __webpack_require__(8).isFunction
+		var isArray = __webpack_require__(8).isArray
 		var isKeyPath = __webpack_require__(4).isKeyPath
 
 		/**
@@ -1247,26 +1260,6 @@
 		 */
 		function isGetter(toTest) {
 		  return (isArray(toTest) && isFunction(toTest[toTest.length - 1]))
-		}
-
-
-		/**
-		 * Recursive function to flatten deps of a getter
-		 * @param {Getter} getter
-		 * @return {Array.<KeyPath>} unique flatten deps
-		 */
-		function unwrapDeps(getter) {
-		  var accum = Immutable.Set()
-		  var deps = getter.slice(0, getter.length - 1)
-
-		  return accum.withMutations(function(accum)  {
-		    deps.forEach(function(dep)  {
-		      isGetter(dep)
-		        ? accum.union(unwrapDeps(dep))
-		        : accum.add(dep)
-		    })
-		    return accum
-		  })
 		}
 
 		/**
@@ -1301,7 +1294,6 @@
 
 
 		module.exports = {
-		  unwrapDeps: unwrapDeps,
 		  isGetter: isGetter,
 		  getComputeFn: getComputeFn,
 		  getDeps: getDeps,
@@ -1313,330 +1305,53 @@
 	/* 6 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var _ = __webpack_require__(13);
+		var each = __webpack_require__(8).each
+		/**
+		 * @param {Reactor} reactor
+		 */
+		module.exports = function(reactor) {
+		  return {
+		    getInitialState: function() {
+		      return getState(reactor, this.getDataBindings())
+		    },
 
-		exports.clone = _.clone
+		    componentDidMount: function() {
+		      var component = this
+		      component.__unwatchFns = []
+		      each(this.getDataBindings(), function(getter, key) {
+		        var unwatchFn = reactor.observe(getter, function(val) {
+		          var newState = {};
+		          newState[key] = val;
+		          component.setState(newState)
+		        })
 
-		exports.cloneDeep = _.cloneDeep
+		        component.__unwatchFns.push(unwatchFn)
+		      })
+		    },
 
-		exports.extend = _.extend
-
-		exports.each = _.each
-
-		exports.partial = _.partial
-
-		exports.isArray = _.isArray
-
-		exports.isObject = _.isObject
-
-		exports.isFunction = _.isFunction
-
-		exports.isString = _.isString
-
-		exports.isNumber = _.isNumber
+		    componentWillUnmount: function() {
+		      while (this.__unwatchFns.length) {
+		        this.__unwatchFns.shift()()
+		      }
+		    }
+		  }
+		}
 
 		/**
-		 * Ensures that the inputted value is an array
-		 * @param {*} val
-		 * @return {array}
+		 * Returns a mapping of the getDataBinding keys to
+		 * the reactor values
 		 */
-		exports.coerceArray = function(val) {
-		  if (!exports.isArray(val)) {
-		    return [val]
+		function getState(reactor, data) {
+		  var state = {}
+		  for (var key in data) {
+		    state[key] = reactor.evaluate(data[key])
 		  }
-		  return val
+		  return state
 		}
 
 
 	/***/ },
 	/* 7 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		/**
-		 * Wraps a Reactor.react invocation in a console.group
-		*/
-		exports.dispatchStart = function(type, payload) {
-		  if (console.group) {
-		    console.groupCollapsed('Dispatch: %s', type)
-		    console.group('payload')
-		    console.log(payload)
-		    console.groupEnd()
-		  }
-		}
-
-		exports.coreReact = function(id, before, after) {
-		  if (console.group) {
-		    if (before !== after) {
-		      console.log('Core changed: ' + id)
-		    }
-		  }
-		}
-
-		exports.dispatchEnd = function(state) {
-		  if (console.group) {
-		    console.log('Dispatch done, new state: ', state.toJS())
-		    console.groupEnd()
-		  }
-		}
-
-
-	/***/ },
-	/* 8 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		var Immutable = __webpack_require__(10)
-		var hashCode = __webpack_require__(11)
-		var isEqual = __webpack_require__(12)
-
-		/**
-		 * ChangeObserver is an object that contains a set of subscriptions
-		 * to changes for keyPaths on a reactor
-		 *
-		 * Packaging the handlers together allows for easier cleanup
-		 */
-
-		  /**
-		   * @param {Immutable.Map} initialState
-		   * @param {Evaluator} evaluator
-		   */
-		  function ChangeObserver(initialState, evaluator) {"use strict";
-		    this.__prevState = initialState
-		    this.__evaluator = evaluator
-		    this.__prevValues = Immutable.Map({})
-		    this.__observers = []
-		  }
-
-		  /**
-		   * @param {Immutable.Map} newState
-		   */
-		  ChangeObserver.prototype.notifyObservers=function(newState) {"use strict";
-		    this.__observers.forEach(function(entry)  {
-		      var getter = entry.getter
-		      var code = hashCode(getter)
-		      var prevState = this.__prevState
-		      var prevValue
-
-		      if (this.__prevValues.has(code)) {
-		        prevValue = this.__prevValues.get(code)
-		      } else {
-		        prevValue = this.__evaluator.evaluate(prevState, getter)
-		        this.__prevValues = this.__prevValues.set(code, prevValue)
-		      }
-
-		      var currValue = this.__evaluator.evaluate(newState, getter)
-
-		      if (!isEqual(prevValue, currValue)) {
-		        entry.handler.call(null, currValue)
-		        this.__prevValues = this.__prevValues.set(code, currValue)
-		      }
-		    }.bind(this))
-		    this.__prevState = newState
-		  };
-
-		  /**
-		   * Specify an getter and a change handler fn
-		   * Handler function is called whenever the value of the getter changes
-		   * @param {Getter} getter
-		   * @param {function} handler
-		   * @return {function} unwatch function
-		   */
-		  ChangeObserver.prototype.onChange=function(getter, handler) {"use strict";
-		    // TODO make observers a map of <Getter> => { handlers }
-		    var entry = {
-		      getter: getter,
-		      handler: handler,
-		    }
-		    this.__observers.push(entry)
-		    // return unwatch function
-		    return function()  {
-		      // TODO untrack from change emitter
-		      var ind  = this.__observers.indexOf(entry)
-		      if (ind > -1) {
-		        this.__observers.splice(ind, 1)
-		      }
-		    }.bind(this)
-		  };
-
-		  /**
-		   * Resets and clears all observers and reinitializes back to the supplied
-		   * previous state
-		   * @param {Immutable.Map} prevState
-		   *
-		   */
-		  ChangeObserver.prototype.reset=function(prevState) {"use strict";
-		    this.__prevState = prevState
-		    this.__prevValues = Immutable.Map({})
-		    this.__observers = []
-		  };
-
-
-		module.exports = ChangeObserver
-
-
-	/***/ },
-	/* 9 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		var Immutable = __webpack_require__(10)
-		var helpers = __webpack_require__(1)
-		var isImmutable = helpers.isImmutable
-		var toImmutable = helpers.toImmutable
-		var hashCode = __webpack_require__(11)
-		var isEqual = __webpack_require__(12)
-		var getComputeFn = __webpack_require__(5).getComputeFn
-		var getDeps = __webpack_require__(5).getDeps
-		var isKeyPath = __webpack_require__(4).isKeyPath
-		var isGetter = __webpack_require__(5).isGetter
-		var isObject = __webpack_require__(6).isObject
-		var isArray = __webpack_require__(6).isArray
-		var cloneDeep = __webpack_require__(6).cloneDeep
-
-
-		/**
-		 * Dereferences a value, if its a mutable value makes a copy
-		 */
-		function deref(val) {
-		  if (isImmutable(val)) {
-		    // cache hit
-		    return val
-		  } else if (isArray(val) || isObject(val)){
-		    // its a mutable value so clone it deep
-		    return cloneDeep(val)
-		  } else {
-		    // its a plain JS immutable type, eg: string, number
-		    return val
-		  }
-		}
-
-
-		  function Evaluator() {"use strict";
-		    /**
-		     * {
-		     *   <hashCode>: {
-		     *     stateHashCode: number,
-		     *     args: Immutable.List,
-		     *     value: any,
-		     *   }
-		     * }
-		     */
-		    this.__cachedGetters = Immutable.Map({})
-		  }
-
-		  /**
-		   * Takes either a KeyPath or Getter and evaluates
-		   *
-		   * KeyPath form:
-		   * ['foo', 'bar'] => state.getIn(['foo', 'bar'])
-		   *
-		   * Getter form:
-		   * [<KeyPath>, <KeyPath>, ..., <function>]
-		   *
-		   * @param {Immutable.Map} state
-		   * @param {string|array} getter
-		   * @return {any}
-		   */
-		  Evaluator.prototype.evaluate=function(state, keyPathOrGetter) {"use strict";
-		    if (isKeyPath(keyPathOrGetter)) {
-		      // if its a keyPath simply return
-		      return state.getIn(keyPathOrGetter)
-		    } else if (!isGetter(keyPathOrGetter)) {
-		      throw new Error("evaluate must be passed a keyPath or Getter")
-		    }
-
-		    // Must be a Getter
-		    var code = hashCode(keyPathOrGetter)
-
-		    // if the value is cached for this dispatch cycle, return the cached value
-		    if (this.__isCached(state, keyPathOrGetter)) {
-		      // Cache hit
-		      return deref(this.__cachedGetters.getIn([code, 'value']))
-
-		    } else if (this.__hasStaleValue(state, keyPathOrGetter)) {
-		      var prevValue = this.__cachedGetters.getIn([code, 'value'])
-		      var prevArgs = this.__cachedGetters.getIn([code, 'args'])
-		      // getter deps could still be unchanged since we only looked at the unwrapped (keypath, bottom level) deps
-		      var currArgs = toImmutable(getDeps(keyPathOrGetter).map(function(getter)  {
-		        return this.evaluate(state, getter)
-		      }.bind(this)))
-
-		      // since Getter is a pure functions if the args are the same its a cache hit
-		      if (isEqual(prevArgs, currArgs)) {
-		        this.__cacheValue(state, keyPathOrGetter, prevArgs, prevValue)
-		        return deref(prevValue)
-		      }
-		    }
-		    // no cache hit evaluate
-		    var args = getDeps(keyPathOrGetter).map(function(dep)  {return this.evaluate(state, dep);}.bind(this))
-		    var evaluatedValue = getComputeFn(keyPathOrGetter).apply(null, args)
-
-		    this.__cacheValue(state, keyPathOrGetter, args, evaluatedValue)
-
-		    return evaluatedValue
-		  };
-
-		  /**
-		   * @param {Immutable.Map} state
-		   * @param {Getter} getter
-		   */
-		  Evaluator.prototype.__hasStaleValue=function(state, getter) {"use strict";
-		    var code = hashCode(getter)
-		    var cache = this.__cachedGetters
-		    return (
-		      cache.has(code) &&
-		      cache.getIn([code, 'stateHashCode']) !== state.hashCode()
-		    )
-		  };
-
-		  /**
-		   * Caches the value of a getter given state, getter, args, value
-		   * @param {Immutable.Map} state
-		   * @param {Getter} getter
-		   * @param {Array} args
-		   * @param {any} value
-		   */
-		  Evaluator.prototype.__cacheValue=function(state, getter, args, value) {"use strict";
-		    var code = hashCode(getter)
-		    this.__cachedGetters = this.__cachedGetters.set(code, Immutable.Map({
-		      value: value,
-		      args: toImmutable(args),
-		      stateHashCode: state.hashCode(),
-		    }))
-		  };
-
-		  /**
-		   * Returns boolean whether the supplied getter is cached for a given state
-		   * @param {Immutable.Map} state
-		   * @param {Getter} getter
-		   * @return {boolean}
-		   */
-		  Evaluator.prototype.__isCached=function(state, getter) {"use strict";
-		    var code = hashCode(getter)
-		    return (
-		      this.__cachedGetters.hasIn([code, 'value']) &&
-		      this.__cachedGetters.getIn([code, 'stateHashCode']) === state.hashCode()
-		    )
-		  };
-
-		  /**
-		   * Removes all caching about a getter
-		   * @param {Getter}
-		   */
-		  Evaluator.prototype.untrack=function(getter) {"use strict";
-		    var code = hashCode(getter)
-		    this.__cachedGetters = this.__cachedGetters.remove(code)
-		    // TODO untrack all depedencies
-		  };
-
-		  Evaluator.prototype.reset=function() {"use strict";
-		    this.__cachedGetters = Immutable.Map({})
-		  };
-
-
-		module.exports = Evaluator
-
-
-	/***/ },
-	/* 10 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/**
@@ -5554,11 +5269,475 @@
 
 
 	/***/ },
+	/* 8 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		/**
+		 * Checks if the passed in value is a number
+		 * @param {*} val
+		 * @return {boolean}
+		 */
+		exports.isNumber = function(val) {
+		  return typeof val == 'number' || objectToString(val) === '[object Number]'
+		}
+
+		/**
+		 * Checks if the passed in value is a string
+		 * @param {*} val
+		 * @return {boolean}
+		 */
+		exports.isString = function(val) {
+		  return typeof val == 'string' || objectToString(val) === '[object String]'
+		}
+
+		/**
+		 * Checks if the passed in value is an array
+		 * @param {*} val
+		 * @return {boolean}
+		 */
+		exports.isArray = Array.isArray /* istanbul ignore next */|| function(val) {
+		  return objectToString(val) === '[object Array]'
+		}
+
+		// taken from underscore source to account for browser descrepency
+		/* istanbul ignore if  */
+		if (typeof /./ != 'function' && typeof Int8Array != 'object') {
+		  /**
+		   * Checks if the passed in value is a function
+		   * @param {*} val
+		   * @return {boolean}
+		   */
+		  exports.isFunction = function(obj) {
+		    return typeof obj == 'function' || false
+		  }
+		} else {
+		  /**
+		   * Checks if the passed in value is a function
+		   * @param {*} val
+		   * @return {boolean}
+		   */
+		  exports.isFunction = function(val) {
+		    return toString.call(val) === '[object Function]'
+		  }
+		}
+
+		/**
+		 * Checks if the passed in value is af type Object
+		 * @param {*} val
+		 * @return {boolean}
+		 */
+		exports.isObject = function(obj) {
+		  var type = typeof obj
+		  return type === 'function' || type === 'object' && !!obj
+		}
+
+		/**
+		 * Extends an object with the properties of additional objects
+		 * @param {object} obj
+		 * @param {object} objects
+		 * @return {object}
+		 */
+		exports.extend = function(obj) {
+		  var length = arguments.length
+
+		  if (!obj || length < 2) return obj || {}
+
+		  for (var index = 1; index < length; index++) {
+		    var source = arguments[index]
+		    var keys = Object.keys(source)
+		    var l = keys.length
+
+		    for (var i = 0; i < l; i++) {
+		      var key = keys[i]
+		      obj[key] = source[key]
+		    }
+		  }
+
+		  return obj
+		}
+
+		/**
+		 * Creates a shallow clone of an object
+		 * @param {object} obj
+		 * @return {object}
+		 */
+		exports.clone = function(obj) {
+		  if (!exports.isObject(obj)) return obj
+		  return exports.isArray(obj) ? obj.slice() : exports.extend({}, obj)
+		}
+
+		/**
+		 * Iterates over a collection of elements yielding each iteration to an
+		 * iteratee. The iteratee may be bound to the context argument and is invoked
+		 * each time with three arguments (value, index|key, collection). Iteration may
+		 * be exited early by explicitly returning false.
+		 * @param {array|object|string} collection
+		 * @param {function} iteratee
+		 * @param {*} context
+		 * @return {array|object|string}
+		 */
+		exports.each = function(collection, iteratee, context) {
+		  var length = collection ? collection.length : 0
+		  var i = -1
+		  var keys, origIteratee
+
+		  if (context) {
+		    origIteratee = iteratee
+		    iteratee = function(value, index, collection) {
+		      return origIteratee.call(context, value, index, collection)
+		    }
+		  }
+
+		  if (isLength(length)) {
+		    while (++i < length) {
+		      if (iteratee(collection[i], i, collection) === false) break
+		    }
+		  } else {
+		    keys = Object.keys(collection)
+		    length = keys.length
+		    while (++i < length) {
+		      if (iteratee(collection[keys[i]], keys[i], collection) === false) break
+		    }
+		  }
+
+		  return collection
+		}
+
+		/**
+		 * Returns a new function the invokes `func` with `partialArgs` prepended to
+		 * any passed into the new function. Acts like `Array.prototype.bind`, except
+		 * it does not alter `this` context.
+		 * @param {function} func
+		 * @param {*} partialArgs
+		 * @return {function}
+		 */
+		exports.partial = function(func) {
+		  var slice = Array.prototype.slice
+		  var partialArgs = slice.call(arguments, 1)
+
+		  return function() {
+		    return func.apply(this, partialArgs.concat(slice.call(arguments)))
+		  }
+		}
+
+		/**
+		 * Returns the text value representation of an object
+		 * @private
+		 * @param {*} obj
+		 * @return {string}
+		 */
+		function objectToString(obj) {
+		  return obj && typeof obj == 'object' && toString.call(obj)
+		}
+
+		/**
+		 * Checks if the value is a valid array-like length.
+		 * @private
+		 * @param {*} val
+		 * @return {bool}
+		 */
+		function isLength(val) {
+		  return typeof val == 'number'
+		    && val > -1
+		    && val % 1 == 0
+		    && val <= Number.MAX_VALUE
+		}
+
+
+	/***/ },
+	/* 9 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		/**
+		 * Wraps a Reactor.react invocation in a console.group
+		*/
+		exports.dispatchStart = function(type, payload) {
+		  if (console.group) {
+		    console.groupCollapsed('Dispatch: %s', type)
+		    console.group('payload')
+		    console.debug(payload)
+		    console.groupEnd()
+		  }
+		}
+
+		exports.dispatchError = function(error) {
+		  if (console.group) {
+		    console.debug('Dispatch error: ' + error)
+		    console.groupEnd()
+		  }
+		}
+
+		exports.storeHandled = function(id, before, after) {
+		  if (console.group) {
+		    if (before !== after) {
+		      console.debug('Core changed: ' + id)
+		    }
+		  }
+		}
+
+		exports.dispatchEnd = function(state) {
+		  if (console.group) {
+		    console.debug('Dispatch done, new state: ', state.toJS())
+		    console.groupEnd()
+		  }
+		}
+
+
+	/***/ },
+	/* 10 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var Immutable = __webpack_require__(7)
+		var hashCode = __webpack_require__(12)
+		var isEqual = __webpack_require__(13)
+
+		/**
+		 * ChangeObserver is an object that contains a set of subscriptions
+		 * to changes for keyPaths on a reactor
+		 *
+		 * Packaging the handlers together allows for easier cleanup
+		 */
+
+		  /**
+		   * @param {Immutable.Map} initialState
+		   * @param {Evaluator} evaluator
+		   */
+		  function ChangeObserver(initialState, evaluator) {"use strict";
+		    this.__prevState = initialState
+		    this.__evaluator = evaluator
+		    this.__prevValues = Immutable.Map()
+		    this.__observers = []
+		  }
+
+		  /**
+		   * @param {Immutable.Map} newState
+		   */
+		  ChangeObserver.prototype.notifyObservers=function(newState) {"use strict";
+		    if (this.__observers.length > 0) {
+		      var currentValues = Immutable.Map()
+
+		      this.__observers.forEach(function(entry)  {
+		        var getter = entry.getter
+		        var code = hashCode(getter)
+		        var prevState = this.__prevState
+		        var prevValue
+
+		        if (this.__prevValues.has(code)) {
+		          prevValue = this.__prevValues.get(code)
+		        } else {
+		          prevValue = this.__evaluator.evaluate(prevState, getter)
+		          this.__prevValues = this.__prevValues.set(code, prevValue)
+		        }
+
+		        var currValue = this.__evaluator.evaluate(newState, getter)
+
+		        if (!isEqual(prevValue, currValue)) {
+		          entry.handler.call(null, currValue)
+		          currentValues = currentValues.set(code, currValue)
+		        }
+		      }.bind(this))
+
+		      this.__prevValues = currentValues
+		    }
+		    this.__prevState = newState
+		  };
+
+		  /**
+		   * Specify an getter and a change handler fn
+		   * Handler function is called whenever the value of the getter changes
+		   * @param {Getter} getter
+		   * @param {function} handler
+		   * @return {function} unwatch function
+		   */
+		  ChangeObserver.prototype.onChange=function(getter, handler) {"use strict";
+		    // TODO make observers a map of <Getter> => { handlers }
+		    var entry = {
+		      getter: getter,
+		      handler: handler,
+		    }
+		    this.__observers.push(entry)
+		    // return unwatch function
+		    return function()  {
+		      // TODO untrack from change emitter
+		      var ind  = this.__observers.indexOf(entry)
+		      if (ind > -1) {
+		        this.__observers.splice(ind, 1)
+		      }
+		    }.bind(this)
+		  };
+
+		  /**
+		   * Resets and clears all observers and reinitializes back to the supplied
+		   * previous state
+		   * @param {Immutable.Map} prevState
+		   *
+		   */
+		  ChangeObserver.prototype.reset=function(prevState) {"use strict";
+		    this.__prevState = prevState
+		    this.__prevValues = Immutable.Map()
+		    this.__observers = []
+		  };
+
+
+		module.exports = ChangeObserver
+
+
+	/***/ },
 	/* 11 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Immutable = __webpack_require__(10)
+		var Immutable = __webpack_require__(7)
+		var toImmutable = __webpack_require__(1).toImmutable
+		var hashCode = __webpack_require__(12)
+		var isEqual = __webpack_require__(13)
+		var getComputeFn = __webpack_require__(5).getComputeFn
+		var getDeps = __webpack_require__(5).getDeps
+		var isKeyPath = __webpack_require__(4).isKeyPath
 		var isGetter = __webpack_require__(5).isGetter
+
+		// Keep track of whether we are currently executing a Getter's computeFn
+		var __applyingComputeFn = false;
+
+
+		  function Evaluator() {"use strict";
+		    /**
+		     * {
+		     *   <hashCode>: {
+		     *     stateHashCode: number,
+		     *     args: Immutable.List,
+		     *     value: any,
+		     *   }
+		     * }
+		     */
+		    this.__cachedGetters = Immutable.Map({})
+		  }
+
+		  /**
+		   * Takes either a KeyPath or Getter and evaluates
+		   *
+		   * KeyPath form:
+		   * ['foo', 'bar'] => state.getIn(['foo', 'bar'])
+		   *
+		   * Getter form:
+		   * [<KeyPath>, <KeyPath>, ..., <function>]
+		   *
+		   * @param {Immutable.Map} state
+		   * @param {string|array} getter
+		   * @return {any}
+		   */
+		  Evaluator.prototype.evaluate=function(state, keyPathOrGetter) {"use strict";
+		    if (isKeyPath(keyPathOrGetter)) {
+		      // if its a keyPath simply return
+		      return state.getIn(keyPathOrGetter)
+		    } else if (!isGetter(keyPathOrGetter)) {
+		      throw new Error("evaluate must be passed a keyPath or Getter")
+		    }
+
+		    // Must be a Getter
+		    var code = hashCode(keyPathOrGetter)
+
+		    // if the value is cached for this dispatch cycle, return the cached value
+		    if (this.__isCached(state, keyPathOrGetter)) {
+		      // Cache hit
+		      return this.__cachedGetters.getIn([code, 'value'])
+
+		    }
+
+		    // evaluate dependencies
+		    var args = getDeps(keyPathOrGetter).map(function(dep)  {return this.evaluate(state, dep);}.bind(this))
+
+		    if (this.__hasStaleValue(state, keyPathOrGetter)) {
+		      // getter deps could still be unchanged since we only looked at the unwrapped (keypath, bottom level) deps
+		      var prevArgs = this.__cachedGetters.getIn([code, 'args'])
+
+		      // since Getter is a pure functions if the args are the same its a cache hit
+		      if (isEqual(prevArgs, toImmutable(args))) {
+		        var prevValue = this.__cachedGetters.getIn([code, 'value'])
+		        this.__cacheValue(state, keyPathOrGetter, prevArgs, prevValue)
+		        return prevValue
+		      }
+		    }
+
+		    // This indicates that we have called evaluate within the body of a computeFn.
+		    // Throw an error as this will lead to inconsistent caching
+		    if (__applyingComputeFn === true) {
+		      __applyingComputeFn = false
+		      throw new Error("Evaluate may not be called within a Getters computeFn")
+		    }
+
+		    __applyingComputeFn = true
+		    var evaluatedValue = getComputeFn(keyPathOrGetter).apply(null, args)
+		    __applyingComputeFn = false
+
+		    this.__cacheValue(state, keyPathOrGetter, args, evaluatedValue)
+
+		    return evaluatedValue
+		  };
+
+		  /**
+		   * @param {Immutable.Map} state
+		   * @param {Getter} getter
+		   */
+		  Evaluator.prototype.__hasStaleValue=function(state, getter) {"use strict";
+		    var code = hashCode(getter)
+		    var cache = this.__cachedGetters
+		    return (
+		      cache.has(code) &&
+		      cache.getIn([code, 'stateHashCode']) !== state.hashCode()
+		    )
+		  };
+
+		  /**
+		   * Caches the value of a getter given state, getter, args, value
+		   * @param {Immutable.Map} state
+		   * @param {Getter} getter
+		   * @param {Array} args
+		   * @param {any} value
+		   */
+		  Evaluator.prototype.__cacheValue=function(state, getter, args, value) {"use strict";
+		    var code = hashCode(getter)
+		    this.__cachedGetters = this.__cachedGetters.set(code, Immutable.Map({
+		      value: value,
+		      args: toImmutable(args),
+		      stateHashCode: state.hashCode(),
+		    }))
+		  };
+
+		  /**
+		   * Returns boolean whether the supplied getter is cached for a given state
+		   * @param {Immutable.Map} state
+		   * @param {Getter} getter
+		   * @return {boolean}
+		   */
+		  Evaluator.prototype.__isCached=function(state, getter) {"use strict";
+		    var code = hashCode(getter)
+		    return (
+		      this.__cachedGetters.hasIn([code, 'value']) &&
+		      this.__cachedGetters.getIn([code, 'stateHashCode']) === state.hashCode()
+		    )
+		  };
+
+		  /**
+		   * Removes all caching about a getter
+		   * @param {Getter}
+		   */
+		  Evaluator.prototype.untrack=function(getter) {"use strict";
+		    // TODO untrack all depedencies
+		  };
+
+		  Evaluator.prototype.reset=function() {"use strict";
+		    this.__cachedGetters = Immutable.Map({})
+		  };
+
+
+		module.exports = Evaluator
+
+
+	/***/ },
+	/* 12 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var Immutable = __webpack_require__(7)
 
 		/**
 		 * Takes a getter and returns the hash code value
@@ -5573,10 +5752,6 @@
 		module.exports = function(getter, dontCache) {
 		  if (getter.hasOwnProperty('__hashCode')) {
 		    return getter.__hashCode
-		  }
-
-		  if (!isGetter(getter)) {
-		    throw new Error("Invalid getter!  Must be of the form: [<KeyPath>, ...<KeyPath>, <function>]")
 		  }
 
 		  var hashCode = Immutable.fromJS(getter).hashCode()
@@ -5597,10 +5772,10 @@
 
 
 	/***/ },
-	/* 12 */
+	/* 13 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Immutable = __webpack_require__(10)
+		var Immutable = __webpack_require__(7)
 		/**
 		 * Is equal by value check
 		 */
@@ -5609,7193 +5784,13 @@
 		}
 
 
-	/***/ },
-	/* 13 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
-		 * @license
-		 * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
-		 * Build: `lodash -o ./dist/lodash.compat.js`
-		 * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
-		 * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
-		 * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-		 * Available under MIT license <http://lodash.com/license>
-		 */
-		;(function() {
-
-		  /** Used as a safe reference for `undefined` in pre ES5 environments */
-		  var undefined;
-
-		  /** Used to pool arrays and objects used internally */
-		  var arrayPool = [],
-		      objectPool = [];
-
-		  /** Used to generate unique IDs */
-		  var idCounter = 0;
-
-		  /** Used internally to indicate various things */
-		  var indicatorObject = {};
-
-		  /** Used to prefix keys to avoid issues with `__proto__` and properties on `Object.prototype` */
-		  var keyPrefix = +new Date + '';
-
-		  /** Used as the size when optimizations are enabled for large arrays */
-		  var largeArraySize = 75;
-
-		  /** Used as the max size of the `arrayPool` and `objectPool` */
-		  var maxPoolSize = 40;
-
-		  /** Used to detect and test whitespace */
-		  var whitespace = (
-		    // whitespace
-		    ' \t\x0B\f\xA0\ufeff' +
-
-		    // line terminators
-		    '\n\r\u2028\u2029' +
-
-		    // unicode category "Zs" space separators
-		    '\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000'
-		  );
-
-		  /** Used to match empty string literals in compiled template source */
-		  var reEmptyStringLeading = /\b__p \+= '';/g,
-		      reEmptyStringMiddle = /\b(__p \+=) '' \+/g,
-		      reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g;
-
-		  /**
-		   * Used to match ES6 template delimiters
-		   * http://people.mozilla.org/~jorendorff/es6-draft.html#sec-literals-string-literals
-		   */
-		  var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
-
-		  /** Used to match regexp flags from their coerced string values */
-		  var reFlags = /\w*$/;
-
-		  /** Used to detected named functions */
-		  var reFuncName = /^\s*function[ \n\r\t]+\w/;
-
-		  /** Used to match "interpolate" template delimiters */
-		  var reInterpolate = /<%=([\s\S]+?)%>/g;
-
-		  /** Used to match leading whitespace and zeros to be removed */
-		  var reLeadingSpacesAndZeros = RegExp('^[' + whitespace + ']*0+(?=.$)');
-
-		  /** Used to ensure capturing order of template delimiters */
-		  var reNoMatch = /($^)/;
-
-		  /** Used to detect functions containing a `this` reference */
-		  var reThis = /\bthis\b/;
-
-		  /** Used to match unescaped characters in compiled string literals */
-		  var reUnescapedString = /['\n\r\t\u2028\u2029\\]/g;
-
-		  /** Used to assign default `context` object properties */
-		  var contextProps = [
-		    'Array', 'Boolean', 'Date', 'Error', 'Function', 'Math', 'Number', 'Object',
-		    'RegExp', 'String', '_', 'attachEvent', 'clearTimeout', 'isFinite', 'isNaN',
-		    'parseInt', 'setTimeout'
-		  ];
-
-		  /** Used to fix the JScript [[DontEnum]] bug */
-		  var shadowedProps = [
-		    'constructor', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
-		    'toLocaleString', 'toString', 'valueOf'
-		  ];
-
-		  /** Used to make template sourceURLs easier to identify */
-		  var templateCounter = 0;
-
-		  /** `Object#toString` result shortcuts */
-		  var argsClass = '[object Arguments]',
-		      arrayClass = '[object Array]',
-		      boolClass = '[object Boolean]',
-		      dateClass = '[object Date]',
-		      errorClass = '[object Error]',
-		      funcClass = '[object Function]',
-		      numberClass = '[object Number]',
-		      objectClass = '[object Object]',
-		      regexpClass = '[object RegExp]',
-		      stringClass = '[object String]';
-
-		  /** Used to identify object classifications that `_.clone` supports */
-		  var cloneableClasses = {};
-		  cloneableClasses[funcClass] = false;
-		  cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
-		  cloneableClasses[boolClass] = cloneableClasses[dateClass] =
-		  cloneableClasses[numberClass] = cloneableClasses[objectClass] =
-		  cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
-
-		  /** Used as an internal `_.debounce` options object */
-		  var debounceOptions = {
-		    'leading': false,
-		    'maxWait': 0,
-		    'trailing': false
-		  };
-
-		  /** Used as the property descriptor for `__bindData__` */
-		  var descriptor = {
-		    'configurable': false,
-		    'enumerable': false,
-		    'value': null,
-		    'writable': false
-		  };
-
-		  /** Used as the data object for `iteratorTemplate` */
-		  var iteratorData = {
-		    'args': '',
-		    'array': null,
-		    'bottom': '',
-		    'firstArg': '',
-		    'init': '',
-		    'keys': null,
-		    'loop': '',
-		    'shadowedProps': null,
-		    'support': null,
-		    'top': '',
-		    'useHas': false
-		  };
-
-		  /** Used to determine if values are of the language type Object */
-		  var objectTypes = {
-		    'boolean': false,
-		    'function': true,
-		    'object': true,
-		    'number': false,
-		    'string': false,
-		    'undefined': false
-		  };
-
-		  /** Used to escape characters for inclusion in compiled string literals */
-		  var stringEscapes = {
-		    '\\': '\\',
-		    "'": "'",
-		    '\n': 'n',
-		    '\r': 'r',
-		    '\t': 't',
-		    '\u2028': 'u2028',
-		    '\u2029': 'u2029'
-		  };
-
-		  /** Used as a reference to the global object */
-		  var root = (objectTypes[typeof window] && window) || this;
-
-		  /** Detect free variable `exports` */
-		  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
-
-		  /** Detect free variable `module` */
-		  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
-
-		  /** Detect the popular CommonJS extension `module.exports` */
-		  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
-
-		  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
-		  var freeGlobal = objectTypes[typeof global] && global;
-		  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
-		    root = freeGlobal;
-		  }
-
-		  /*--------------------------------------------------------------------------*/
-
-		  /**
-		   * The base implementation of `_.indexOf` without support for binary searches
-		   * or `fromIndex` constraints.
-		   *
-		   * @private
-		   * @param {Array} array The array to search.
-		   * @param {*} value The value to search for.
-		   * @param {number} [fromIndex=0] The index to search from.
-		   * @returns {number} Returns the index of the matched value or `-1`.
-		   */
-		  function baseIndexOf(array, value, fromIndex) {
-		    var index = (fromIndex || 0) - 1,
-		        length = array ? array.length : 0;
-
-		    while (++index < length) {
-		      if (array[index] === value) {
-		        return index;
-		      }
-		    }
-		    return -1;
-		  }
-
-		  /**
-		   * An implementation of `_.contains` for cache objects that mimics the return
-		   * signature of `_.indexOf` by returning `0` if the value is found, else `-1`.
-		   *
-		   * @private
-		   * @param {Object} cache The cache object to inspect.
-		   * @param {*} value The value to search for.
-		   * @returns {number} Returns `0` if `value` is found, else `-1`.
-		   */
-		  function cacheIndexOf(cache, value) {
-		    var type = typeof value;
-		    cache = cache.cache;
-
-		    if (type == 'boolean' || value == null) {
-		      return cache[value] ? 0 : -1;
-		    }
-		    if (type != 'number' && type != 'string') {
-		      type = 'object';
-		    }
-		    var key = type == 'number' ? value : keyPrefix + value;
-		    cache = (cache = cache[type]) && cache[key];
-
-		    return type == 'object'
-		      ? (cache && baseIndexOf(cache, value) > -1 ? 0 : -1)
-		      : (cache ? 0 : -1);
-		  }
-
-		  /**
-		   * Adds a given value to the corresponding cache object.
-		   *
-		   * @private
-		   * @param {*} value The value to add to the cache.
-		   */
-		  function cachePush(value) {
-		    var cache = this.cache,
-		        type = typeof value;
-
-		    if (type == 'boolean' || value == null) {
-		      cache[value] = true;
-		    } else {
-		      if (type != 'number' && type != 'string') {
-		        type = 'object';
-		      }
-		      var key = type == 'number' ? value : keyPrefix + value,
-		          typeCache = cache[type] || (cache[type] = {});
-
-		      if (type == 'object') {
-		        (typeCache[key] || (typeCache[key] = [])).push(value);
-		      } else {
-		        typeCache[key] = true;
-		      }
-		    }
-		  }
-
-		  /**
-		   * Used by `_.max` and `_.min` as the default callback when a given
-		   * collection is a string value.
-		   *
-		   * @private
-		   * @param {string} value The character to inspect.
-		   * @returns {number} Returns the code unit of given character.
-		   */
-		  function charAtCallback(value) {
-		    return value.charCodeAt(0);
-		  }
-
-		  /**
-		   * Used by `sortBy` to compare transformed `collection` elements, stable sorting
-		   * them in ascending order.
-		   *
-		   * @private
-		   * @param {Object} a The object to compare to `b`.
-		   * @param {Object} b The object to compare to `a`.
-		   * @returns {number} Returns the sort order indicator of `1` or `-1`.
-		   */
-		  function compareAscending(a, b) {
-		    var ac = a.criteria,
-		        bc = b.criteria,
-		        index = -1,
-		        length = ac.length;
-
-		    while (++index < length) {
-		      var value = ac[index],
-		          other = bc[index];
-
-		      if (value !== other) {
-		        if (value > other || typeof value == 'undefined') {
-		          return 1;
-		        }
-		        if (value < other || typeof other == 'undefined') {
-		          return -1;
-		        }
-		      }
-		    }
-		    // Fixes an `Array#sort` bug in the JS engine embedded in Adobe applications
-		    // that causes it, under certain circumstances, to return the same value for
-		    // `a` and `b`. See https://github.com/jashkenas/underscore/pull/1247
-		    //
-		    // This also ensures a stable sort in V8 and other engines.
-		    // See http://code.google.com/p/v8/issues/detail?id=90
-		    return a.index - b.index;
-		  }
-
-		  /**
-		   * Creates a cache object to optimize linear searches of large arrays.
-		   *
-		   * @private
-		   * @param {Array} [array=[]] The array to search.
-		   * @returns {null|Object} Returns the cache object or `null` if caching should not be used.
-		   */
-		  function createCache(array) {
-		    var index = -1,
-		        length = array.length,
-		        first = array[0],
-		        mid = array[(length / 2) | 0],
-		        last = array[length - 1];
-
-		    if (first && typeof first == 'object' &&
-		        mid && typeof mid == 'object' && last && typeof last == 'object') {
-		      return false;
-		    }
-		    var cache = getObject();
-		    cache['false'] = cache['null'] = cache['true'] = cache['undefined'] = false;
-
-		    var result = getObject();
-		    result.array = array;
-		    result.cache = cache;
-		    result.push = cachePush;
-
-		    while (++index < length) {
-		      result.push(array[index]);
-		    }
-		    return result;
-		  }
-
-		  /**
-		   * Used by `template` to escape characters for inclusion in compiled
-		   * string literals.
-		   *
-		   * @private
-		   * @param {string} match The matched character to escape.
-		   * @returns {string} Returns the escaped character.
-		   */
-		  function escapeStringChar(match) {
-		    return '\\' + stringEscapes[match];
-		  }
-
-		  /**
-		   * Gets an array from the array pool or creates a new one if the pool is empty.
-		   *
-		   * @private
-		   * @returns {Array} The array from the pool.
-		   */
-		  function getArray() {
-		    return arrayPool.pop() || [];
-		  }
-
-		  /**
-		   * Gets an object from the object pool or creates a new one if the pool is empty.
-		   *
-		   * @private
-		   * @returns {Object} The object from the pool.
-		   */
-		  function getObject() {
-		    return objectPool.pop() || {
-		      'array': null,
-		      'cache': null,
-		      'criteria': null,
-		      'false': false,
-		      'index': 0,
-		      'null': false,
-		      'number': null,
-		      'object': null,
-		      'push': null,
-		      'string': null,
-		      'true': false,
-		      'undefined': false,
-		      'value': null
-		    };
-		  }
-
-		  /**
-		   * Checks if `value` is a DOM node in IE < 9.
-		   *
-		   * @private
-		   * @param {*} value The value to check.
-		   * @returns {boolean} Returns `true` if the `value` is a DOM node, else `false`.
-		   */
-		  function isNode(value) {
-		    // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
-		    // methods that are `typeof` "string" and still can coerce nodes to strings
-		    return typeof value.toString != 'function' && typeof (value + '') == 'string';
-		  }
-
-		  /**
-		   * Releases the given array back to the array pool.
-		   *
-		   * @private
-		   * @param {Array} [array] The array to release.
-		   */
-		  function releaseArray(array) {
-		    array.length = 0;
-		    if (arrayPool.length < maxPoolSize) {
-		      arrayPool.push(array);
-		    }
-		  }
-
-		  /**
-		   * Releases the given object back to the object pool.
-		   *
-		   * @private
-		   * @param {Object} [object] The object to release.
-		   */
-		  function releaseObject(object) {
-		    var cache = object.cache;
-		    if (cache) {
-		      releaseObject(cache);
-		    }
-		    object.array = object.cache = object.criteria = object.object = object.number = object.string = object.value = null;
-		    if (objectPool.length < maxPoolSize) {
-		      objectPool.push(object);
-		    }
-		  }
-
-		  /**
-		   * Slices the `collection` from the `start` index up to, but not including,
-		   * the `end` index.
-		   *
-		   * Note: This function is used instead of `Array#slice` to support node lists
-		   * in IE < 9 and to ensure dense arrays are returned.
-		   *
-		   * @private
-		   * @param {Array|Object|string} collection The collection to slice.
-		   * @param {number} start The start index.
-		   * @param {number} end The end index.
-		   * @returns {Array} Returns the new array.
-		   */
-		  function slice(array, start, end) {
-		    start || (start = 0);
-		    if (typeof end == 'undefined') {
-		      end = array ? array.length : 0;
-		    }
-		    var index = -1,
-		        length = end - start || 0,
-		        result = Array(length < 0 ? 0 : length);
-
-		    while (++index < length) {
-		      result[index] = array[start + index];
-		    }
-		    return result;
-		  }
-
-		  /*--------------------------------------------------------------------------*/
-
-		  /**
-		   * Create a new `lodash` function using the given context object.
-		   *
-		   * @static
-		   * @memberOf _
-		   * @category Utilities
-		   * @param {Object} [context=root] The context object.
-		   * @returns {Function} Returns the `lodash` function.
-		   */
-		  function runInContext(context) {
-		    // Avoid issues with some ES3 environments that attempt to use values, named
-		    // after built-in constructors like `Object`, for the creation of literals.
-		    // ES5 clears this up by stating that literals must use built-in constructors.
-		    // See http://es5.github.io/#x11.1.5.
-		    context = context ? _.defaults(root.Object(), context, _.pick(root, contextProps)) : root;
-
-		    /** Native constructor references */
-		    var Array = context.Array,
-		        Boolean = context.Boolean,
-		        Date = context.Date,
-		        Error = context.Error,
-		        Function = context.Function,
-		        Math = context.Math,
-		        Number = context.Number,
-		        Object = context.Object,
-		        RegExp = context.RegExp,
-		        String = context.String,
-		        TypeError = context.TypeError;
-
-		    /**
-		     * Used for `Array` method references.
-		     *
-		     * Normally `Array.prototype` would suffice, however, using an array literal
-		     * avoids issues in Narwhal.
-		     */
-		    var arrayRef = [];
-
-		    /** Used for native method references */
-		    var errorProto = Error.prototype,
-		        objectProto = Object.prototype,
-		        stringProto = String.prototype;
-
-		    /** Used to restore the original `_` reference in `noConflict` */
-		    var oldDash = context._;
-
-		    /** Used to resolve the internal [[Class]] of values */
-		    var toString = objectProto.toString;
-
-		    /** Used to detect if a method is native */
-		    var reNative = RegExp('^' +
-		      String(toString)
-		        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-		        .replace(/toString| for [^\]]+/g, '.*?') + '$'
-		    );
-
-		    /** Native method shortcuts */
-		    var ceil = Math.ceil,
-		        clearTimeout = context.clearTimeout,
-		        floor = Math.floor,
-		        fnToString = Function.prototype.toString,
-		        getPrototypeOf = isNative(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-		        hasOwnProperty = objectProto.hasOwnProperty,
-		        push = arrayRef.push,
-		        propertyIsEnumerable = objectProto.propertyIsEnumerable,
-		        setTimeout = context.setTimeout,
-		        splice = arrayRef.splice,
-		        unshift = arrayRef.unshift;
-
-		    /** Used to set meta data on functions */
-		    var defineProperty = (function() {
-		      // IE 8 only accepts DOM elements
-		      try {
-		        var o = {},
-		            func = isNative(func = Object.defineProperty) && func,
-		            result = func(o, o, o) && func;
-		      } catch(e) { }
-		      return result;
-		    }());
-
-		    /* Native method shortcuts for methods with the same name as other `lodash` methods */
-		    var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate,
-		        nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray,
-		        nativeIsFinite = context.isFinite,
-		        nativeIsNaN = context.isNaN,
-		        nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys,
-		        nativeMax = Math.max,
-		        nativeMin = Math.min,
-		        nativeParseInt = context.parseInt,
-		        nativeRandom = Math.random;
-
-		    /** Used to lookup a built-in constructor by [[Class]] */
-		    var ctorByClass = {};
-		    ctorByClass[arrayClass] = Array;
-		    ctorByClass[boolClass] = Boolean;
-		    ctorByClass[dateClass] = Date;
-		    ctorByClass[funcClass] = Function;
-		    ctorByClass[objectClass] = Object;
-		    ctorByClass[numberClass] = Number;
-		    ctorByClass[regexpClass] = RegExp;
-		    ctorByClass[stringClass] = String;
-
-		    /** Used to avoid iterating non-enumerable properties in IE < 9 */
-		    var nonEnumProps = {};
-		    nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
-		    nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
-		    nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
-		    nonEnumProps[objectClass] = { 'constructor': true };
-
-		    (function() {
-		      var length = shadowedProps.length;
-		      while (length--) {
-		        var key = shadowedProps[length];
-		        for (var className in nonEnumProps) {
-		          if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], key)) {
-		            nonEnumProps[className][key] = false;
-		          }
-		        }
-		      }
-		    }());
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates a `lodash` object which wraps the given value to enable intuitive
-		     * method chaining.
-		     *
-		     * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
-		     * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`, `splice`,
-		     * and `unshift`
-		     *
-		     * Chaining is supported in custom builds as long as the `value` method is
-		     * implicitly or explicitly included in the build.
-		     *
-		     * The chainable wrapper functions are:
-		     * `after`, `assign`, `bind`, `bindAll`, `bindKey`, `chain`, `compact`,
-		     * `compose`, `concat`, `countBy`, `create`, `createCallback`, `curry`,
-		     * `debounce`, `defaults`, `defer`, `delay`, `difference`, `filter`, `flatten`,
-		     * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
-		     * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
-		     * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
-		     * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `pull`, `push`,
-		     * `range`, `reject`, `remove`, `rest`, `reverse`, `shuffle`, `slice`, `sort`,
-		     * `sortBy`, `splice`, `tap`, `throttle`, `times`, `toArray`, `transform`,
-		     * `union`, `uniq`, `unshift`, `unzip`, `values`, `where`, `without`, `wrap`,
-		     * and `zip`
-		     *
-		     * The non-chainable wrapper functions are:
-		     * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `findIndex`,
-		     * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `has`, `identity`,
-		     * `indexOf`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
-		     * `isEmpty`, `isEqual`, `isFinite`, `isFunction`, `isNaN`, `isNull`, `isNumber`,
-		     * `isObject`, `isPlainObject`, `isRegExp`, `isString`, `isUndefined`, `join`,
-		     * `lastIndexOf`, `mixin`, `noConflict`, `parseInt`, `pop`, `random`, `reduce`,
-		     * `reduceRight`, `result`, `shift`, `size`, `some`, `sortedIndex`, `runInContext`,
-		     * `template`, `unescape`, `uniqueId`, and `value`
-		     *
-		     * The wrapper functions `first` and `last` return wrapped values when `n` is
-		     * provided, otherwise they return unwrapped values.
-		     *
-		     * Explicit chaining can be enabled by using the `_.chain` method.
-		     *
-		     * @name _
-		     * @constructor
-		     * @category Chaining
-		     * @param {*} value The value to wrap in a `lodash` instance.
-		     * @returns {Object} Returns a `lodash` instance.
-		     * @example
-		     *
-		     * var wrapped = _([1, 2, 3]);
-		     *
-		     * // returns an unwrapped value
-		     * wrapped.reduce(function(sum, num) {
-		     *   return sum + num;
-		     * });
-		     * // => 6
-		     *
-		     * // returns a wrapped value
-		     * var squares = wrapped.map(function(num) {
-		     *   return num * num;
-		     * });
-		     *
-		     * _.isArray(squares);
-		     * // => false
-		     *
-		     * _.isArray(squares.value());
-		     * // => true
-		     */
-		    function lodash(value) {
-		      // don't wrap if already wrapped, even if wrapped by a different `lodash` constructor
-		      return (value && typeof value == 'object' && !isArray(value) && hasOwnProperty.call(value, '__wrapped__'))
-		       ? value
-		       : new lodashWrapper(value);
-		    }
-
-		    /**
-		     * A fast path for creating `lodash` wrapper objects.
-		     *
-		     * @private
-		     * @param {*} value The value to wrap in a `lodash` instance.
-		     * @param {boolean} chainAll A flag to enable chaining for all methods
-		     * @returns {Object} Returns a `lodash` instance.
-		     */
-		    function lodashWrapper(value, chainAll) {
-		      this.__chain__ = !!chainAll;
-		      this.__wrapped__ = value;
-		    }
-		    // ensure `new lodashWrapper` is an instance of `lodash`
-		    lodashWrapper.prototype = lodash.prototype;
-
-		    /**
-		     * An object used to flag environments features.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Object
-		     */
-		    var support = lodash.support = {};
-
-		    (function() {
-		      var ctor = function() { this.x = 1; },
-		          object = { '0': 1, 'length': 1 },
-		          props = [];
-
-		      ctor.prototype = { 'valueOf': 1, 'y': 1 };
-		      for (var key in new ctor) { props.push(key); }
-		      for (key in arguments) { }
-
-		      /**
-		       * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.argsClass = toString.call(arguments) == argsClass;
-
-		      /**
-		       * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
-
-		      /**
-		       * Detect if `name` or `message` properties of `Error.prototype` are
-		       * enumerable by default. (IE < 9, Safari < 5.1)
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
-
-		      /**
-		       * Detect if `prototype` properties are enumerable by default.
-		       *
-		       * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
-		       * (if the prototype or a property on the prototype has been set)
-		       * incorrectly sets a function's `prototype` property [[Enumerable]]
-		       * value to `true`.
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
-
-		      /**
-		       * Detect if functions can be decompiled by `Function#toString`
-		       * (all but PS3 and older Opera mobile browsers & avoided in Windows 8 apps).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.funcDecomp = !isNative(context.WinRTError) && reThis.test(runInContext);
-
-		      /**
-		       * Detect if `Function#name` is supported (all but IE).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.funcNames = typeof Function.name == 'string';
-
-		      /**
-		       * Detect if `arguments` object indexes are non-enumerable
-		       * (Firefox < 4, IE < 9, PhantomJS, Safari < 5.1).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.nonEnumArgs = key != 0;
-
-		      /**
-		       * Detect if properties shadowing those on `Object.prototype` are non-enumerable.
-		       *
-		       * In IE < 9 an objects own properties, shadowing non-enumerable ones, are
-		       * made non-enumerable as well (a.k.a the JScript [[DontEnum]] bug).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.nonEnumShadows = !/valueOf/.test(props);
-
-		      /**
-		       * Detect if own properties are iterated after inherited properties (all but IE < 9).
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.ownLast = props[0] != 'x';
-
-		      /**
-		       * Detect if `Array#shift` and `Array#splice` augment array-like objects correctly.
-		       *
-		       * Firefox < 10, IE compatibility mode, and IE < 9 have buggy Array `shift()`
-		       * and `splice()` functions that fail to remove the last element, `value[0]`,
-		       * of array-like objects even though the `length` property is set to `0`.
-		       * The `shift()` method is buggy in IE 8 compatibility mode, while `splice()`
-		       * is buggy regardless of mode in IE < 9 and buggy in compatibility mode in IE 9.
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
-
-		      /**
-		       * Detect lack of support for accessing string characters by index.
-		       *
-		       * IE < 8 can't access characters by index and IE 8 can only access
-		       * characters by index on string literals.
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      support.unindexedChars = ('x'[0] + Object('x')[0]) != 'xx';
-
-		      /**
-		       * Detect if a DOM node's [[Class]] is resolvable (all but IE < 9)
-		       * and that the JS engine errors when attempting to coerce an object to
-		       * a string without a `toString` function.
-		       *
-		       * @memberOf _.support
-		       * @type boolean
-		       */
-		      try {
-		        support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
-		      } catch(e) {
-		        support.nodeClass = true;
-		      }
-		    }(1));
-
-		    /**
-		     * By default, the template delimiters used by Lo-Dash are similar to those in
-		     * embedded Ruby (ERB). Change the following template settings to use alternative
-		     * delimiters.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Object
-		     */
-		    lodash.templateSettings = {
-
-		      /**
-		       * Used to detect `data` property values to be HTML-escaped.
-		       *
-		       * @memberOf _.templateSettings
-		       * @type RegExp
-		       */
-		      'escape': /<%-([\s\S]+?)%>/g,
-
-		      /**
-		       * Used to detect code to be evaluated.
-		       *
-		       * @memberOf _.templateSettings
-		       * @type RegExp
-		       */
-		      'evaluate': /<%([\s\S]+?)%>/g,
-
-		      /**
-		       * Used to detect `data` property values to inject.
-		       *
-		       * @memberOf _.templateSettings
-		       * @type RegExp
-		       */
-		      'interpolate': reInterpolate,
-
-		      /**
-		       * Used to reference the data object in the template text.
-		       *
-		       * @memberOf _.templateSettings
-		       * @type string
-		       */
-		      'variable': '',
-
-		      /**
-		       * Used to import variables into the compiled template.
-		       *
-		       * @memberOf _.templateSettings
-		       * @type Object
-		       */
-		      'imports': {
-
-		        /**
-		         * A reference to the `lodash` function.
-		         *
-		         * @memberOf _.templateSettings.imports
-		         * @type Function
-		         */
-		        '_': lodash
-		      }
-		    };
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * The template used to create iterator functions.
-		     *
-		     * @private
-		     * @param {Object} data The data object used to populate the text.
-		     * @returns {string} Returns the interpolated text.
-		     */
-		    var iteratorTemplate = function(obj) {
-
-		      var __p = 'var index, iterable = ' +
-		      (obj.firstArg) +
-		      ', result = ' +
-		      (obj.init) +
-		      ';\nif (!iterable) return result;\n' +
-		      (obj.top) +
-		      ';';
-		       if (obj.array) {
-		      __p += '\nvar length = iterable.length; index = -1;\nif (' +
-		      (obj.array) +
-		      ') {  ';
-		       if (support.unindexedChars) {
-		      __p += '\n  if (isString(iterable)) {\n    iterable = iterable.split(\'\')\n  }  ';
-		       }
-		      __p += '\n  while (++index < length) {\n    ' +
-		      (obj.loop) +
-		      ';\n  }\n}\nelse {  ';
-		       } else if (support.nonEnumArgs) {
-		      __p += '\n  var length = iterable.length; index = -1;\n  if (length && isArguments(iterable)) {\n    while (++index < length) {\n      index += \'\';\n      ' +
-		      (obj.loop) +
-		      ';\n    }\n  } else {  ';
-		       }
-
-		       if (support.enumPrototypes) {
-		      __p += '\n  var skipProto = typeof iterable == \'function\';\n  ';
-		       }
-
-		       if (support.enumErrorProps) {
-		      __p += '\n  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n  ';
-		       }
-
-		          var conditions = [];    if (support.enumPrototypes) { conditions.push('!(skipProto && index == "prototype")'); }    if (support.enumErrorProps)  { conditions.push('!(skipErrorProps && (index == "message" || index == "name"))'); }
-
-		       if (obj.useHas && obj.keys) {
-		      __p += '\n  var ownIndex = -1,\n      ownProps = objectTypes[typeof iterable] && keys(iterable),\n      length = ownProps ? ownProps.length : 0;\n\n  while (++ownIndex < length) {\n    index = ownProps[ownIndex];\n';
-		          if (conditions.length) {
-		      __p += '    if (' +
-		      (conditions.join(' && ')) +
-		      ') {\n  ';
-		       }
-		      __p +=
-		      (obj.loop) +
-		      ';    ';
-		       if (conditions.length) {
-		      __p += '\n    }';
-		       }
-		      __p += '\n  }  ';
-		       } else {
-		      __p += '\n  for (index in iterable) {\n';
-		          if (obj.useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }    if (conditions.length) {
-		      __p += '    if (' +
-		      (conditions.join(' && ')) +
-		      ') {\n  ';
-		       }
-		      __p +=
-		      (obj.loop) +
-		      ';    ';
-		       if (conditions.length) {
-		      __p += '\n    }';
-		       }
-		      __p += '\n  }    ';
-		       if (support.nonEnumShadows) {
-		      __p += '\n\n  if (iterable !== objectProto) {\n    var ctor = iterable.constructor,\n        isProto = iterable === (ctor && ctor.prototype),\n        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n        nonEnum = nonEnumProps[className];\n      ';
-		       for (k = 0; k < 7; k++) {
-		      __p += '\n    index = \'' +
-		      (obj.shadowedProps[k]) +
-		      '\';\n    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))';
-		              if (!obj.useHas) {
-		      __p += ' || (!nonEnum[index] && iterable[index] !== objectProto[index])';
-		       }
-		      __p += ') {\n      ' +
-		      (obj.loop) +
-		      ';\n    }      ';
-		       }
-		      __p += '\n  }    ';
-		       }
-
-		       }
-
-		       if (obj.array || support.nonEnumArgs) {
-		      __p += '\n}';
-		       }
-		      __p +=
-		      (obj.bottom) +
-		      ';\nreturn result';
-
-		      return __p
-		    };
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * The base implementation of `_.bind` that creates the bound function and
-		     * sets its meta data.
-		     *
-		     * @private
-		     * @param {Array} bindData The bind data array.
-		     * @returns {Function} Returns the new bound function.
-		     */
-		    function baseBind(bindData) {
-		      var func = bindData[0],
-		          partialArgs = bindData[2],
-		          thisArg = bindData[4];
-
-		      function bound() {
-		        // `Function#bind` spec
-		        // http://es5.github.io/#x15.3.4.5
-		        if (partialArgs) {
-		          // avoid `arguments` object deoptimizations by using `slice` instead
-		          // of `Array.prototype.slice.call` and not assigning `arguments` to a
-		          // variable as a ternary expression
-		          var args = slice(partialArgs);
-		          push.apply(args, arguments);
-		        }
-		        // mimic the constructor's `return` behavior
-		        // http://es5.github.io/#x13.2.2
-		        if (this instanceof bound) {
-		          // ensure `new bound` is an instance of `func`
-		          var thisBinding = baseCreate(func.prototype),
-		              result = func.apply(thisBinding, args || arguments);
-		          return isObject(result) ? result : thisBinding;
-		        }
-		        return func.apply(thisArg, args || arguments);
-		      }
-		      setBindData(bound, bindData);
-		      return bound;
-		    }
-
-		    /**
-		     * The base implementation of `_.clone` without argument juggling or support
-		     * for `thisArg` binding.
-		     *
-		     * @private
-		     * @param {*} value The value to clone.
-		     * @param {boolean} [isDeep=false] Specify a deep clone.
-		     * @param {Function} [callback] The function to customize cloning values.
-		     * @param {Array} [stackA=[]] Tracks traversed source objects.
-		     * @param {Array} [stackB=[]] Associates clones with source counterparts.
-		     * @returns {*} Returns the cloned value.
-		     */
-		    function baseClone(value, isDeep, callback, stackA, stackB) {
-		      if (callback) {
-		        var result = callback(value);
-		        if (typeof result != 'undefined') {
-		          return result;
-		        }
-		      }
-		      // inspect [[Class]]
-		      var isObj = isObject(value);
-		      if (isObj) {
-		        var className = toString.call(value);
-		        if (!cloneableClasses[className] || (!support.nodeClass && isNode(value))) {
-		          return value;
-		        }
-		        var ctor = ctorByClass[className];
-		        switch (className) {
-		          case boolClass:
-		          case dateClass:
-		            return new ctor(+value);
-
-		          case numberClass:
-		          case stringClass:
-		            return new ctor(value);
-
-		          case regexpClass:
-		            result = ctor(value.source, reFlags.exec(value));
-		            result.lastIndex = value.lastIndex;
-		            return result;
-		        }
-		      } else {
-		        return value;
-		      }
-		      var isArr = isArray(value);
-		      if (isDeep) {
-		        // check for circular references and return corresponding clone
-		        var initedStack = !stackA;
-		        stackA || (stackA = getArray());
-		        stackB || (stackB = getArray());
-
-		        var length = stackA.length;
-		        while (length--) {
-		          if (stackA[length] == value) {
-		            return stackB[length];
-		          }
-		        }
-		        result = isArr ? ctor(value.length) : {};
-		      }
-		      else {
-		        result = isArr ? slice(value) : assign({}, value);
-		      }
-		      // add array properties assigned by `RegExp#exec`
-		      if (isArr) {
-		        if (hasOwnProperty.call(value, 'index')) {
-		          result.index = value.index;
-		        }
-		        if (hasOwnProperty.call(value, 'input')) {
-		          result.input = value.input;
-		        }
-		      }
-		      // exit for shallow clone
-		      if (!isDeep) {
-		        return result;
-		      }
-		      // add the source value to the stack of traversed objects
-		      // and associate it with its clone
-		      stackA.push(value);
-		      stackB.push(result);
-
-		      // recursively populate clone (susceptible to call stack limits)
-		      (isArr ? baseEach : forOwn)(value, function(objValue, key) {
-		        result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
-		      });
-
-		      if (initedStack) {
-		        releaseArray(stackA);
-		        releaseArray(stackB);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The base implementation of `_.create` without support for assigning
-		     * properties to the created object.
-		     *
-		     * @private
-		     * @param {Object} prototype The object to inherit from.
-		     * @returns {Object} Returns the new object.
-		     */
-		    function baseCreate(prototype, properties) {
-		      return isObject(prototype) ? nativeCreate(prototype) : {};
-		    }
-		    // fallback for browsers without `Object.create`
-		    if (!nativeCreate) {
-		      baseCreate = (function() {
-		        function Object() {}
-		        return function(prototype) {
-		          if (isObject(prototype)) {
-		            Object.prototype = prototype;
-		            var result = new Object;
-		            Object.prototype = null;
-		          }
-		          return result || context.Object();
-		        };
-		      }());
-		    }
-
-		    /**
-		     * The base implementation of `_.createCallback` without support for creating
-		     * "_.pluck" or "_.where" style callbacks.
-		     *
-		     * @private
-		     * @param {*} [func=identity] The value to convert to a callback.
-		     * @param {*} [thisArg] The `this` binding of the created callback.
-		     * @param {number} [argCount] The number of arguments the callback accepts.
-		     * @returns {Function} Returns a callback function.
-		     */
-		    function baseCreateCallback(func, thisArg, argCount) {
-		      if (typeof func != 'function') {
-		        return identity;
-		      }
-		      // exit early for no `thisArg` or already bound by `Function#bind`
-		      if (typeof thisArg == 'undefined' || !('prototype' in func)) {
-		        return func;
-		      }
-		      var bindData = func.__bindData__;
-		      if (typeof bindData == 'undefined') {
-		        if (support.funcNames) {
-		          bindData = !func.name;
-		        }
-		        bindData = bindData || !support.funcDecomp;
-		        if (!bindData) {
-		          var source = fnToString.call(func);
-		          if (!support.funcNames) {
-		            bindData = !reFuncName.test(source);
-		          }
-		          if (!bindData) {
-		            // checks if `func` references the `this` keyword and stores the result
-		            bindData = reThis.test(source);
-		            setBindData(func, bindData);
-		          }
-		        }
-		      }
-		      // exit early if there are no `this` references or `func` is bound
-		      if (bindData === false || (bindData !== true && bindData[1] & 1)) {
-		        return func;
-		      }
-		      switch (argCount) {
-		        case 1: return function(value) {
-		          return func.call(thisArg, value);
-		        };
-		        case 2: return function(a, b) {
-		          return func.call(thisArg, a, b);
-		        };
-		        case 3: return function(value, index, collection) {
-		          return func.call(thisArg, value, index, collection);
-		        };
-		        case 4: return function(accumulator, value, index, collection) {
-		          return func.call(thisArg, accumulator, value, index, collection);
-		        };
-		      }
-		      return bind(func, thisArg);
-		    }
-
-		    /**
-		     * The base implementation of `createWrapper` that creates the wrapper and
-		     * sets its meta data.
-		     *
-		     * @private
-		     * @param {Array} bindData The bind data array.
-		     * @returns {Function} Returns the new function.
-		     */
-		    function baseCreateWrapper(bindData) {
-		      var func = bindData[0],
-		          bitmask = bindData[1],
-		          partialArgs = bindData[2],
-		          partialRightArgs = bindData[3],
-		          thisArg = bindData[4],
-		          arity = bindData[5];
-
-		      var isBind = bitmask & 1,
-		          isBindKey = bitmask & 2,
-		          isCurry = bitmask & 4,
-		          isCurryBound = bitmask & 8,
-		          key = func;
-
-		      function bound() {
-		        var thisBinding = isBind ? thisArg : this;
-		        if (partialArgs) {
-		          var args = slice(partialArgs);
-		          push.apply(args, arguments);
-		        }
-		        if (partialRightArgs || isCurry) {
-		          args || (args = slice(arguments));
-		          if (partialRightArgs) {
-		            push.apply(args, partialRightArgs);
-		          }
-		          if (isCurry && args.length < arity) {
-		            bitmask |= 16 & ~32;
-		            return baseCreateWrapper([func, (isCurryBound ? bitmask : bitmask & ~3), args, null, thisArg, arity]);
-		          }
-		        }
-		        args || (args = arguments);
-		        if (isBindKey) {
-		          func = thisBinding[key];
-		        }
-		        if (this instanceof bound) {
-		          thisBinding = baseCreate(func.prototype);
-		          var result = func.apply(thisBinding, args);
-		          return isObject(result) ? result : thisBinding;
-		        }
-		        return func.apply(thisBinding, args);
-		      }
-		      setBindData(bound, bindData);
-		      return bound;
-		    }
-
-		    /**
-		     * The base implementation of `_.difference` that accepts a single array
-		     * of values to exclude.
-		     *
-		     * @private
-		     * @param {Array} array The array to process.
-		     * @param {Array} [values] The array of values to exclude.
-		     * @returns {Array} Returns a new array of filtered values.
-		     */
-		    function baseDifference(array, values) {
-		      var index = -1,
-		          indexOf = getIndexOf(),
-		          length = array ? array.length : 0,
-		          isLarge = length >= largeArraySize && indexOf === baseIndexOf,
-		          result = [];
-
-		      if (isLarge) {
-		        var cache = createCache(values);
-		        if (cache) {
-		          indexOf = cacheIndexOf;
-		          values = cache;
-		        } else {
-		          isLarge = false;
-		        }
-		      }
-		      while (++index < length) {
-		        var value = array[index];
-		        if (indexOf(values, value) < 0) {
-		          result.push(value);
-		        }
-		      }
-		      if (isLarge) {
-		        releaseObject(values);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The base implementation of `_.flatten` without support for callback
-		     * shorthands or `thisArg` binding.
-		     *
-		     * @private
-		     * @param {Array} array The array to flatten.
-		     * @param {boolean} [isShallow=false] A flag to restrict flattening to a single level.
-		     * @param {boolean} [isStrict=false] A flag to restrict flattening to arrays and `arguments` objects.
-		     * @param {number} [fromIndex=0] The index to start from.
-		     * @returns {Array} Returns a new flattened array.
-		     */
-		    function baseFlatten(array, isShallow, isStrict, fromIndex) {
-		      var index = (fromIndex || 0) - 1,
-		          length = array ? array.length : 0,
-		          result = [];
-
-		      while (++index < length) {
-		        var value = array[index];
-
-		        if (value && typeof value == 'object' && typeof value.length == 'number'
-		            && (isArray(value) || isArguments(value))) {
-		          // recursively flatten arrays (susceptible to call stack limits)
-		          if (!isShallow) {
-		            value = baseFlatten(value, isShallow, isStrict);
-		          }
-		          var valIndex = -1,
-		              valLength = value.length,
-		              resIndex = result.length;
-
-		          result.length += valLength;
-		          while (++valIndex < valLength) {
-		            result[resIndex++] = value[valIndex];
-		          }
-		        } else if (!isStrict) {
-		          result.push(value);
-		        }
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The base implementation of `_.isEqual`, without support for `thisArg` binding,
-		     * that allows partial "_.where" style comparisons.
-		     *
-		     * @private
-		     * @param {*} a The value to compare.
-		     * @param {*} b The other value to compare.
-		     * @param {Function} [callback] The function to customize comparing values.
-		     * @param {Function} [isWhere=false] A flag to indicate performing partial comparisons.
-		     * @param {Array} [stackA=[]] Tracks traversed `a` objects.
-		     * @param {Array} [stackB=[]] Tracks traversed `b` objects.
-		     * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
-		     */
-		    function baseIsEqual(a, b, callback, isWhere, stackA, stackB) {
-		      // used to indicate that when comparing objects, `a` has at least the properties of `b`
-		      if (callback) {
-		        var result = callback(a, b);
-		        if (typeof result != 'undefined') {
-		          return !!result;
-		        }
-		      }
-		      // exit early for identical values
-		      if (a === b) {
-		        // treat `+0` vs. `-0` as not equal
-		        return a !== 0 || (1 / a == 1 / b);
-		      }
-		      var type = typeof a,
-		          otherType = typeof b;
-
-		      // exit early for unlike primitive values
-		      if (a === a &&
-		          !(a && objectTypes[type]) &&
-		          !(b && objectTypes[otherType])) {
-		        return false;
-		      }
-		      // exit early for `null` and `undefined` avoiding ES3's Function#call behavior
-		      // http://es5.github.io/#x15.3.4.4
-		      if (a == null || b == null) {
-		        return a === b;
-		      }
-		      // compare [[Class]] names
-		      var className = toString.call(a),
-		          otherClass = toString.call(b);
-
-		      if (className == argsClass) {
-		        className = objectClass;
-		      }
-		      if (otherClass == argsClass) {
-		        otherClass = objectClass;
-		      }
-		      if (className != otherClass) {
-		        return false;
-		      }
-		      switch (className) {
-		        case boolClass:
-		        case dateClass:
-		          // coerce dates and booleans to numbers, dates to milliseconds and booleans
-		          // to `1` or `0` treating invalid dates coerced to `NaN` as not equal
-		          return +a == +b;
-
-		        case numberClass:
-		          // treat `NaN` vs. `NaN` as equal
-		          return (a != +a)
-		            ? b != +b
-		            // but treat `+0` vs. `-0` as not equal
-		            : (a == 0 ? (1 / a == 1 / b) : a == +b);
-
-		        case regexpClass:
-		        case stringClass:
-		          // coerce regexes to strings (http://es5.github.io/#x15.10.6.4)
-		          // treat string primitives and their corresponding object instances as equal
-		          return a == String(b);
-		      }
-		      var isArr = className == arrayClass;
-		      if (!isArr) {
-		        // unwrap any `lodash` wrapped values
-		        var aWrapped = hasOwnProperty.call(a, '__wrapped__'),
-		            bWrapped = hasOwnProperty.call(b, '__wrapped__');
-
-		        if (aWrapped || bWrapped) {
-		          return baseIsEqual(aWrapped ? a.__wrapped__ : a, bWrapped ? b.__wrapped__ : b, callback, isWhere, stackA, stackB);
-		        }
-		        // exit for functions and DOM nodes
-		        if (className != objectClass || (!support.nodeClass && (isNode(a) || isNode(b)))) {
-		          return false;
-		        }
-		        // in older versions of Opera, `arguments` objects have `Array` constructors
-		        var ctorA = !support.argsObject && isArguments(a) ? Object : a.constructor,
-		            ctorB = !support.argsObject && isArguments(b) ? Object : b.constructor;
-
-		        // non `Object` object instances with different constructors are not equal
-		        if (ctorA != ctorB &&
-		              !(isFunction(ctorA) && ctorA instanceof ctorA && isFunction(ctorB) && ctorB instanceof ctorB) &&
-		              ('constructor' in a && 'constructor' in b)
-		            ) {
-		          return false;
-		        }
-		      }
-		      // assume cyclic structures are equal
-		      // the algorithm for detecting cyclic structures is adapted from ES 5.1
-		      // section 15.12.3, abstract operation `JO` (http://es5.github.io/#x15.12.3)
-		      var initedStack = !stackA;
-		      stackA || (stackA = getArray());
-		      stackB || (stackB = getArray());
-
-		      var length = stackA.length;
-		      while (length--) {
-		        if (stackA[length] == a) {
-		          return stackB[length] == b;
-		        }
-		      }
-		      var size = 0;
-		      result = true;
-
-		      // add `a` and `b` to the stack of traversed objects
-		      stackA.push(a);
-		      stackB.push(b);
-
-		      // recursively compare objects and arrays (susceptible to call stack limits)
-		      if (isArr) {
-		        // compare lengths to determine if a deep comparison is necessary
-		        length = a.length;
-		        size = b.length;
-		        result = size == length;
-
-		        if (result || isWhere) {
-		          // deep compare the contents, ignoring non-numeric properties
-		          while (size--) {
-		            var index = length,
-		                value = b[size];
-
-		            if (isWhere) {
-		              while (index--) {
-		                if ((result = baseIsEqual(a[index], value, callback, isWhere, stackA, stackB))) {
-		                  break;
-		                }
-		              }
-		            } else if (!(result = baseIsEqual(a[size], value, callback, isWhere, stackA, stackB))) {
-		              break;
-		            }
-		          }
-		        }
-		      }
-		      else {
-		        // deep compare objects using `forIn`, instead of `forOwn`, to avoid `Object.keys`
-		        // which, in this case, is more costly
-		        forIn(b, function(value, key, b) {
-		          if (hasOwnProperty.call(b, key)) {
-		            // count the number of properties.
-		            size++;
-		            // deep compare each property value.
-		            return (result = hasOwnProperty.call(a, key) && baseIsEqual(a[key], value, callback, isWhere, stackA, stackB));
-		          }
-		        });
-
-		        if (result && !isWhere) {
-		          // ensure both objects have the same number of properties
-		          forIn(a, function(value, key, a) {
-		            if (hasOwnProperty.call(a, key)) {
-		              // `size` will be `-1` if `a` has more properties than `b`
-		              return (result = --size > -1);
-		            }
-		          });
-		        }
-		      }
-		      stackA.pop();
-		      stackB.pop();
-
-		      if (initedStack) {
-		        releaseArray(stackA);
-		        releaseArray(stackB);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The base implementation of `_.merge` without argument juggling or support
-		     * for `thisArg` binding.
-		     *
-		     * @private
-		     * @param {Object} object The destination object.
-		     * @param {Object} source The source object.
-		     * @param {Function} [callback] The function to customize merging properties.
-		     * @param {Array} [stackA=[]] Tracks traversed source objects.
-		     * @param {Array} [stackB=[]] Associates values with source counterparts.
-		     */
-		    function baseMerge(object, source, callback, stackA, stackB) {
-		      (isArray(source) ? forEach : forOwn)(source, function(source, key) {
-		        var found,
-		            isArr,
-		            result = source,
-		            value = object[key];
-
-		        if (source && ((isArr = isArray(source)) || isPlainObject(source))) {
-		          // avoid merging previously merged cyclic sources
-		          var stackLength = stackA.length;
-		          while (stackLength--) {
-		            if ((found = stackA[stackLength] == source)) {
-		              value = stackB[stackLength];
-		              break;
-		            }
-		          }
-		          if (!found) {
-		            var isShallow;
-		            if (callback) {
-		              result = callback(value, source);
-		              if ((isShallow = typeof result != 'undefined')) {
-		                value = result;
-		              }
-		            }
-		            if (!isShallow) {
-		              value = isArr
-		                ? (isArray(value) ? value : [])
-		                : (isPlainObject(value) ? value : {});
-		            }
-		            // add `source` and associated `value` to the stack of traversed objects
-		            stackA.push(source);
-		            stackB.push(value);
-
-		            // recursively merge objects and arrays (susceptible to call stack limits)
-		            if (!isShallow) {
-		              baseMerge(value, source, callback, stackA, stackB);
-		            }
-		          }
-		        }
-		        else {
-		          if (callback) {
-		            result = callback(value, source);
-		            if (typeof result == 'undefined') {
-		              result = source;
-		            }
-		          }
-		          if (typeof result != 'undefined') {
-		            value = result;
-		          }
-		        }
-		        object[key] = value;
-		      });
-		    }
-
-		    /**
-		     * The base implementation of `_.random` without argument juggling or support
-		     * for returning floating-point numbers.
-		     *
-		     * @private
-		     * @param {number} min The minimum possible value.
-		     * @param {number} max The maximum possible value.
-		     * @returns {number} Returns a random number.
-		     */
-		    function baseRandom(min, max) {
-		      return min + floor(nativeRandom() * (max - min + 1));
-		    }
-
-		    /**
-		     * The base implementation of `_.uniq` without support for callback shorthands
-		     * or `thisArg` binding.
-		     *
-		     * @private
-		     * @param {Array} array The array to process.
-		     * @param {boolean} [isSorted=false] A flag to indicate that `array` is sorted.
-		     * @param {Function} [callback] The function called per iteration.
-		     * @returns {Array} Returns a duplicate-value-free array.
-		     */
-		    function baseUniq(array, isSorted, callback) {
-		      var index = -1,
-		          indexOf = getIndexOf(),
-		          length = array ? array.length : 0,
-		          result = [];
-
-		      var isLarge = !isSorted && length >= largeArraySize && indexOf === baseIndexOf,
-		          seen = (callback || isLarge) ? getArray() : result;
-
-		      if (isLarge) {
-		        var cache = createCache(seen);
-		        indexOf = cacheIndexOf;
-		        seen = cache;
-		      }
-		      while (++index < length) {
-		        var value = array[index],
-		            computed = callback ? callback(value, index, array) : value;
-
-		        if (isSorted
-		              ? !index || seen[seen.length - 1] !== computed
-		              : indexOf(seen, computed) < 0
-		            ) {
-		          if (callback || isLarge) {
-		            seen.push(computed);
-		          }
-		          result.push(value);
-		        }
-		      }
-		      if (isLarge) {
-		        releaseArray(seen.array);
-		        releaseObject(seen);
-		      } else if (callback) {
-		        releaseArray(seen);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates a function that aggregates a collection, creating an object composed
-		     * of keys generated from the results of running each element of the collection
-		     * through a callback. The given `setter` function sets the keys and values
-		     * of the composed object.
-		     *
-		     * @private
-		     * @param {Function} setter The setter function.
-		     * @returns {Function} Returns the new aggregator function.
-		     */
-		    function createAggregator(setter) {
-		      return function(collection, callback, thisArg) {
-		        var result = {};
-		        callback = lodash.createCallback(callback, thisArg, 3);
-
-		        if (isArray(collection)) {
-		          var index = -1,
-		              length = collection.length;
-
-		          while (++index < length) {
-		            var value = collection[index];
-		            setter(result, value, callback(value, index, collection), collection);
-		          }
-		        } else {
-		          baseEach(collection, function(value, key, collection) {
-		            setter(result, value, callback(value, key, collection), collection);
-		          });
-		        }
-		        return result;
-		      };
-		    }
-
-		    /**
-		     * Creates a function that, when called, either curries or invokes `func`
-		     * with an optional `this` binding and partially applied arguments.
-		     *
-		     * @private
-		     * @param {Function|string} func The function or method name to reference.
-		     * @param {number} bitmask The bitmask of method flags to compose.
-		     *  The bitmask may be composed of the following flags:
-		     *  1 - `_.bind`
-		     *  2 - `_.bindKey`
-		     *  4 - `_.curry`
-		     *  8 - `_.curry` (bound)
-		     *  16 - `_.partial`
-		     *  32 - `_.partialRight`
-		     * @param {Array} [partialArgs] An array of arguments to prepend to those
-		     *  provided to the new function.
-		     * @param {Array} [partialRightArgs] An array of arguments to append to those
-		     *  provided to the new function.
-		     * @param {*} [thisArg] The `this` binding of `func`.
-		     * @param {number} [arity] The arity of `func`.
-		     * @returns {Function} Returns the new function.
-		     */
-		    function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, arity) {
-		      var isBind = bitmask & 1,
-		          isBindKey = bitmask & 2,
-		          isCurry = bitmask & 4,
-		          isCurryBound = bitmask & 8,
-		          isPartial = bitmask & 16,
-		          isPartialRight = bitmask & 32;
-
-		      if (!isBindKey && !isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      if (isPartial && !partialArgs.length) {
-		        bitmask &= ~16;
-		        isPartial = partialArgs = false;
-		      }
-		      if (isPartialRight && !partialRightArgs.length) {
-		        bitmask &= ~32;
-		        isPartialRight = partialRightArgs = false;
-		      }
-		      var bindData = func && func.__bindData__;
-		      if (bindData && bindData !== true) {
-		        // clone `bindData`
-		        bindData = slice(bindData);
-		        if (bindData[2]) {
-		          bindData[2] = slice(bindData[2]);
-		        }
-		        if (bindData[3]) {
-		          bindData[3] = slice(bindData[3]);
-		        }
-		        // set `thisBinding` is not previously bound
-		        if (isBind && !(bindData[1] & 1)) {
-		          bindData[4] = thisArg;
-		        }
-		        // set if previously bound but not currently (subsequent curried functions)
-		        if (!isBind && bindData[1] & 1) {
-		          bitmask |= 8;
-		        }
-		        // set curried arity if not yet set
-		        if (isCurry && !(bindData[1] & 4)) {
-		          bindData[5] = arity;
-		        }
-		        // append partial left arguments
-		        if (isPartial) {
-		          push.apply(bindData[2] || (bindData[2] = []), partialArgs);
-		        }
-		        // append partial right arguments
-		        if (isPartialRight) {
-		          unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
-		        }
-		        // merge flags
-		        bindData[1] |= bitmask;
-		        return createWrapper.apply(null, bindData);
-		      }
-		      // fast path for `_.bind`
-		      var creater = (bitmask == 1 || bitmask === 17) ? baseBind : baseCreateWrapper;
-		      return creater([func, bitmask, partialArgs, partialRightArgs, thisArg, arity]);
-		    }
-
-		    /**
-		     * Creates compiled iteration functions.
-		     *
-		     * @private
-		     * @param {...Object} [options] The compile options object(s).
-		     * @param {string} [options.array] Code to determine if the iterable is an array or array-like.
-		     * @param {boolean} [options.useHas] Specify using `hasOwnProperty` checks in the object loop.
-		     * @param {Function} [options.keys] A reference to `_.keys` for use in own property iteration.
-		     * @param {string} [options.args] A comma separated string of iteration function arguments.
-		     * @param {string} [options.top] Code to execute before the iteration branches.
-		     * @param {string} [options.loop] Code to execute in the object loop.
-		     * @param {string} [options.bottom] Code to execute after the iteration branches.
-		     * @returns {Function} Returns the compiled function.
-		     */
-		    function createIterator() {
-		      // data properties
-		      iteratorData.shadowedProps = shadowedProps;
-
-		      // iterator options
-		      iteratorData.array = iteratorData.bottom = iteratorData.loop = iteratorData.top = '';
-		      iteratorData.init = 'iterable';
-		      iteratorData.useHas = true;
-
-		      // merge options into a template data object
-		      for (var object, index = 0; object = arguments[index]; index++) {
-		        for (var key in object) {
-		          iteratorData[key] = object[key];
-		        }
-		      }
-		      var args = iteratorData.args;
-		      iteratorData.firstArg = /^[^,]+/.exec(args)[0];
-
-		      // create the function factory
-		      var factory = Function(
-		          'baseCreateCallback, errorClass, errorProto, hasOwnProperty, ' +
-		          'indicatorObject, isArguments, isArray, isString, keys, objectProto, ' +
-		          'objectTypes, nonEnumProps, stringClass, stringProto, toString',
-		        'return function(' + args + ') {\n' + iteratorTemplate(iteratorData) + '\n}'
-		      );
-
-		      // return the compiled function
-		      return factory(
-		        baseCreateCallback, errorClass, errorProto, hasOwnProperty,
-		        indicatorObject, isArguments, isArray, isString, iteratorData.keys, objectProto,
-		        objectTypes, nonEnumProps, stringClass, stringProto, toString
-		      );
-		    }
-
-		    /**
-		     * Used by `escape` to convert characters to HTML entities.
-		     *
-		     * @private
-		     * @param {string} match The matched character to escape.
-		     * @returns {string} Returns the escaped character.
-		     */
-		    function escapeHtmlChar(match) {
-		      return htmlEscapes[match];
-		    }
-
-		    /**
-		     * Gets the appropriate "indexOf" function. If the `_.indexOf` method is
-		     * customized, this method returns the custom method, otherwise it returns
-		     * the `baseIndexOf` function.
-		     *
-		     * @private
-		     * @returns {Function} Returns the "indexOf" function.
-		     */
-		    function getIndexOf() {
-		      var result = (result = lodash.indexOf) === indexOf ? baseIndexOf : result;
-		      return result;
-		    }
-
-		    /**
-		     * Checks if `value` is a native function.
-		     *
-		     * @private
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
-		     */
-		    function isNative(value) {
-		      return typeof value == 'function' && reNative.test(value);
-		    }
-
-		    /**
-		     * Sets `this` binding data on a given function.
-		     *
-		     * @private
-		     * @param {Function} func The function to set data on.
-		     * @param {Array} value The data array to set.
-		     */
-		    var setBindData = !defineProperty ? noop : function(func, value) {
-		      descriptor.value = value;
-		      defineProperty(func, '__bindData__', descriptor);
-		    };
-
-		    /**
-		     * A fallback implementation of `isPlainObject` which checks if a given value
-		     * is an object created by the `Object` constructor, assuming objects created
-		     * by the `Object` constructor have no inherited enumerable properties and that
-		     * there are no `Object.prototype` extensions.
-		     *
-		     * @private
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-		     */
-		    function shimIsPlainObject(value) {
-		      var ctor,
-		          result;
-
-		      // avoid non Object objects, `arguments` objects, and DOM elements
-		      if (!(value && toString.call(value) == objectClass) ||
-		          (ctor = value.constructor, isFunction(ctor) && !(ctor instanceof ctor)) ||
-		          (!support.argsClass && isArguments(value)) ||
-		          (!support.nodeClass && isNode(value))) {
-		        return false;
-		      }
-		      // IE < 9 iterates inherited properties before own properties. If the first
-		      // iterated property is an object's own property then there are no inherited
-		      // enumerable properties.
-		      if (support.ownLast) {
-		        forIn(value, function(value, key, object) {
-		          result = hasOwnProperty.call(object, key);
-		          return false;
-		        });
-		        return result !== false;
-		      }
-		      // In most environments an object's own properties are iterated before
-		      // its inherited properties. If the last iterated property is an object's
-		      // own property then there are no inherited enumerable properties.
-		      forIn(value, function(value, key) {
-		        result = key;
-		      });
-		      return typeof result == 'undefined' || hasOwnProperty.call(value, result);
-		    }
-
-		    /**
-		     * Used by `unescape` to convert HTML entities to characters.
-		     *
-		     * @private
-		     * @param {string} match The matched character to unescape.
-		     * @returns {string} Returns the unescaped character.
-		     */
-		    function unescapeHtmlChar(match) {
-		      return htmlUnescapes[match];
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Checks if `value` is an `arguments` object.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is an `arguments` object, else `false`.
-		     * @example
-		     *
-		     * (function() { return _.isArguments(arguments); })(1, 2, 3);
-		     * // => true
-		     *
-		     * _.isArguments([1, 2, 3]);
-		     * // => false
-		     */
-		    function isArguments(value) {
-		      return value && typeof value == 'object' && typeof value.length == 'number' &&
-		        toString.call(value) == argsClass || false;
-		    }
-		    // fallback for browsers that can't detect `arguments` objects by [[Class]]
-		    if (!support.argsClass) {
-		      isArguments = function(value) {
-		        return value && typeof value == 'object' && typeof value.length == 'number' &&
-		          hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee') || false;
-		      };
-		    }
-
-		    /**
-		     * Checks if `value` is an array.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
-		     * @example
-		     *
-		     * (function() { return _.isArray(arguments); })();
-		     * // => false
-		     *
-		     * _.isArray([1, 2, 3]);
-		     * // => true
-		     */
-		    var isArray = nativeIsArray || function(value) {
-		      return value && typeof value == 'object' && typeof value.length == 'number' &&
-		        toString.call(value) == arrayClass || false;
-		    };
-
-		    /**
-		     * A fallback implementation of `Object.keys` which produces an array of the
-		     * given object's own enumerable property names.
-		     *
-		     * @private
-		     * @type Function
-		     * @param {Object} object The object to inspect.
-		     * @returns {Array} Returns an array of property names.
-		     */
-		    var shimKeys = createIterator({
-		      'args': 'object',
-		      'init': '[]',
-		      'top': 'if (!(objectTypes[typeof object])) return result',
-		      'loop': 'result.push(index)'
-		    });
-
-		    /**
-		     * Creates an array composed of the own enumerable property names of an object.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to inspect.
-		     * @returns {Array} Returns an array of property names.
-		     * @example
-		     *
-		     * _.keys({ 'one': 1, 'two': 2, 'three': 3 });
-		     * // => ['one', 'two', 'three'] (property order is not guaranteed across environments)
-		     */
-		    var keys = !nativeKeys ? shimKeys : function(object) {
-		      if (!isObject(object)) {
-		        return [];
-		      }
-		      if ((support.enumPrototypes && typeof object == 'function') ||
-		          (support.nonEnumArgs && object.length && isArguments(object))) {
-		        return shimKeys(object);
-		      }
-		      return nativeKeys(object);
-		    };
-
-		    /** Reusable iterator options shared by `each`, `forIn`, and `forOwn` */
-		    var eachIteratorOptions = {
-		      'args': 'collection, callback, thisArg',
-		      'top': "callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3)",
-		      'array': "typeof length == 'number'",
-		      'keys': keys,
-		      'loop': 'if (callback(iterable[index], index, collection) === false) return result'
-		    };
-
-		    /** Reusable iterator options for `assign` and `defaults` */
-		    var defaultsIteratorOptions = {
-		      'args': 'object, source, guard',
-		      'top':
-		        'var args = arguments,\n' +
-		        '    argsIndex = 0,\n' +
-		        "    argsLength = typeof guard == 'number' ? 2 : args.length;\n" +
-		        'while (++argsIndex < argsLength) {\n' +
-		        '  iterable = args[argsIndex];\n' +
-		        '  if (iterable && objectTypes[typeof iterable]) {',
-		      'keys': keys,
-		      'loop': "if (typeof result[index] == 'undefined') result[index] = iterable[index]",
-		      'bottom': '  }\n}'
-		    };
-
-		    /** Reusable iterator options for `forIn` and `forOwn` */
-		    var forOwnIteratorOptions = {
-		      'top': 'if (!objectTypes[typeof iterable]) return result;\n' + eachIteratorOptions.top,
-		      'array': false
-		    };
-
-		    /**
-		     * Used to convert characters to HTML entities:
-		     *
-		     * Though the `>` character is escaped for symmetry, characters like `>` and `/`
-		     * don't require escaping in HTML and have no special meaning unless they're part
-		     * of a tag or an unquoted attribute value.
-		     * http://mathiasbynens.be/notes/ambiguous-ampersands (under "semi-related fun fact")
-		     */
-		    var htmlEscapes = {
-		      '&': '&amp;',
-		      '<': '&lt;',
-		      '>': '&gt;',
-		      '"': '&quot;',
-		      "'": '&#39;'
-		    };
-
-		    /** Used to convert HTML entities to characters */
-		    var htmlUnescapes = invert(htmlEscapes);
-
-		    /** Used to match HTML entities and HTML characters */
-		    var reEscapedHtml = RegExp('(' + keys(htmlUnescapes).join('|') + ')', 'g'),
-		        reUnescapedHtml = RegExp('[' + keys(htmlEscapes).join('') + ']', 'g');
-
-		    /**
-		     * A function compiled to iterate `arguments` objects, arrays, objects, and
-		     * strings consistenly across environments, executing the callback for each
-		     * element in the collection. The callback is bound to `thisArg` and invoked
-		     * with three arguments; (value, index|key, collection). Callbacks may exit
-		     * iteration early by explicitly returning `false`.
-		     *
-		     * @private
-		     * @type Function
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array|Object|string} Returns `collection`.
-		     */
-		    var baseEach = createIterator(eachIteratorOptions);
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Assigns own enumerable properties of source object(s) to the destination
-		     * object. Subsequent sources will overwrite property assignments of previous
-		     * sources. If a callback is provided it will be executed to produce the
-		     * assigned values. The callback is bound to `thisArg` and invoked with two
-		     * arguments; (objectValue, sourceValue).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @alias extend
-		     * @category Objects
-		     * @param {Object} object The destination object.
-		     * @param {...Object} [source] The source objects.
-		     * @param {Function} [callback] The function to customize assigning values.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns the destination object.
-		     * @example
-		     *
-		     * _.assign({ 'name': 'fred' }, { 'employer': 'slate' });
-		     * // => { 'name': 'fred', 'employer': 'slate' }
-		     *
-		     * var defaults = _.partialRight(_.assign, function(a, b) {
-		     *   return typeof a == 'undefined' ? b : a;
-		     * });
-		     *
-		     * var object = { 'name': 'barney' };
-		     * defaults(object, { 'name': 'fred', 'employer': 'slate' });
-		     * // => { 'name': 'barney', 'employer': 'slate' }
-		     */
-		    var assign = createIterator(defaultsIteratorOptions, {
-		      'top':
-		        defaultsIteratorOptions.top.replace(';',
-		          ';\n' +
-		          "if (argsLength > 3 && typeof args[argsLength - 2] == 'function') {\n" +
-		          '  var callback = baseCreateCallback(args[--argsLength - 1], args[argsLength--], 2);\n' +
-		          "} else if (argsLength > 2 && typeof args[argsLength - 1] == 'function') {\n" +
-		          '  callback = args[--argsLength];\n' +
-		          '}'
-		        ),
-		      'loop': 'result[index] = callback ? callback(result[index], iterable[index]) : iterable[index]'
-		    });
-
-		    /**
-		     * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
-		     * be cloned, otherwise they will be assigned by reference. If a callback
-		     * is provided it will be executed to produce the cloned values. If the
-		     * callback returns `undefined` cloning will be handled by the method instead.
-		     * The callback is bound to `thisArg` and invoked with one argument; (value).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to clone.
-		     * @param {boolean} [isDeep=false] Specify a deep clone.
-		     * @param {Function} [callback] The function to customize cloning values.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the cloned value.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * var shallow = _.clone(characters);
-		     * shallow[0] === characters[0];
-		     * // => true
-		     *
-		     * var deep = _.clone(characters, true);
-		     * deep[0] === characters[0];
-		     * // => false
-		     *
-		     * _.mixin({
-		     *   'clone': _.partialRight(_.clone, function(value) {
-		     *     return _.isElement(value) ? value.cloneNode(false) : undefined;
-		     *   })
-		     * });
-		     *
-		     * var clone = _.clone(document.body);
-		     * clone.childNodes.length;
-		     * // => 0
-		     */
-		    function clone(value, isDeep, callback, thisArg) {
-		      // allows working with "Collections" methods without using their `index`
-		      // and `collection` arguments for `isDeep` and `callback`
-		      if (typeof isDeep != 'boolean' && isDeep != null) {
-		        thisArg = callback;
-		        callback = isDeep;
-		        isDeep = false;
-		      }
-		      return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
-		    }
-
-		    /**
-		     * Creates a deep clone of `value`. If a callback is provided it will be
-		     * executed to produce the cloned values. If the callback returns `undefined`
-		     * cloning will be handled by the method instead. The callback is bound to
-		     * `thisArg` and invoked with one argument; (value).
-		     *
-		     * Note: This method is loosely based on the structured clone algorithm. Functions
-		     * and DOM nodes are **not** cloned. The enumerable properties of `arguments` objects and
-		     * objects created by constructors other than `Object` are cloned to plain `Object` objects.
-		     * See http://www.w3.org/TR/html5/infrastructure.html#internal-structured-cloning-algorithm.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to deep clone.
-		     * @param {Function} [callback] The function to customize cloning values.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the deep cloned value.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * var deep = _.cloneDeep(characters);
-		     * deep[0] === characters[0];
-		     * // => false
-		     *
-		     * var view = {
-		     *   'label': 'docs',
-		     *   'node': element
-		     * };
-		     *
-		     * var clone = _.cloneDeep(view, function(value) {
-		     *   return _.isElement(value) ? value.cloneNode(true) : undefined;
-		     * });
-		     *
-		     * clone.node == view.node;
-		     * // => false
-		     */
-		    function cloneDeep(value, callback, thisArg) {
-		      return baseClone(value, true, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
-		    }
-
-		    /**
-		     * Creates an object that inherits from the given `prototype` object. If a
-		     * `properties` object is provided its own enumerable properties are assigned
-		     * to the created object.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} prototype The object to inherit from.
-		     * @param {Object} [properties] The properties to assign to the object.
-		     * @returns {Object} Returns the new object.
-		     * @example
-		     *
-		     * function Shape() {
-		     *   this.x = 0;
-		     *   this.y = 0;
-		     * }
-		     *
-		     * function Circle() {
-		     *   Shape.call(this);
-		     * }
-		     *
-		     * Circle.prototype = _.create(Shape.prototype, { 'constructor': Circle });
-		     *
-		     * var circle = new Circle;
-		     * circle instanceof Circle;
-		     * // => true
-		     *
-		     * circle instanceof Shape;
-		     * // => true
-		     */
-		    function create(prototype, properties) {
-		      var result = baseCreate(prototype);
-		      return properties ? assign(result, properties) : result;
-		    }
-
-		    /**
-		     * Assigns own enumerable properties of source object(s) to the destination
-		     * object for all destination properties that resolve to `undefined`. Once a
-		     * property is set, additional defaults of the same property will be ignored.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Objects
-		     * @param {Object} object The destination object.
-		     * @param {...Object} [source] The source objects.
-		     * @param- {Object} [guard] Allows working with `_.reduce` without using its
-		     *  `key` and `object` arguments as sources.
-		     * @returns {Object} Returns the destination object.
-		     * @example
-		     *
-		     * var object = { 'name': 'barney' };
-		     * _.defaults(object, { 'name': 'fred', 'employer': 'slate' });
-		     * // => { 'name': 'barney', 'employer': 'slate' }
-		     */
-		    var defaults = createIterator(defaultsIteratorOptions);
-
-		    /**
-		     * This method is like `_.findIndex` except that it returns the key of the
-		     * first element that passes the callback check, instead of the element itself.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to search.
-		     * @param {Function|Object|string} [callback=identity] The function called per
-		     *  iteration. If a property name or object is provided it will be used to
-		     *  create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {string|undefined} Returns the key of the found element, else `undefined`.
-		     * @example
-		     *
-		     * var characters = {
-		     *   'barney': {  'age': 36, 'blocked': false },
-		     *   'fred': {    'age': 40, 'blocked': true },
-		     *   'pebbles': { 'age': 1,  'blocked': false }
-		     * };
-		     *
-		     * _.findKey(characters, function(chr) {
-		     *   return chr.age < 40;
-		     * });
-		     * // => 'barney' (property order is not guaranteed across environments)
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.findKey(characters, { 'age': 1 });
-		     * // => 'pebbles'
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.findKey(characters, 'blocked');
-		     * // => 'fred'
-		     */
-		    function findKey(object, callback, thisArg) {
-		      var result;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      forOwn(object, function(value, key, object) {
-		        if (callback(value, key, object)) {
-		          result = key;
-		          return false;
-		        }
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * This method is like `_.findKey` except that it iterates over elements
-		     * of a `collection` in the opposite order.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to search.
-		     * @param {Function|Object|string} [callback=identity] The function called per
-		     *  iteration. If a property name or object is provided it will be used to
-		     *  create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {string|undefined} Returns the key of the found element, else `undefined`.
-		     * @example
-		     *
-		     * var characters = {
-		     *   'barney': {  'age': 36, 'blocked': true },
-		     *   'fred': {    'age': 40, 'blocked': false },
-		     *   'pebbles': { 'age': 1,  'blocked': true }
-		     * };
-		     *
-		     * _.findLastKey(characters, function(chr) {
-		     *   return chr.age < 40;
-		     * });
-		     * // => returns `pebbles`, assuming `_.findKey` returns `barney`
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.findLastKey(characters, { 'age': 40 });
-		     * // => 'fred'
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.findLastKey(characters, 'blocked');
-		     * // => 'pebbles'
-		     */
-		    function findLastKey(object, callback, thisArg) {
-		      var result;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      forOwnRight(object, function(value, key, object) {
-		        if (callback(value, key, object)) {
-		          result = key;
-		          return false;
-		        }
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Iterates over own and inherited enumerable properties of an object,
-		     * executing the callback for each property. The callback is bound to `thisArg`
-		     * and invoked with three arguments; (value, key, object). Callbacks may exit
-		     * iteration early by explicitly returning `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Objects
-		     * @param {Object} object The object to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns `object`.
-		     * @example
-		     *
-		     * function Shape() {
-		     *   this.x = 0;
-		     *   this.y = 0;
-		     * }
-		     *
-		     * Shape.prototype.move = function(x, y) {
-		     *   this.x += x;
-		     *   this.y += y;
-		     * };
-		     *
-		     * _.forIn(new Shape, function(value, key) {
-		     *   console.log(key);
-		     * });
-		     * // => logs 'x', 'y', and 'move' (property order is not guaranteed across environments)
-		     */
-		    var forIn = createIterator(eachIteratorOptions, forOwnIteratorOptions, {
-		      'useHas': false
-		    });
-
-		    /**
-		     * This method is like `_.forIn` except that it iterates over elements
-		     * of a `collection` in the opposite order.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns `object`.
-		     * @example
-		     *
-		     * function Shape() {
-		     *   this.x = 0;
-		     *   this.y = 0;
-		     * }
-		     *
-		     * Shape.prototype.move = function(x, y) {
-		     *   this.x += x;
-		     *   this.y += y;
-		     * };
-		     *
-		     * _.forInRight(new Shape, function(value, key) {
-		     *   console.log(key);
-		     * });
-		     * // => logs 'move', 'y', and 'x' assuming `_.forIn ` logs 'x', 'y', and 'move'
-		     */
-		    function forInRight(object, callback, thisArg) {
-		      var pairs = [];
-
-		      forIn(object, function(value, key) {
-		        pairs.push(key, value);
-		      });
-
-		      var length = pairs.length;
-		      callback = baseCreateCallback(callback, thisArg, 3);
-		      while (length--) {
-		        if (callback(pairs[length--], pairs[length], object) === false) {
-		          break;
-		        }
-		      }
-		      return object;
-		    }
-
-		    /**
-		     * Iterates over own enumerable properties of an object, executing the callback
-		     * for each property. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, key, object). Callbacks may exit iteration early by
-		     * explicitly returning `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Objects
-		     * @param {Object} object The object to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns `object`.
-		     * @example
-		     *
-		     * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
-		     *   console.log(key);
-		     * });
-		     * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
-		     */
-		    var forOwn = createIterator(eachIteratorOptions, forOwnIteratorOptions);
-
-		    /**
-		     * This method is like `_.forOwn` except that it iterates over elements
-		     * of a `collection` in the opposite order.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns `object`.
-		     * @example
-		     *
-		     * _.forOwnRight({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
-		     *   console.log(key);
-		     * });
-		     * // => logs 'length', '1', and '0' assuming `_.forOwn` logs '0', '1', and 'length'
-		     */
-		    function forOwnRight(object, callback, thisArg) {
-		      var props = keys(object),
-		          length = props.length;
-
-		      callback = baseCreateCallback(callback, thisArg, 3);
-		      while (length--) {
-		        var key = props[length];
-		        if (callback(object[key], key, object) === false) {
-		          break;
-		        }
-		      }
-		      return object;
-		    }
-
-		    /**
-		     * Creates a sorted array of property names of all enumerable properties,
-		     * own and inherited, of `object` that have function values.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias methods
-		     * @category Objects
-		     * @param {Object} object The object to inspect.
-		     * @returns {Array} Returns an array of property names that have function values.
-		     * @example
-		     *
-		     * _.functions(_);
-		     * // => ['all', 'any', 'bind', 'bindAll', 'clone', 'compact', 'compose', ...]
-		     */
-		    function functions(object) {
-		      var result = [];
-		      forIn(object, function(value, key) {
-		        if (isFunction(value)) {
-		          result.push(key);
-		        }
-		      });
-		      return result.sort();
-		    }
-
-		    /**
-		     * Checks if the specified property name exists as a direct property of `object`,
-		     * instead of an inherited property.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to inspect.
-		     * @param {string} key The name of the property to check.
-		     * @returns {boolean} Returns `true` if key is a direct property, else `false`.
-		     * @example
-		     *
-		     * _.has({ 'a': 1, 'b': 2, 'c': 3 }, 'b');
-		     * // => true
-		     */
-		    function has(object, key) {
-		      return object ? hasOwnProperty.call(object, key) : false;
-		    }
-
-		    /**
-		     * Creates an object composed of the inverted keys and values of the given object.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to invert.
-		     * @returns {Object} Returns the created inverted object.
-		     * @example
-		     *
-		     * _.invert({ 'first': 'fred', 'second': 'barney' });
-		     * // => { 'fred': 'first', 'barney': 'second' }
-		     */
-		    function invert(object) {
-		      var index = -1,
-		          props = keys(object),
-		          length = props.length,
-		          result = {};
-
-		      while (++index < length) {
-		        var key = props[index];
-		        result[object[key]] = key;
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Checks if `value` is a boolean value.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a boolean value, else `false`.
-		     * @example
-		     *
-		     * _.isBoolean(null);
-		     * // => false
-		     */
-		    function isBoolean(value) {
-		      return value === true || value === false ||
-		        value && typeof value == 'object' && toString.call(value) == boolClass || false;
-		    }
-
-		    /**
-		     * Checks if `value` is a date.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a date, else `false`.
-		     * @example
-		     *
-		     * _.isDate(new Date);
-		     * // => true
-		     */
-		    function isDate(value) {
-		      return value && typeof value == 'object' && toString.call(value) == dateClass || false;
-		    }
-
-		    /**
-		     * Checks if `value` is a DOM element.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a DOM element, else `false`.
-		     * @example
-		     *
-		     * _.isElement(document.body);
-		     * // => true
-		     */
-		    function isElement(value) {
-		      return value && value.nodeType === 1 || false;
-		    }
-
-		    /**
-		     * Checks if `value` is empty. Arrays, strings, or `arguments` objects with a
-		     * length of `0` and objects with no own enumerable properties are considered
-		     * "empty".
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Array|Object|string} value The value to inspect.
-		     * @returns {boolean} Returns `true` if the `value` is empty, else `false`.
-		     * @example
-		     *
-		     * _.isEmpty([1, 2, 3]);
-		     * // => false
-		     *
-		     * _.isEmpty({});
-		     * // => true
-		     *
-		     * _.isEmpty('');
-		     * // => true
-		     */
-		    function isEmpty(value) {
-		      var result = true;
-		      if (!value) {
-		        return result;
-		      }
-		      var className = toString.call(value),
-		          length = value.length;
-
-		      if ((className == arrayClass || className == stringClass ||
-		          (support.argsClass ? className == argsClass : isArguments(value))) ||
-		          (className == objectClass && typeof length == 'number' && isFunction(value.splice))) {
-		        return !length;
-		      }
-		      forOwn(value, function() {
-		        return (result = false);
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Performs a deep comparison between two values to determine if they are
-		     * equivalent to each other. If a callback is provided it will be executed
-		     * to compare values. If the callback returns `undefined` comparisons will
-		     * be handled by the method instead. The callback is bound to `thisArg` and
-		     * invoked with two arguments; (a, b).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} a The value to compare.
-		     * @param {*} b The other value to compare.
-		     * @param {Function} [callback] The function to customize comparing values.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
-		     * @example
-		     *
-		     * var object = { 'name': 'fred' };
-		     * var copy = { 'name': 'fred' };
-		     *
-		     * object == copy;
-		     * // => false
-		     *
-		     * _.isEqual(object, copy);
-		     * // => true
-		     *
-		     * var words = ['hello', 'goodbye'];
-		     * var otherWords = ['hi', 'goodbye'];
-		     *
-		     * _.isEqual(words, otherWords, function(a, b) {
-		     *   var reGreet = /^(?:hello|hi)$/i,
-		     *       aGreet = _.isString(a) && reGreet.test(a),
-		     *       bGreet = _.isString(b) && reGreet.test(b);
-		     *
-		     *   return (aGreet || bGreet) ? (aGreet == bGreet) : undefined;
-		     * });
-		     * // => true
-		     */
-		    function isEqual(a, b, callback, thisArg) {
-		      return baseIsEqual(a, b, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 2));
-		    }
-
-		    /**
-		     * Checks if `value` is, or can be coerced to, a finite number.
-		     *
-		     * Note: This is not the same as native `isFinite` which will return true for
-		     * booleans and empty strings. See http://es5.github.io/#x15.1.2.5.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is finite, else `false`.
-		     * @example
-		     *
-		     * _.isFinite(-101);
-		     * // => true
-		     *
-		     * _.isFinite('10');
-		     * // => true
-		     *
-		     * _.isFinite(true);
-		     * // => false
-		     *
-		     * _.isFinite('');
-		     * // => false
-		     *
-		     * _.isFinite(Infinity);
-		     * // => false
-		     */
-		    function isFinite(value) {
-		      return nativeIsFinite(value) && !nativeIsNaN(parseFloat(value));
-		    }
-
-		    /**
-		     * Checks if `value` is a function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a function, else `false`.
-		     * @example
-		     *
-		     * _.isFunction(_);
-		     * // => true
-		     */
-		    function isFunction(value) {
-		      return typeof value == 'function';
-		    }
-		    // fallback for older versions of Chrome and Safari
-		    if (isFunction(/x/)) {
-		      isFunction = function(value) {
-		        return typeof value == 'function' && toString.call(value) == funcClass;
-		      };
-		    }
-
-		    /**
-		     * Checks if `value` is the language type of Object.
-		     * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is an object, else `false`.
-		     * @example
-		     *
-		     * _.isObject({});
-		     * // => true
-		     *
-		     * _.isObject([1, 2, 3]);
-		     * // => true
-		     *
-		     * _.isObject(1);
-		     * // => false
-		     */
-		    function isObject(value) {
-		      // check if the value is the ECMAScript language type of Object
-		      // http://es5.github.io/#x8
-		      // and avoid a V8 bug
-		      // http://code.google.com/p/v8/issues/detail?id=2291
-		      return !!(value && objectTypes[typeof value]);
-		    }
-
-		    /**
-		     * Checks if `value` is `NaN`.
-		     *
-		     * Note: This is not the same as native `isNaN` which will return `true` for
-		     * `undefined` and other non-numeric values. See http://es5.github.io/#x15.1.2.4.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is `NaN`, else `false`.
-		     * @example
-		     *
-		     * _.isNaN(NaN);
-		     * // => true
-		     *
-		     * _.isNaN(new Number(NaN));
-		     * // => true
-		     *
-		     * isNaN(undefined);
-		     * // => true
-		     *
-		     * _.isNaN(undefined);
-		     * // => false
-		     */
-		    function isNaN(value) {
-		      // `NaN` as a primitive is the only value that is not equal to itself
-		      // (perform the [[Class]] check first to avoid errors with some host objects in IE)
-		      return isNumber(value) && value != +value;
-		    }
-
-		    /**
-		     * Checks if `value` is `null`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is `null`, else `false`.
-		     * @example
-		     *
-		     * _.isNull(null);
-		     * // => true
-		     *
-		     * _.isNull(undefined);
-		     * // => false
-		     */
-		    function isNull(value) {
-		      return value === null;
-		    }
-
-		    /**
-		     * Checks if `value` is a number.
-		     *
-		     * Note: `NaN` is considered a number. See http://es5.github.io/#x8.5.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a number, else `false`.
-		     * @example
-		     *
-		     * _.isNumber(8.4 * 5);
-		     * // => true
-		     */
-		    function isNumber(value) {
-		      return typeof value == 'number' ||
-		        value && typeof value == 'object' && toString.call(value) == numberClass || false;
-		    }
-
-		    /**
-		     * Checks if `value` is an object created by the `Object` constructor.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
-		     * @example
-		     *
-		     * function Shape() {
-		     *   this.x = 0;
-		     *   this.y = 0;
-		     * }
-		     *
-		     * _.isPlainObject(new Shape);
-		     * // => false
-		     *
-		     * _.isPlainObject([1, 2, 3]);
-		     * // => false
-		     *
-		     * _.isPlainObject({ 'x': 0, 'y': 0 });
-		     * // => true
-		     */
-		    var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
-		      if (!(value && toString.call(value) == objectClass) || (!support.argsClass && isArguments(value))) {
-		        return false;
-		      }
-		      var valueOf = value.valueOf,
-		          objProto = isNative(valueOf) && (objProto = getPrototypeOf(valueOf)) && getPrototypeOf(objProto);
-
-		      return objProto
-		        ? (value == objProto || getPrototypeOf(value) == objProto)
-		        : shimIsPlainObject(value);
-		    };
-
-		    /**
-		     * Checks if `value` is a regular expression.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a regular expression, else `false`.
-		     * @example
-		     *
-		     * _.isRegExp(/fred/);
-		     * // => true
-		     */
-		    function isRegExp(value) {
-		      return value && objectTypes[typeof value] && toString.call(value) == regexpClass || false;
-		    }
-
-		    /**
-		     * Checks if `value` is a string.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is a string, else `false`.
-		     * @example
-		     *
-		     * _.isString('fred');
-		     * // => true
-		     */
-		    function isString(value) {
-		      return typeof value == 'string' ||
-		        value && typeof value == 'object' && toString.call(value) == stringClass || false;
-		    }
-
-		    /**
-		     * Checks if `value` is `undefined`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {*} value The value to check.
-		     * @returns {boolean} Returns `true` if the `value` is `undefined`, else `false`.
-		     * @example
-		     *
-		     * _.isUndefined(void 0);
-		     * // => true
-		     */
-		    function isUndefined(value) {
-		      return typeof value == 'undefined';
-		    }
-
-		    /**
-		     * Creates an object with the same keys as `object` and values generated by
-		     * running each own enumerable property of `object` through the callback.
-		     * The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, key, object).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new object with values of the results of each `callback` execution.
-		     * @example
-		     *
-		     * _.mapValues({ 'a': 1, 'b': 2, 'c': 3} , function(num) { return num * 3; });
-		     * // => { 'a': 3, 'b': 6, 'c': 9 }
-		     *
-		     * var characters = {
-		     *   'fred': { 'name': 'fred', 'age': 40 },
-		     *   'pebbles': { 'name': 'pebbles', 'age': 1 }
-		     * };
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.mapValues(characters, 'age');
-		     * // => { 'fred': 40, 'pebbles': 1 }
-		     */
-		    function mapValues(object, callback, thisArg) {
-		      var result = {};
-		      callback = lodash.createCallback(callback, thisArg, 3);
-
-		      forOwn(object, function(value, key, object) {
-		        result[key] = callback(value, key, object);
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Recursively merges own enumerable properties of the source object(s), that
-		     * don't resolve to `undefined` into the destination object. Subsequent sources
-		     * will overwrite property assignments of previous sources. If a callback is
-		     * provided it will be executed to produce the merged values of the destination
-		     * and source properties. If the callback returns `undefined` merging will
-		     * be handled by the method instead. The callback is bound to `thisArg` and
-		     * invoked with two arguments; (objectValue, sourceValue).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The destination object.
-		     * @param {...Object} [source] The source objects.
-		     * @param {Function} [callback] The function to customize merging properties.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns the destination object.
-		     * @example
-		     *
-		     * var names = {
-		     *   'characters': [
-		     *     { 'name': 'barney' },
-		     *     { 'name': 'fred' }
-		     *   ]
-		     * };
-		     *
-		     * var ages = {
-		     *   'characters': [
-		     *     { 'age': 36 },
-		     *     { 'age': 40 }
-		     *   ]
-		     * };
-		     *
-		     * _.merge(names, ages);
-		     * // => { 'characters': [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred', 'age': 40 }] }
-		     *
-		     * var food = {
-		     *   'fruits': ['apple'],
-		     *   'vegetables': ['beet']
-		     * };
-		     *
-		     * var otherFood = {
-		     *   'fruits': ['banana'],
-		     *   'vegetables': ['carrot']
-		     * };
-		     *
-		     * _.merge(food, otherFood, function(a, b) {
-		     *   return _.isArray(a) ? a.concat(b) : undefined;
-		     * });
-		     * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot] }
-		     */
-		    function merge(object) {
-		      var args = arguments,
-		          length = 2;
-
-		      if (!isObject(object)) {
-		        return object;
-		      }
-		      // allows working with `_.reduce` and `_.reduceRight` without using
-		      // their `index` and `collection` arguments
-		      if (typeof args[2] != 'number') {
-		        length = args.length;
-		      }
-		      if (length > 3 && typeof args[length - 2] == 'function') {
-		        var callback = baseCreateCallback(args[--length - 1], args[length--], 2);
-		      } else if (length > 2 && typeof args[length - 1] == 'function') {
-		        callback = args[--length];
-		      }
-		      var sources = slice(arguments, 1, length),
-		          index = -1,
-		          stackA = getArray(),
-		          stackB = getArray();
-
-		      while (++index < length) {
-		        baseMerge(object, sources[index], callback, stackA, stackB);
-		      }
-		      releaseArray(stackA);
-		      releaseArray(stackB);
-		      return object;
-		    }
-
-		    /**
-		     * Creates a shallow clone of `object` excluding the specified properties.
-		     * Property names may be specified as individual arguments or as arrays of
-		     * property names. If a callback is provided it will be executed for each
-		     * property of `object` omitting the properties the callback returns truey
-		     * for. The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, key, object).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The source object.
-		     * @param {Function|...string|string[]} [callback] The properties to omit or the
-		     *  function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns an object without the omitted properties.
-		     * @example
-		     *
-		     * _.omit({ 'name': 'fred', 'age': 40 }, 'age');
-		     * // => { 'name': 'fred' }
-		     *
-		     * _.omit({ 'name': 'fred', 'age': 40 }, function(value) {
-		     *   return typeof value == 'number';
-		     * });
-		     * // => { 'name': 'fred' }
-		     */
-		    function omit(object, callback, thisArg) {
-		      var result = {};
-		      if (typeof callback != 'function') {
-		        var props = [];
-		        forIn(object, function(value, key) {
-		          props.push(key);
-		        });
-		        props = baseDifference(props, baseFlatten(arguments, true, false, 1));
-
-		        var index = -1,
-		            length = props.length;
-
-		        while (++index < length) {
-		          var key = props[index];
-		          result[key] = object[key];
-		        }
-		      } else {
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        forIn(object, function(value, key, object) {
-		          if (!callback(value, key, object)) {
-		            result[key] = value;
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates a two dimensional array of an object's key-value pairs,
-		     * i.e. `[[key1, value1], [key2, value2]]`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to inspect.
-		     * @returns {Array} Returns new array of key-value pairs.
-		     * @example
-		     *
-		     * _.pairs({ 'barney': 36, 'fred': 40 });
-		     * // => [['barney', 36], ['fred', 40]] (property order is not guaranteed across environments)
-		     */
-		    function pairs(object) {
-		      var index = -1,
-		          props = keys(object),
-		          length = props.length,
-		          result = Array(length);
-
-		      while (++index < length) {
-		        var key = props[index];
-		        result[index] = [key, object[key]];
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates a shallow clone of `object` composed of the specified properties.
-		     * Property names may be specified as individual arguments or as arrays of
-		     * property names. If a callback is provided it will be executed for each
-		     * property of `object` picking the properties the callback returns truey
-		     * for. The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, key, object).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The source object.
-		     * @param {Function|...string|string[]} [callback] The function called per
-		     *  iteration or property names to pick, specified as individual property
-		     *  names or arrays of property names.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns an object composed of the picked properties.
-		     * @example
-		     *
-		     * _.pick({ 'name': 'fred', '_userid': 'fred1' }, 'name');
-		     * // => { 'name': 'fred' }
-		     *
-		     * _.pick({ 'name': 'fred', '_userid': 'fred1' }, function(value, key) {
-		     *   return key.charAt(0) != '_';
-		     * });
-		     * // => { 'name': 'fred' }
-		     */
-		    function pick(object, callback, thisArg) {
-		      var result = {};
-		      if (typeof callback != 'function') {
-		        var index = -1,
-		            props = baseFlatten(arguments, true, false, 1),
-		            length = isObject(object) ? props.length : 0;
-
-		        while (++index < length) {
-		          var key = props[index];
-		          if (key in object) {
-		            result[key] = object[key];
-		          }
-		        }
-		      } else {
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        forIn(object, function(value, key, object) {
-		          if (callback(value, key, object)) {
-		            result[key] = value;
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * An alternative to `_.reduce` this method transforms `object` to a new
-		     * `accumulator` object which is the result of running each of its own
-		     * enumerable properties through a callback, with each callback execution
-		     * potentially mutating the `accumulator` object. The callback is bound to
-		     * `thisArg` and invoked with four arguments; (accumulator, value, key, object).
-		     * Callbacks may exit iteration early by explicitly returning `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Array|Object} object The object to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [accumulator] The custom accumulator value.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the accumulated value.
-		     * @example
-		     *
-		     * var squares = _.transform([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], function(result, num) {
-		     *   num *= num;
-		     *   if (num % 2) {
-		     *     return result.push(num) < 3;
-		     *   }
-		     * });
-		     * // => [1, 9, 25]
-		     *
-		     * var mapped = _.transform({ 'a': 1, 'b': 2, 'c': 3 }, function(result, num, key) {
-		     *   result[key] = num * 3;
-		     * });
-		     * // => { 'a': 3, 'b': 6, 'c': 9 }
-		     */
-		    function transform(object, callback, accumulator, thisArg) {
-		      var isArr = isArray(object);
-		      if (accumulator == null) {
-		        if (isArr) {
-		          accumulator = [];
-		        } else {
-		          var ctor = object && object.constructor,
-		              proto = ctor && ctor.prototype;
-
-		          accumulator = baseCreate(proto);
-		        }
-		      }
-		      if (callback) {
-		        callback = lodash.createCallback(callback, thisArg, 4);
-		        (isArr ? baseEach : forOwn)(object, function(value, index, object) {
-		          return callback(accumulator, value, index, object);
-		        });
-		      }
-		      return accumulator;
-		    }
-
-		    /**
-		     * Creates an array composed of the own enumerable property values of `object`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Objects
-		     * @param {Object} object The object to inspect.
-		     * @returns {Array} Returns an array of property values.
-		     * @example
-		     *
-		     * _.values({ 'one': 1, 'two': 2, 'three': 3 });
-		     * // => [1, 2, 3] (property order is not guaranteed across environments)
-		     */
-		    function values(object) {
-		      var index = -1,
-		          props = keys(object),
-		          length = props.length,
-		          result = Array(length);
-
-		      while (++index < length) {
-		        result[index] = object[props[index]];
-		      }
-		      return result;
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates an array of elements from the specified indexes, or keys, of the
-		     * `collection`. Indexes may be specified as individual arguments or as arrays
-		     * of indexes.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {...(number|number[]|string|string[])} [index] The indexes of `collection`
-		     *   to retrieve, specified as individual indexes or arrays of indexes.
-		     * @returns {Array} Returns a new array of elements corresponding to the
-		     *  provided indexes.
-		     * @example
-		     *
-		     * _.at(['a', 'b', 'c', 'd', 'e'], [0, 2, 4]);
-		     * // => ['a', 'c', 'e']
-		     *
-		     * _.at(['fred', 'barney', 'pebbles'], 0, 2);
-		     * // => ['fred', 'pebbles']
-		     */
-		    function at(collection) {
-		      var args = arguments,
-		          index = -1,
-		          props = baseFlatten(args, true, false, 1),
-		          length = (args[2] && args[2][args[1]] === collection) ? 1 : props.length,
-		          result = Array(length);
-
-		      if (support.unindexedChars && isString(collection)) {
-		        collection = collection.split('');
-		      }
-		      while(++index < length) {
-		        result[index] = collection[props[index]];
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Checks if a given value is present in a collection using strict equality
-		     * for comparisons, i.e. `===`. If `fromIndex` is negative, it is used as the
-		     * offset from the end of the collection.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias include
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {*} target The value to check for.
-		     * @param {number} [fromIndex=0] The index to search from.
-		     * @returns {boolean} Returns `true` if the `target` element is found, else `false`.
-		     * @example
-		     *
-		     * _.contains([1, 2, 3], 1);
-		     * // => true
-		     *
-		     * _.contains([1, 2, 3], 1, 2);
-		     * // => false
-		     *
-		     * _.contains({ 'name': 'fred', 'age': 40 }, 'fred');
-		     * // => true
-		     *
-		     * _.contains('pebbles', 'eb');
-		     * // => true
-		     */
-		    function contains(collection, target, fromIndex) {
-		      var index = -1,
-		          indexOf = getIndexOf(),
-		          length = collection ? collection.length : 0,
-		          result = false;
-
-		      fromIndex = (fromIndex < 0 ? nativeMax(0, length + fromIndex) : fromIndex) || 0;
-		      if (isArray(collection)) {
-		        result = indexOf(collection, target, fromIndex) > -1;
-		      } else if (typeof length == 'number') {
-		        result = (isString(collection) ? collection.indexOf(target, fromIndex) : indexOf(collection, target, fromIndex)) > -1;
-		      } else {
-		        baseEach(collection, function(value) {
-		          if (++index >= fromIndex) {
-		            return !(result = value === target);
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates an object composed of keys generated from the results of running
-		     * each element of `collection` through the callback. The corresponding value
-		     * of each key is the number of times the key was returned by the callback.
-		     * The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns the composed aggregate object.
-		     * @example
-		     *
-		     * _.countBy([4.3, 6.1, 6.4], function(num) { return Math.floor(num); });
-		     * // => { '4': 1, '6': 2 }
-		     *
-		     * _.countBy([4.3, 6.1, 6.4], function(num) { return this.floor(num); }, Math);
-		     * // => { '4': 1, '6': 2 }
-		     *
-		     * _.countBy(['one', 'two', 'three'], 'length');
-		     * // => { '3': 2, '5': 1 }
-		     */
-		    var countBy = createAggregator(function(result, value, key) {
-		      (hasOwnProperty.call(result, key) ? result[key]++ : result[key] = 1);
-		    });
-
-		    /**
-		     * Checks if the given callback returns truey value for **all** elements of
-		     * a collection. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias all
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {boolean} Returns `true` if all elements passed the callback check,
-		     *  else `false`.
-		     * @example
-		     *
-		     * _.every([true, 1, null, 'yes']);
-		     * // => false
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.every(characters, 'age');
-		     * // => true
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.every(characters, { 'age': 36 });
-		     * // => false
-		     */
-		    function every(collection, callback, thisArg) {
-		      var result = true;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-
-		      if (isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          if (!(result = !!callback(collection[index], index, collection))) {
-		            break;
-		          }
-		        }
-		      } else {
-		        baseEach(collection, function(value, index, collection) {
-		          return (result = !!callback(value, index, collection));
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Iterates over elements of a collection, returning an array of all elements
-		     * the callback returns truey for. The callback is bound to `thisArg` and
-		     * invoked with three arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias select
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new array of elements that passed the callback check.
-		     * @example
-		     *
-		     * var evens = _.filter([1, 2, 3, 4, 5, 6], function(num) { return num % 2 == 0; });
-		     * // => [2, 4, 6]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36, 'blocked': false },
-		     *   { 'name': 'fred',   'age': 40, 'blocked': true }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.filter(characters, 'blocked');
-		     * // => [{ 'name': 'fred', 'age': 40, 'blocked': true }]
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.filter(characters, { 'age': 36 });
-		     * // => [{ 'name': 'barney', 'age': 36, 'blocked': false }]
-		     */
-		    function filter(collection, callback, thisArg) {
-		      var result = [];
-		      callback = lodash.createCallback(callback, thisArg, 3);
-
-		      if (isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          var value = collection[index];
-		          if (callback(value, index, collection)) {
-		            result.push(value);
-		          }
-		        }
-		      } else {
-		        baseEach(collection, function(value, index, collection) {
-		          if (callback(value, index, collection)) {
-		            result.push(value);
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Iterates over elements of a collection, returning the first element that
-		     * the callback returns truey for. The callback is bound to `thisArg` and
-		     * invoked with three arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias detect, findWhere
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the found element, else `undefined`.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'age': 36, 'blocked': false },
-		     *   { 'name': 'fred',    'age': 40, 'blocked': true },
-		     *   { 'name': 'pebbles', 'age': 1,  'blocked': false }
-		     * ];
-		     *
-		     * _.find(characters, function(chr) {
-		     *   return chr.age < 40;
-		     * });
-		     * // => { 'name': 'barney', 'age': 36, 'blocked': false }
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.find(characters, { 'age': 1 });
-		     * // =>  { 'name': 'pebbles', 'age': 1, 'blocked': false }
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.find(characters, 'blocked');
-		     * // => { 'name': 'fred', 'age': 40, 'blocked': true }
-		     */
-		    function find(collection, callback, thisArg) {
-		      callback = lodash.createCallback(callback, thisArg, 3);
-
-		      if (isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          var value = collection[index];
-		          if (callback(value, index, collection)) {
-		            return value;
-		          }
-		        }
-		      } else {
-		        var result;
-		        baseEach(collection, function(value, index, collection) {
-		          if (callback(value, index, collection)) {
-		            result = value;
-		            return false;
-		          }
-		        });
-		        return result;
-		      }
-		    }
-
-		    /**
-		     * This method is like `_.find` except that it iterates over elements
-		     * of a `collection` from right to left.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the found element, else `undefined`.
-		     * @example
-		     *
-		     * _.findLast([1, 2, 3, 4], function(num) {
-		     *   return num % 2 == 1;
-		     * });
-		     * // => 3
-		     */
-		    function findLast(collection, callback, thisArg) {
-		      var result;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      forEachRight(collection, function(value, index, collection) {
-		        if (callback(value, index, collection)) {
-		          result = value;
-		          return false;
-		        }
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Iterates over elements of a collection, executing the callback for each
-		     * element. The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, index|key, collection). Callbacks may exit iteration early by
-		     * explicitly returning `false`.
-		     *
-		     * Note: As with other "Collections" methods, objects with a `length` property
-		     * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
-		     * may be used for object iteration.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias each
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array|Object|string} Returns `collection`.
-		     * @example
-		     *
-		     * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
-		     * // => logs each number and returns '1,2,3'
-		     *
-		     * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
-		     * // => logs each number and returns the object (property order is not guaranteed across environments)
-		     */
-		    function forEach(collection, callback, thisArg) {
-		      if (callback && typeof thisArg == 'undefined' && isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          if (callback(collection[index], index, collection) === false) {
-		            break;
-		          }
-		        }
-		      } else {
-		        baseEach(collection, callback, thisArg);
-		      }
-		      return collection;
-		    }
-
-		    /**
-		     * This method is like `_.forEach` except that it iterates over elements
-		     * of a `collection` from right to left.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias eachRight
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array|Object|string} Returns `collection`.
-		     * @example
-		     *
-		     * _([1, 2, 3]).forEachRight(function(num) { console.log(num); }).join(',');
-		     * // => logs each number from right to left and returns '3,2,1'
-		     */
-		    function forEachRight(collection, callback, thisArg) {
-		      var iterable = collection,
-		          length = collection ? collection.length : 0;
-
-		      callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);
-		      if (isArray(collection)) {
-		        while (length--) {
-		          if (callback(collection[length], length, collection) === false) {
-		            break;
-		          }
-		        }
-		      } else {
-		        if (typeof length != 'number') {
-		          var props = keys(collection);
-		          length = props.length;
-		        } else if (support.unindexedChars && isString(collection)) {
-		          iterable = collection.split('');
-		        }
-		        baseEach(collection, function(value, key, collection) {
-		          key = props ? props[--length] : --length;
-		          return callback(iterable[key], key, collection);
-		        });
-		      }
-		      return collection;
-		    }
-
-		    /**
-		     * Creates an object composed of keys generated from the results of running
-		     * each element of a collection through the callback. The corresponding value
-		     * of each key is an array of the elements responsible for generating the key.
-		     * The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns the composed aggregate object.
-		     * @example
-		     *
-		     * _.groupBy([4.2, 6.1, 6.4], function(num) { return Math.floor(num); });
-		     * // => { '4': [4.2], '6': [6.1, 6.4] }
-		     *
-		     * _.groupBy([4.2, 6.1, 6.4], function(num) { return this.floor(num); }, Math);
-		     * // => { '4': [4.2], '6': [6.1, 6.4] }
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.groupBy(['one', 'two', 'three'], 'length');
-		     * // => { '3': ['one', 'two'], '5': ['three'] }
-		     */
-		    var groupBy = createAggregator(function(result, value, key) {
-		      (hasOwnProperty.call(result, key) ? result[key] : result[key] = []).push(value);
-		    });
-
-		    /**
-		     * Creates an object composed of keys generated from the results of running
-		     * each element of the collection through the given callback. The corresponding
-		     * value of each key is the last element responsible for generating the key.
-		     * The callback is bound to `thisArg` and invoked with three arguments;
-		     * (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Object} Returns the composed aggregate object.
-		     * @example
-		     *
-		     * var keys = [
-		     *   { 'dir': 'left', 'code': 97 },
-		     *   { 'dir': 'right', 'code': 100 }
-		     * ];
-		     *
-		     * _.indexBy(keys, 'dir');
-		     * // => { 'left': { 'dir': 'left', 'code': 97 }, 'right': { 'dir': 'right', 'code': 100 } }
-		     *
-		     * _.indexBy(keys, function(key) { return String.fromCharCode(key.code); });
-		     * // => { 'a': { 'dir': 'left', 'code': 97 }, 'd': { 'dir': 'right', 'code': 100 } }
-		     *
-		     * _.indexBy(characters, function(key) { this.fromCharCode(key.code); }, String);
-		     * // => { 'a': { 'dir': 'left', 'code': 97 }, 'd': { 'dir': 'right', 'code': 100 } }
-		     */
-		    var indexBy = createAggregator(function(result, value, key) {
-		      result[key] = value;
-		    });
-
-		    /**
-		     * Invokes the method named by `methodName` on each element in the `collection`
-		     * returning an array of the results of each invoked method. Additional arguments
-		     * will be provided to each invoked method. If `methodName` is a function it
-		     * will be invoked for, and `this` bound to, each element in the `collection`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|string} methodName The name of the method to invoke or
-		     *  the function invoked per iteration.
-		     * @param {...*} [arg] Arguments to invoke the method with.
-		     * @returns {Array} Returns a new array of the results of each invoked method.
-		     * @example
-		     *
-		     * _.invoke([[5, 1, 7], [3, 2, 1]], 'sort');
-		     * // => [[1, 5, 7], [1, 2, 3]]
-		     *
-		     * _.invoke([123, 456], String.prototype.split, '');
-		     * // => [['1', '2', '3'], ['4', '5', '6']]
-		     */
-		    function invoke(collection, methodName) {
-		      var args = slice(arguments, 2),
-		          index = -1,
-		          isFunc = typeof methodName == 'function',
-		          length = collection ? collection.length : 0,
-		          result = Array(typeof length == 'number' ? length : 0);
-
-		      forEach(collection, function(value) {
-		        result[++index] = (isFunc ? methodName : value[methodName]).apply(value, args);
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Creates an array of values by running each element in the collection
-		     * through the callback. The callback is bound to `thisArg` and invoked with
-		     * three arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias collect
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new array of the results of each `callback` execution.
-		     * @example
-		     *
-		     * _.map([1, 2, 3], function(num) { return num * 3; });
-		     * // => [3, 6, 9]
-		     *
-		     * _.map({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { return num * 3; });
-		     * // => [3, 6, 9] (property order is not guaranteed across environments)
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.map(characters, 'name');
-		     * // => ['barney', 'fred']
-		     */
-		    function map(collection, callback, thisArg) {
-		      var index = -1,
-		          length = collection ? collection.length : 0,
-		          result = Array(typeof length == 'number' ? length : 0);
-
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      if (isArray(collection)) {
-		        while (++index < length) {
-		          result[index] = callback(collection[index], index, collection);
-		        }
-		      } else {
-		        baseEach(collection, function(value, key, collection) {
-		          result[++index] = callback(value, key, collection);
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Retrieves the maximum value of a collection. If the collection is empty or
-		     * falsey `-Infinity` is returned. If a callback is provided it will be executed
-		     * for each value in the collection to generate the criterion by which the value
-		     * is ranked. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, index, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the maximum value.
-		     * @example
-		     *
-		     * _.max([4, 2, 8, 6]);
-		     * // => 8
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * _.max(characters, function(chr) { return chr.age; });
-		     * // => { 'name': 'fred', 'age': 40 };
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.max(characters, 'age');
-		     * // => { 'name': 'fred', 'age': 40 };
-		     */
-		    function max(collection, callback, thisArg) {
-		      var computed = -Infinity,
-		          result = computed;
-
-		      // allows working with functions like `_.map` without using
-		      // their `index` argument as a callback
-		      if (typeof callback != 'function' && thisArg && thisArg[callback] === collection) {
-		        callback = null;
-		      }
-		      if (callback == null && isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          var value = collection[index];
-		          if (value > result) {
-		            result = value;
-		          }
-		        }
-		      } else {
-		        callback = (callback == null && isString(collection))
-		          ? charAtCallback
-		          : lodash.createCallback(callback, thisArg, 3);
-
-		        baseEach(collection, function(value, index, collection) {
-		          var current = callback(value, index, collection);
-		          if (current > computed) {
-		            computed = current;
-		            result = value;
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Retrieves the minimum value of a collection. If the collection is empty or
-		     * falsey `Infinity` is returned. If a callback is provided it will be executed
-		     * for each value in the collection to generate the criterion by which the value
-		     * is ranked. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, index, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the minimum value.
-		     * @example
-		     *
-		     * _.min([4, 2, 8, 6]);
-		     * // => 2
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * _.min(characters, function(chr) { return chr.age; });
-		     * // => { 'name': 'barney', 'age': 36 };
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.min(characters, 'age');
-		     * // => { 'name': 'barney', 'age': 36 };
-		     */
-		    function min(collection, callback, thisArg) {
-		      var computed = Infinity,
-		          result = computed;
-
-		      // allows working with functions like `_.map` without using
-		      // their `index` argument as a callback
-		      if (typeof callback != 'function' && thisArg && thisArg[callback] === collection) {
-		        callback = null;
-		      }
-		      if (callback == null && isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          var value = collection[index];
-		          if (value < result) {
-		            result = value;
-		          }
-		        }
-		      } else {
-		        callback = (callback == null && isString(collection))
-		          ? charAtCallback
-		          : lodash.createCallback(callback, thisArg, 3);
-
-		        baseEach(collection, function(value, index, collection) {
-		          var current = callback(value, index, collection);
-		          if (current < computed) {
-		            computed = current;
-		            result = value;
-		          }
-		        });
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Retrieves the value of a specified property from all elements in the collection.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {string} property The name of the property to pluck.
-		     * @returns {Array} Returns a new array of property values.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * _.pluck(characters, 'name');
-		     * // => ['barney', 'fred']
-		     */
-		    var pluck = map;
-
-		    /**
-		     * Reduces a collection to a value which is the accumulated result of running
-		     * each element in the collection through the callback, where each successive
-		     * callback execution consumes the return value of the previous execution. If
-		     * `accumulator` is not provided the first element of the collection will be
-		     * used as the initial `accumulator` value. The callback is bound to `thisArg`
-		     * and invoked with four arguments; (accumulator, value, index|key, collection).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias foldl, inject
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [accumulator] Initial value of the accumulator.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the accumulated value.
-		     * @example
-		     *
-		     * var sum = _.reduce([1, 2, 3], function(sum, num) {
-		     *   return sum + num;
-		     * });
-		     * // => 6
-		     *
-		     * var mapped = _.reduce({ 'a': 1, 'b': 2, 'c': 3 }, function(result, num, key) {
-		     *   result[key] = num * 3;
-		     *   return result;
-		     * }, {});
-		     * // => { 'a': 3, 'b': 6, 'c': 9 }
-		     */
-		    function reduce(collection, callback, accumulator, thisArg) {
-		      var noaccum = arguments.length < 3;
-		      callback = lodash.createCallback(callback, thisArg, 4);
-
-		      if (isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        if (noaccum) {
-		          accumulator = collection[++index];
-		        }
-		        while (++index < length) {
-		          accumulator = callback(accumulator, collection[index], index, collection);
-		        }
-		      } else {
-		        baseEach(collection, function(value, index, collection) {
-		          accumulator = noaccum
-		            ? (noaccum = false, value)
-		            : callback(accumulator, value, index, collection)
-		        });
-		      }
-		      return accumulator;
-		    }
-
-		    /**
-		     * This method is like `_.reduce` except that it iterates over elements
-		     * of a `collection` from right to left.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias foldr
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function} [callback=identity] The function called per iteration.
-		     * @param {*} [accumulator] Initial value of the accumulator.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the accumulated value.
-		     * @example
-		     *
-		     * var list = [[0, 1], [2, 3], [4, 5]];
-		     * var flat = _.reduceRight(list, function(a, b) { return a.concat(b); }, []);
-		     * // => [4, 5, 2, 3, 0, 1]
-		     */
-		    function reduceRight(collection, callback, accumulator, thisArg) {
-		      var noaccum = arguments.length < 3;
-		      callback = lodash.createCallback(callback, thisArg, 4);
-		      forEachRight(collection, function(value, index, collection) {
-		        accumulator = noaccum
-		          ? (noaccum = false, value)
-		          : callback(accumulator, value, index, collection);
-		      });
-		      return accumulator;
-		    }
-
-		    /**
-		     * The opposite of `_.filter` this method returns the elements of a
-		     * collection that the callback does **not** return truey for.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new array of elements that failed the callback check.
-		     * @example
-		     *
-		     * var odds = _.reject([1, 2, 3, 4, 5, 6], function(num) { return num % 2 == 0; });
-		     * // => [1, 3, 5]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36, 'blocked': false },
-		     *   { 'name': 'fred',   'age': 40, 'blocked': true }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.reject(characters, 'blocked');
-		     * // => [{ 'name': 'barney', 'age': 36, 'blocked': false }]
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.reject(characters, { 'age': 36 });
-		     * // => [{ 'name': 'fred', 'age': 40, 'blocked': true }]
-		     */
-		    function reject(collection, callback, thisArg) {
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      return filter(collection, function(value, index, collection) {
-		        return !callback(value, index, collection);
-		      });
-		    }
-
-		    /**
-		     * Retrieves a random element or `n` random elements from a collection.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to sample.
-		     * @param {number} [n] The number of elements to sample.
-		     * @param- {Object} [guard] Allows working with functions like `_.map`
-		     *  without using their `index` arguments as `n`.
-		     * @returns {Array} Returns the random sample(s) of `collection`.
-		     * @example
-		     *
-		     * _.sample([1, 2, 3, 4]);
-		     * // => 2
-		     *
-		     * _.sample([1, 2, 3, 4], 2);
-		     * // => [3, 1]
-		     */
-		    function sample(collection, n, guard) {
-		      if (collection && typeof collection.length != 'number') {
-		        collection = values(collection);
-		      } else if (support.unindexedChars && isString(collection)) {
-		        collection = collection.split('');
-		      }
-		      if (n == null || guard) {
-		        return collection ? collection[baseRandom(0, collection.length - 1)] : undefined;
-		      }
-		      var result = shuffle(collection);
-		      result.length = nativeMin(nativeMax(0, n), result.length);
-		      return result;
-		    }
-
-		    /**
-		     * Creates an array of shuffled values, using a version of the Fisher-Yates
-		     * shuffle. See http://en.wikipedia.org/wiki/Fisher-Yates_shuffle.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to shuffle.
-		     * @returns {Array} Returns a new shuffled collection.
-		     * @example
-		     *
-		     * _.shuffle([1, 2, 3, 4, 5, 6]);
-		     * // => [4, 1, 6, 3, 5, 2]
-		     */
-		    function shuffle(collection) {
-		      var index = -1,
-		          length = collection ? collection.length : 0,
-		          result = Array(typeof length == 'number' ? length : 0);
-
-		      forEach(collection, function(value) {
-		        var rand = baseRandom(0, ++index);
-		        result[index] = result[rand];
-		        result[rand] = value;
-		      });
-		      return result;
-		    }
-
-		    /**
-		     * Gets the size of the `collection` by returning `collection.length` for arrays
-		     * and array-like objects or the number of own enumerable properties for objects.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to inspect.
-		     * @returns {number} Returns `collection.length` or number of own enumerable properties.
-		     * @example
-		     *
-		     * _.size([1, 2]);
-		     * // => 2
-		     *
-		     * _.size({ 'one': 1, 'two': 2, 'three': 3 });
-		     * // => 3
-		     *
-		     * _.size('pebbles');
-		     * // => 7
-		     */
-		    function size(collection) {
-		      var length = collection ? collection.length : 0;
-		      return typeof length == 'number' ? length : keys(collection).length;
-		    }
-
-		    /**
-		     * Checks if the callback returns a truey value for **any** element of a
-		     * collection. The function returns as soon as it finds a passing value and
-		     * does not iterate over the entire collection. The callback is bound to
-		     * `thisArg` and invoked with three arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias any
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {boolean} Returns `true` if any element passed the callback check,
-		     *  else `false`.
-		     * @example
-		     *
-		     * _.some([null, 0, 'yes', false], Boolean);
-		     * // => true
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36, 'blocked': false },
-		     *   { 'name': 'fred',   'age': 40, 'blocked': true }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.some(characters, 'blocked');
-		     * // => true
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.some(characters, { 'age': 1 });
-		     * // => false
-		     */
-		    function some(collection, callback, thisArg) {
-		      var result;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-
-		      if (isArray(collection)) {
-		        var index = -1,
-		            length = collection.length;
-
-		        while (++index < length) {
-		          if ((result = callback(collection[index], index, collection))) {
-		            break;
-		          }
-		        }
-		      } else {
-		        baseEach(collection, function(value, index, collection) {
-		          return !(result = callback(value, index, collection));
-		        });
-		      }
-		      return !!result;
-		    }
-
-		    /**
-		     * Creates an array of elements, sorted in ascending order by the results of
-		     * running each element in a collection through the callback. This method
-		     * performs a stable sort, that is, it will preserve the original sort order
-		     * of equal elements. The callback is bound to `thisArg` and invoked with
-		     * three arguments; (value, index|key, collection).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an array of property names is provided for `callback` the collection
-		     * will be sorted by each property value.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Array|Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new array of sorted elements.
-		     * @example
-		     *
-		     * _.sortBy([1, 2, 3], function(num) { return Math.sin(num); });
-		     * // => [3, 1, 2]
-		     *
-		     * _.sortBy([1, 2, 3], function(num) { return this.sin(num); }, Math);
-		     * // => [3, 1, 2]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'age': 36 },
-		     *   { 'name': 'fred',    'age': 40 },
-		     *   { 'name': 'barney',  'age': 26 },
-		     *   { 'name': 'fred',    'age': 30 }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.map(_.sortBy(characters, 'age'), _.values);
-		     * // => [['barney', 26], ['fred', 30], ['barney', 36], ['fred', 40]]
-		     *
-		     * // sorting by multiple properties
-		     * _.map(_.sortBy(characters, ['name', 'age']), _.values);
-		     * // = > [['barney', 26], ['barney', 36], ['fred', 30], ['fred', 40]]
-		     */
-		    function sortBy(collection, callback, thisArg) {
-		      var index = -1,
-		          isArr = isArray(callback),
-		          length = collection ? collection.length : 0,
-		          result = Array(typeof length == 'number' ? length : 0);
-
-		      if (!isArr) {
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		      }
-		      forEach(collection, function(value, key, collection) {
-		        var object = result[++index] = getObject();
-		        if (isArr) {
-		          object.criteria = map(callback, function(key) { return value[key]; });
-		        } else {
-		          (object.criteria = getArray())[0] = callback(value, key, collection);
-		        }
-		        object.index = index;
-		        object.value = value;
-		      });
-
-		      length = result.length;
-		      result.sort(compareAscending);
-		      while (length--) {
-		        var object = result[length];
-		        result[length] = object.value;
-		        if (!isArr) {
-		          releaseArray(object.criteria);
-		        }
-		        releaseObject(object);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Converts the `collection` to an array.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to convert.
-		     * @returns {Array} Returns the new converted array.
-		     * @example
-		     *
-		     * (function() { return _.toArray(arguments).slice(1); })(1, 2, 3, 4);
-		     * // => [2, 3, 4]
-		     */
-		    function toArray(collection) {
-		      if (collection && typeof collection.length == 'number') {
-		        return (support.unindexedChars && isString(collection))
-		          ? collection.split('')
-		          : slice(collection);
-		      }
-		      return values(collection);
-		    }
-
-		    /**
-		     * Performs a deep comparison of each element in a `collection` to the given
-		     * `properties` object, returning an array of all elements that have equivalent
-		     * property values.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type Function
-		     * @category Collections
-		     * @param {Array|Object|string} collection The collection to iterate over.
-		     * @param {Object} props The object of property values to filter by.
-		     * @returns {Array} Returns a new array of elements that have the given properties.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36, 'pets': ['hoppy'] },
-		     *   { 'name': 'fred',   'age': 40, 'pets': ['baby puss', 'dino'] }
-		     * ];
-		     *
-		     * _.where(characters, { 'age': 36 });
-		     * // => [{ 'name': 'barney', 'age': 36, 'pets': ['hoppy'] }]
-		     *
-		     * _.where(characters, { 'pets': ['dino'] });
-		     * // => [{ 'name': 'fred', 'age': 40, 'pets': ['baby puss', 'dino'] }]
-		     */
-		    var where = filter;
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates an array with all falsey values removed. The values `false`, `null`,
-		     * `0`, `""`, `undefined`, and `NaN` are all falsey.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to compact.
-		     * @returns {Array} Returns a new array of filtered values.
-		     * @example
-		     *
-		     * _.compact([0, 1, false, 2, '', 3]);
-		     * // => [1, 2, 3]
-		     */
-		    function compact(array) {
-		      var index = -1,
-		          length = array ? array.length : 0,
-		          result = [];
-
-		      while (++index < length) {
-		        var value = array[index];
-		        if (value) {
-		          result.push(value);
-		        }
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates an array excluding all values of the provided arrays using strict
-		     * equality for comparisons, i.e. `===`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to process.
-		     * @param {...Array} [values] The arrays of values to exclude.
-		     * @returns {Array} Returns a new array of filtered values.
-		     * @example
-		     *
-		     * _.difference([1, 2, 3, 4, 5], [5, 2, 10]);
-		     * // => [1, 3, 4]
-		     */
-		    function difference(array) {
-		      return baseDifference(array, baseFlatten(arguments, true, true, 1));
-		    }
-
-		    /**
-		     * This method is like `_.find` except that it returns the index of the first
-		     * element that passes the callback check, instead of the element itself.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to search.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {number} Returns the index of the found element, else `-1`.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'age': 36, 'blocked': false },
-		     *   { 'name': 'fred',    'age': 40, 'blocked': true },
-		     *   { 'name': 'pebbles', 'age': 1,  'blocked': false }
-		     * ];
-		     *
-		     * _.findIndex(characters, function(chr) {
-		     *   return chr.age < 20;
-		     * });
-		     * // => 2
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.findIndex(characters, { 'age': 36 });
-		     * // => 0
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.findIndex(characters, 'blocked');
-		     * // => 1
-		     */
-		    function findIndex(array, callback, thisArg) {
-		      var index = -1,
-		          length = array ? array.length : 0;
-
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      while (++index < length) {
-		        if (callback(array[index], index, array)) {
-		          return index;
-		        }
-		      }
-		      return -1;
-		    }
-
-		    /**
-		     * This method is like `_.findIndex` except that it iterates over elements
-		     * of a `collection` from right to left.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to search.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {number} Returns the index of the found element, else `-1`.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'age': 36, 'blocked': true },
-		     *   { 'name': 'fred',    'age': 40, 'blocked': false },
-		     *   { 'name': 'pebbles', 'age': 1,  'blocked': true }
-		     * ];
-		     *
-		     * _.findLastIndex(characters, function(chr) {
-		     *   return chr.age > 30;
-		     * });
-		     * // => 1
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.findLastIndex(characters, { 'age': 36 });
-		     * // => 0
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.findLastIndex(characters, 'blocked');
-		     * // => 2
-		     */
-		    function findLastIndex(array, callback, thisArg) {
-		      var length = array ? array.length : 0;
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      while (length--) {
-		        if (callback(array[length], length, array)) {
-		          return length;
-		        }
-		      }
-		      return -1;
-		    }
-
-		    /**
-		     * Gets the first element or first `n` elements of an array. If a callback
-		     * is provided elements at the beginning of the array are returned as long
-		     * as the callback returns truey. The callback is bound to `thisArg` and
-		     * invoked with three arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias head, take
-		     * @category Arrays
-		     * @param {Array} array The array to query.
-		     * @param {Function|Object|number|string} [callback] The function called
-		     *  per element or the number of elements to return. If a property name or
-		     *  object is provided it will be used to create a "_.pluck" or "_.where"
-		     *  style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the first element(s) of `array`.
-		     * @example
-		     *
-		     * _.first([1, 2, 3]);
-		     * // => 1
-		     *
-		     * _.first([1, 2, 3], 2);
-		     * // => [1, 2]
-		     *
-		     * _.first([1, 2, 3], function(num) {
-		     *   return num < 3;
-		     * });
-		     * // => [1, 2]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'blocked': true,  'employer': 'slate' },
-		     *   { 'name': 'fred',    'blocked': false, 'employer': 'slate' },
-		     *   { 'name': 'pebbles', 'blocked': true,  'employer': 'na' }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.first(characters, 'blocked');
-		     * // => [{ 'name': 'barney', 'blocked': true, 'employer': 'slate' }]
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.pluck(_.first(characters, { 'employer': 'slate' }), 'name');
-		     * // => ['barney', 'fred']
-		     */
-		    function first(array, callback, thisArg) {
-		      var n = 0,
-		          length = array ? array.length : 0;
-
-		      if (typeof callback != 'number' && callback != null) {
-		        var index = -1;
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        while (++index < length && callback(array[index], index, array)) {
-		          n++;
-		        }
-		      } else {
-		        n = callback;
-		        if (n == null || thisArg) {
-		          return array ? array[0] : undefined;
-		        }
-		      }
-		      return slice(array, 0, nativeMin(nativeMax(0, n), length));
-		    }
-
-		    /**
-		     * Flattens a nested array (the nesting can be to any depth). If `isShallow`
-		     * is truey, the array will only be flattened a single level. If a callback
-		     * is provided each element of the array is passed through the callback before
-		     * flattening. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to flatten.
-		     * @param {boolean} [isShallow=false] A flag to restrict flattening to a single level.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new flattened array.
-		     * @example
-		     *
-		     * _.flatten([1, [2], [3, [[4]]]]);
-		     * // => [1, 2, 3, 4];
-		     *
-		     * _.flatten([1, [2], [3, [[4]]]], true);
-		     * // => [1, 2, 3, [[4]]];
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 30, 'pets': ['hoppy'] },
-		     *   { 'name': 'fred',   'age': 40, 'pets': ['baby puss', 'dino'] }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.flatten(characters, 'pets');
-		     * // => ['hoppy', 'baby puss', 'dino']
-		     */
-		    function flatten(array, isShallow, callback, thisArg) {
-		      // juggle arguments
-		      if (typeof isShallow != 'boolean' && isShallow != null) {
-		        thisArg = callback;
-		        callback = (typeof isShallow != 'function' && thisArg && thisArg[isShallow] === array) ? null : isShallow;
-		        isShallow = false;
-		      }
-		      if (callback != null) {
-		        array = map(array, callback, thisArg);
-		      }
-		      return baseFlatten(array, isShallow);
-		    }
-
-		    /**
-		     * Gets the index at which the first occurrence of `value` is found using
-		     * strict equality for comparisons, i.e. `===`. If the array is already sorted
-		     * providing `true` for `fromIndex` will run a faster binary search.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to search.
-		     * @param {*} value The value to search for.
-		     * @param {boolean|number} [fromIndex=0] The index to search from or `true`
-		     *  to perform a binary search on a sorted array.
-		     * @returns {number} Returns the index of the matched value or `-1`.
-		     * @example
-		     *
-		     * _.indexOf([1, 2, 3, 1, 2, 3], 2);
-		     * // => 1
-		     *
-		     * _.indexOf([1, 2, 3, 1, 2, 3], 2, 3);
-		     * // => 4
-		     *
-		     * _.indexOf([1, 1, 2, 2, 3, 3], 2, true);
-		     * // => 2
-		     */
-		    function indexOf(array, value, fromIndex) {
-		      if (typeof fromIndex == 'number') {
-		        var length = array ? array.length : 0;
-		        fromIndex = (fromIndex < 0 ? nativeMax(0, length + fromIndex) : fromIndex || 0);
-		      } else if (fromIndex) {
-		        var index = sortedIndex(array, value);
-		        return array[index] === value ? index : -1;
-		      }
-		      return baseIndexOf(array, value, fromIndex);
-		    }
-
-		    /**
-		     * Gets all but the last element or last `n` elements of an array. If a
-		     * callback is provided elements at the end of the array are excluded from
-		     * the result as long as the callback returns truey. The callback is bound
-		     * to `thisArg` and invoked with three arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to query.
-		     * @param {Function|Object|number|string} [callback=1] The function called
-		     *  per element or the number of elements to exclude. If a property name or
-		     *  object is provided it will be used to create a "_.pluck" or "_.where"
-		     *  style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a slice of `array`.
-		     * @example
-		     *
-		     * _.initial([1, 2, 3]);
-		     * // => [1, 2]
-		     *
-		     * _.initial([1, 2, 3], 2);
-		     * // => [1]
-		     *
-		     * _.initial([1, 2, 3], function(num) {
-		     *   return num > 1;
-		     * });
-		     * // => [1]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'blocked': false, 'employer': 'slate' },
-		     *   { 'name': 'fred',    'blocked': true,  'employer': 'slate' },
-		     *   { 'name': 'pebbles', 'blocked': true,  'employer': 'na' }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.initial(characters, 'blocked');
-		     * // => [{ 'name': 'barney',  'blocked': false, 'employer': 'slate' }]
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.pluck(_.initial(characters, { 'employer': 'na' }), 'name');
-		     * // => ['barney', 'fred']
-		     */
-		    function initial(array, callback, thisArg) {
-		      var n = 0,
-		          length = array ? array.length : 0;
-
-		      if (typeof callback != 'number' && callback != null) {
-		        var index = length;
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        while (index-- && callback(array[index], index, array)) {
-		          n++;
-		        }
-		      } else {
-		        n = (callback == null || thisArg) ? 1 : callback || n;
-		      }
-		      return slice(array, 0, nativeMin(nativeMax(0, length - n), length));
-		    }
-
-		    /**
-		     * Creates an array of unique values present in all provided arrays using
-		     * strict equality for comparisons, i.e. `===`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {...Array} [array] The arrays to inspect.
-		     * @returns {Array} Returns an array of shared values.
-		     * @example
-		     *
-		     * _.intersection([1, 2, 3], [5, 2, 1, 4], [2, 1]);
-		     * // => [1, 2]
-		     */
-		    function intersection() {
-		      var args = [],
-		          argsIndex = -1,
-		          argsLength = arguments.length,
-		          caches = getArray(),
-		          indexOf = getIndexOf(),
-		          trustIndexOf = indexOf === baseIndexOf,
-		          seen = getArray();
-
-		      while (++argsIndex < argsLength) {
-		        var value = arguments[argsIndex];
-		        if (isArray(value) || isArguments(value)) {
-		          args.push(value);
-		          caches.push(trustIndexOf && value.length >= largeArraySize &&
-		            createCache(argsIndex ? args[argsIndex] : seen));
-		        }
-		      }
-		      var array = args[0],
-		          index = -1,
-		          length = array ? array.length : 0,
-		          result = [];
-
-		      outer:
-		      while (++index < length) {
-		        var cache = caches[0];
-		        value = array[index];
-
-		        if ((cache ? cacheIndexOf(cache, value) : indexOf(seen, value)) < 0) {
-		          argsIndex = argsLength;
-		          (cache || seen).push(value);
-		          while (--argsIndex) {
-		            cache = caches[argsIndex];
-		            if ((cache ? cacheIndexOf(cache, value) : indexOf(args[argsIndex], value)) < 0) {
-		              continue outer;
-		            }
-		          }
-		          result.push(value);
-		        }
-		      }
-		      while (argsLength--) {
-		        cache = caches[argsLength];
-		        if (cache) {
-		          releaseObject(cache);
-		        }
-		      }
-		      releaseArray(caches);
-		      releaseArray(seen);
-		      return result;
-		    }
-
-		    /**
-		     * Gets the last element or last `n` elements of an array. If a callback is
-		     * provided elements at the end of the array are returned as long as the
-		     * callback returns truey. The callback is bound to `thisArg` and invoked
-		     * with three arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to query.
-		     * @param {Function|Object|number|string} [callback] The function called
-		     *  per element or the number of elements to return. If a property name or
-		     *  object is provided it will be used to create a "_.pluck" or "_.where"
-		     *  style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {*} Returns the last element(s) of `array`.
-		     * @example
-		     *
-		     * _.last([1, 2, 3]);
-		     * // => 3
-		     *
-		     * _.last([1, 2, 3], 2);
-		     * // => [2, 3]
-		     *
-		     * _.last([1, 2, 3], function(num) {
-		     *   return num > 1;
-		     * });
-		     * // => [2, 3]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'blocked': false, 'employer': 'slate' },
-		     *   { 'name': 'fred',    'blocked': true,  'employer': 'slate' },
-		     *   { 'name': 'pebbles', 'blocked': true,  'employer': 'na' }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.pluck(_.last(characters, 'blocked'), 'name');
-		     * // => ['fred', 'pebbles']
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.last(characters, { 'employer': 'na' });
-		     * // => [{ 'name': 'pebbles', 'blocked': true, 'employer': 'na' }]
-		     */
-		    function last(array, callback, thisArg) {
-		      var n = 0,
-		          length = array ? array.length : 0;
-
-		      if (typeof callback != 'number' && callback != null) {
-		        var index = length;
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        while (index-- && callback(array[index], index, array)) {
-		          n++;
-		        }
-		      } else {
-		        n = callback;
-		        if (n == null || thisArg) {
-		          return array ? array[length - 1] : undefined;
-		        }
-		      }
-		      return slice(array, nativeMax(0, length - n));
-		    }
-
-		    /**
-		     * Gets the index at which the last occurrence of `value` is found using strict
-		     * equality for comparisons, i.e. `===`. If `fromIndex` is negative, it is used
-		     * as the offset from the end of the collection.
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to search.
-		     * @param {*} value The value to search for.
-		     * @param {number} [fromIndex=array.length-1] The index to search from.
-		     * @returns {number} Returns the index of the matched value or `-1`.
-		     * @example
-		     *
-		     * _.lastIndexOf([1, 2, 3, 1, 2, 3], 2);
-		     * // => 4
-		     *
-		     * _.lastIndexOf([1, 2, 3, 1, 2, 3], 2, 3);
-		     * // => 1
-		     */
-		    function lastIndexOf(array, value, fromIndex) {
-		      var index = array ? array.length : 0;
-		      if (typeof fromIndex == 'number') {
-		        index = (fromIndex < 0 ? nativeMax(0, index + fromIndex) : nativeMin(fromIndex, index - 1)) + 1;
-		      }
-		      while (index--) {
-		        if (array[index] === value) {
-		          return index;
-		        }
-		      }
-		      return -1;
-		    }
-
-		    /**
-		     * Removes all provided values from the given array using strict equality for
-		     * comparisons, i.e. `===`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to modify.
-		     * @param {...*} [value] The values to remove.
-		     * @returns {Array} Returns `array`.
-		     * @example
-		     *
-		     * var array = [1, 2, 3, 1, 2, 3];
-		     * _.pull(array, 2, 3);
-		     * console.log(array);
-		     * // => [1, 1]
-		     */
-		    function pull(array) {
-		      var args = arguments,
-		          argsIndex = 0,
-		          argsLength = args.length,
-		          length = array ? array.length : 0;
-
-		      while (++argsIndex < argsLength) {
-		        var index = -1,
-		            value = args[argsIndex];
-		        while (++index < length) {
-		          if (array[index] === value) {
-		            splice.call(array, index--, 1);
-		            length--;
-		          }
-		        }
-		      }
-		      return array;
-		    }
-
-		    /**
-		     * Creates an array of numbers (positive and/or negative) progressing from
-		     * `start` up to but not including `end`. If `start` is less than `stop` a
-		     * zero-length range is created unless a negative `step` is specified.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {number} [start=0] The start of the range.
-		     * @param {number} end The end of the range.
-		     * @param {number} [step=1] The value to increment or decrement by.
-		     * @returns {Array} Returns a new range array.
-		     * @example
-		     *
-		     * _.range(4);
-		     * // => [0, 1, 2, 3]
-		     *
-		     * _.range(1, 5);
-		     * // => [1, 2, 3, 4]
-		     *
-		     * _.range(0, 20, 5);
-		     * // => [0, 5, 10, 15]
-		     *
-		     * _.range(0, -4, -1);
-		     * // => [0, -1, -2, -3]
-		     *
-		     * _.range(1, 4, 0);
-		     * // => [1, 1, 1]
-		     *
-		     * _.range(0);
-		     * // => []
-		     */
-		    function range(start, end, step) {
-		      start = +start || 0;
-		      step = typeof step == 'number' ? step : (+step || 1);
-
-		      if (end == null) {
-		        end = start;
-		        start = 0;
-		      }
-		      // use `Array(length)` so engines like Chakra and V8 avoid slower modes
-		      // http://youtu.be/XAqIpGU8ZZk#t=17m25s
-		      var index = -1,
-		          length = nativeMax(0, ceil((end - start) / (step || 1))),
-		          result = Array(length);
-
-		      while (++index < length) {
-		        result[index] = start;
-		        start += step;
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Removes all elements from an array that the callback returns truey for
-		     * and returns an array of removed elements. The callback is bound to `thisArg`
-		     * and invoked with three arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to modify.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a new array of removed elements.
-		     * @example
-		     *
-		     * var array = [1, 2, 3, 4, 5, 6];
-		     * var evens = _.remove(array, function(num) { return num % 2 == 0; });
-		     *
-		     * console.log(array);
-		     * // => [1, 3, 5]
-		     *
-		     * console.log(evens);
-		     * // => [2, 4, 6]
-		     */
-		    function remove(array, callback, thisArg) {
-		      var index = -1,
-		          length = array ? array.length : 0,
-		          result = [];
-
-		      callback = lodash.createCallback(callback, thisArg, 3);
-		      while (++index < length) {
-		        var value = array[index];
-		        if (callback(value, index, array)) {
-		          result.push(value);
-		          splice.call(array, index--, 1);
-		          length--;
-		        }
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The opposite of `_.initial` this method gets all but the first element or
-		     * first `n` elements of an array. If a callback function is provided elements
-		     * at the beginning of the array are excluded from the result as long as the
-		     * callback returns truey. The callback is bound to `thisArg` and invoked
-		     * with three arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias drop, tail
-		     * @category Arrays
-		     * @param {Array} array The array to query.
-		     * @param {Function|Object|number|string} [callback=1] The function called
-		     *  per element or the number of elements to exclude. If a property name or
-		     *  object is provided it will be used to create a "_.pluck" or "_.where"
-		     *  style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a slice of `array`.
-		     * @example
-		     *
-		     * _.rest([1, 2, 3]);
-		     * // => [2, 3]
-		     *
-		     * _.rest([1, 2, 3], 2);
-		     * // => [3]
-		     *
-		     * _.rest([1, 2, 3], function(num) {
-		     *   return num < 3;
-		     * });
-		     * // => [3]
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'blocked': true,  'employer': 'slate' },
-		     *   { 'name': 'fred',    'blocked': false,  'employer': 'slate' },
-		     *   { 'name': 'pebbles', 'blocked': true, 'employer': 'na' }
-		     * ];
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.pluck(_.rest(characters, 'blocked'), 'name');
-		     * // => ['fred', 'pebbles']
-		     *
-		     * // using "_.where" callback shorthand
-		     * _.rest(characters, { 'employer': 'slate' });
-		     * // => [{ 'name': 'pebbles', 'blocked': true, 'employer': 'na' }]
-		     */
-		    function rest(array, callback, thisArg) {
-		      if (typeof callback != 'number' && callback != null) {
-		        var n = 0,
-		            index = -1,
-		            length = array ? array.length : 0;
-
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		        while (++index < length && callback(array[index], index, array)) {
-		          n++;
-		        }
-		      } else {
-		        n = (callback == null || thisArg) ? 1 : nativeMax(0, callback);
-		      }
-		      return slice(array, n);
-		    }
-
-		    /**
-		     * Uses a binary search to determine the smallest index at which a value
-		     * should be inserted into a given sorted array in order to maintain the sort
-		     * order of the array. If a callback is provided it will be executed for
-		     * `value` and each element of `array` to compute their sort ranking. The
-		     * callback is bound to `thisArg` and invoked with one argument; (value).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to inspect.
-		     * @param {*} value The value to evaluate.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {number} Returns the index at which `value` should be inserted
-		     *  into `array`.
-		     * @example
-		     *
-		     * _.sortedIndex([20, 30, 50], 40);
-		     * // => 2
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.sortedIndex([{ 'x': 20 }, { 'x': 30 }, { 'x': 50 }], { 'x': 40 }, 'x');
-		     * // => 2
-		     *
-		     * var dict = {
-		     *   'wordToNumber': { 'twenty': 20, 'thirty': 30, 'fourty': 40, 'fifty': 50 }
-		     * };
-		     *
-		     * _.sortedIndex(['twenty', 'thirty', 'fifty'], 'fourty', function(word) {
-		     *   return dict.wordToNumber[word];
-		     * });
-		     * // => 2
-		     *
-		     * _.sortedIndex(['twenty', 'thirty', 'fifty'], 'fourty', function(word) {
-		     *   return this.wordToNumber[word];
-		     * }, dict);
-		     * // => 2
-		     */
-		    function sortedIndex(array, value, callback, thisArg) {
-		      var low = 0,
-		          high = array ? array.length : low;
-
-		      // explicitly reference `identity` for better inlining in Firefox
-		      callback = callback ? lodash.createCallback(callback, thisArg, 1) : identity;
-		      value = callback(value);
-
-		      while (low < high) {
-		        var mid = (low + high) >>> 1;
-		        (callback(array[mid]) < value)
-		          ? low = mid + 1
-		          : high = mid;
-		      }
-		      return low;
-		    }
-
-		    /**
-		     * Creates an array of unique values, in order, of the provided arrays using
-		     * strict equality for comparisons, i.e. `===`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {...Array} [array] The arrays to inspect.
-		     * @returns {Array} Returns an array of combined values.
-		     * @example
-		     *
-		     * _.union([1, 2, 3], [5, 2, 1, 4], [2, 1]);
-		     * // => [1, 2, 3, 5, 4]
-		     */
-		    function union() {
-		      return baseUniq(baseFlatten(arguments, true, true));
-		    }
-
-		    /**
-		     * Creates a duplicate-value-free version of an array using strict equality
-		     * for comparisons, i.e. `===`. If the array is sorted, providing
-		     * `true` for `isSorted` will use a faster algorithm. If a callback is provided
-		     * each element of `array` is passed through the callback before uniqueness
-		     * is computed. The callback is bound to `thisArg` and invoked with three
-		     * arguments; (value, index, array).
-		     *
-		     * If a property name is provided for `callback` the created "_.pluck" style
-		     * callback will return the property value of the given element.
-		     *
-		     * If an object is provided for `callback` the created "_.where" style callback
-		     * will return `true` for elements that have the properties of the given object,
-		     * else `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias unique
-		     * @category Arrays
-		     * @param {Array} array The array to process.
-		     * @param {boolean} [isSorted=false] A flag to indicate that `array` is sorted.
-		     * @param {Function|Object|string} [callback=identity] The function called
-		     *  per iteration. If a property name or object is provided it will be used
-		     *  to create a "_.pluck" or "_.where" style callback, respectively.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns a duplicate-value-free array.
-		     * @example
-		     *
-		     * _.uniq([1, 2, 1, 3, 1]);
-		     * // => [1, 2, 3]
-		     *
-		     * _.uniq([1, 1, 2, 2, 3], true);
-		     * // => [1, 2, 3]
-		     *
-		     * _.uniq(['A', 'b', 'C', 'a', 'B', 'c'], function(letter) { return letter.toLowerCase(); });
-		     * // => ['A', 'b', 'C']
-		     *
-		     * _.uniq([1, 2.5, 3, 1.5, 2, 3.5], function(num) { return this.floor(num); }, Math);
-		     * // => [1, 2.5, 3]
-		     *
-		     * // using "_.pluck" callback shorthand
-		     * _.uniq([{ 'x': 1 }, { 'x': 2 }, { 'x': 1 }], 'x');
-		     * // => [{ 'x': 1 }, { 'x': 2 }]
-		     */
-		    function uniq(array, isSorted, callback, thisArg) {
-		      // juggle arguments
-		      if (typeof isSorted != 'boolean' && isSorted != null) {
-		        thisArg = callback;
-		        callback = (typeof isSorted != 'function' && thisArg && thisArg[isSorted] === array) ? null : isSorted;
-		        isSorted = false;
-		      }
-		      if (callback != null) {
-		        callback = lodash.createCallback(callback, thisArg, 3);
-		      }
-		      return baseUniq(array, isSorted, callback);
-		    }
-
-		    /**
-		     * Creates an array excluding all provided values using strict equality for
-		     * comparisons, i.e. `===`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {Array} array The array to filter.
-		     * @param {...*} [value] The values to exclude.
-		     * @returns {Array} Returns a new array of filtered values.
-		     * @example
-		     *
-		     * _.without([1, 2, 1, 0, 3, 1, 4], 0, 1);
-		     * // => [2, 3, 4]
-		     */
-		    function without(array) {
-		      return baseDifference(array, slice(arguments, 1));
-		    }
-
-		    /**
-		     * Creates an array that is the symmetric difference of the provided arrays.
-		     * See http://en.wikipedia.org/wiki/Symmetric_difference.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Arrays
-		     * @param {...Array} [array] The arrays to inspect.
-		     * @returns {Array} Returns an array of values.
-		     * @example
-		     *
-		     * _.xor([1, 2, 3], [5, 2, 1, 4]);
-		     * // => [3, 5, 4]
-		     *
-		     * _.xor([1, 2, 5], [2, 3, 5], [3, 4, 5]);
-		     * // => [1, 4, 5]
-		     */
-		    function xor() {
-		      var index = -1,
-		          length = arguments.length;
-
-		      while (++index < length) {
-		        var array = arguments[index];
-		        if (isArray(array) || isArguments(array)) {
-		          var result = result
-		            ? baseUniq(baseDifference(result, array).concat(baseDifference(array, result)))
-		            : array;
-		        }
-		      }
-		      return result || [];
-		    }
-
-		    /**
-		     * Creates an array of grouped elements, the first of which contains the first
-		     * elements of the given arrays, the second of which contains the second
-		     * elements of the given arrays, and so on.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias unzip
-		     * @category Arrays
-		     * @param {...Array} [array] Arrays to process.
-		     * @returns {Array} Returns a new array of grouped elements.
-		     * @example
-		     *
-		     * _.zip(['fred', 'barney'], [30, 40], [true, false]);
-		     * // => [['fred', 30, true], ['barney', 40, false]]
-		     */
-		    function zip() {
-		      var array = arguments.length > 1 ? arguments : arguments[0],
-		          index = -1,
-		          length = array ? max(pluck(array, 'length')) : 0,
-		          result = Array(length < 0 ? 0 : length);
-
-		      while (++index < length) {
-		        result[index] = pluck(array, index);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * Creates an object composed from arrays of `keys` and `values`. Provide
-		     * either a single two dimensional array, i.e. `[[key1, value1], [key2, value2]]`
-		     * or two arrays, one of `keys` and one of corresponding `values`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @alias object
-		     * @category Arrays
-		     * @param {Array} keys The array of keys.
-		     * @param {Array} [values=[]] The array of values.
-		     * @returns {Object} Returns an object composed of the given keys and
-		     *  corresponding values.
-		     * @example
-		     *
-		     * _.zipObject(['fred', 'barney'], [30, 40]);
-		     * // => { 'fred': 30, 'barney': 40 }
-		     */
-		    function zipObject(keys, values) {
-		      var index = -1,
-		          length = keys ? keys.length : 0,
-		          result = {};
-
-		      if (!values && length && !isArray(keys[0])) {
-		        values = [];
-		      }
-		      while (++index < length) {
-		        var key = keys[index];
-		        if (values) {
-		          result[key] = values[index];
-		        } else if (key) {
-		          result[key[0]] = key[1];
-		        }
-		      }
-		      return result;
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates a function that executes `func`, with  the `this` binding and
-		     * arguments of the created function, only after being called `n` times.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {number} n The number of times the function must be called before
-		     *  `func` is executed.
-		     * @param {Function} func The function to restrict.
-		     * @returns {Function} Returns the new restricted function.
-		     * @example
-		     *
-		     * var saves = ['profile', 'settings'];
-		     *
-		     * var done = _.after(saves.length, function() {
-		     *   console.log('Done saving!');
-		     * });
-		     *
-		     * _.forEach(saves, function(type) {
-		     *   asyncSave({ 'type': type, 'complete': done });
-		     * });
-		     * // => logs 'Done saving!', after all saves have completed
-		     */
-		    function after(n, func) {
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      return function() {
-		        if (--n < 1) {
-		          return func.apply(this, arguments);
-		        }
-		      };
-		    }
-
-		    /**
-		     * Creates a function that, when called, invokes `func` with the `this`
-		     * binding of `thisArg` and prepends any additional `bind` arguments to those
-		     * provided to the bound function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to bind.
-		     * @param {*} [thisArg] The `this` binding of `func`.
-		     * @param {...*} [arg] Arguments to be partially applied.
-		     * @returns {Function} Returns the new bound function.
-		     * @example
-		     *
-		     * var func = function(greeting) {
-		     *   return greeting + ' ' + this.name;
-		     * };
-		     *
-		     * func = _.bind(func, { 'name': 'fred' }, 'hi');
-		     * func();
-		     * // => 'hi fred'
-		     */
-		    function bind(func, thisArg) {
-		      return arguments.length > 2
-		        ? createWrapper(func, 17, slice(arguments, 2), null, thisArg)
-		        : createWrapper(func, 1, null, null, thisArg);
-		    }
-
-		    /**
-		     * Binds methods of an object to the object itself, overwriting the existing
-		     * method. Method names may be specified as individual arguments or as arrays
-		     * of method names. If no method names are provided all the function properties
-		     * of `object` will be bound.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Object} object The object to bind and assign the bound methods to.
-		     * @param {...string} [methodName] The object method names to
-		     *  bind, specified as individual method names or arrays of method names.
-		     * @returns {Object} Returns `object`.
-		     * @example
-		     *
-		     * var view = {
-		     *   'label': 'docs',
-		     *   'onClick': function() { console.log('clicked ' + this.label); }
-		     * };
-		     *
-		     * _.bindAll(view);
-		     * jQuery('#docs').on('click', view.onClick);
-		     * // => logs 'clicked docs', when the button is clicked
-		     */
-		    function bindAll(object) {
-		      var funcs = arguments.length > 1 ? baseFlatten(arguments, true, false, 1) : functions(object),
-		          index = -1,
-		          length = funcs.length;
-
-		      while (++index < length) {
-		        var key = funcs[index];
-		        object[key] = createWrapper(object[key], 1, null, null, object);
-		      }
-		      return object;
-		    }
-
-		    /**
-		     * Creates a function that, when called, invokes the method at `object[key]`
-		     * and prepends any additional `bindKey` arguments to those provided to the bound
-		     * function. This method differs from `_.bind` by allowing bound functions to
-		     * reference methods that will be redefined or don't yet exist.
-		     * See http://michaux.ca/articles/lazy-function-definition-pattern.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Object} object The object the method belongs to.
-		     * @param {string} key The key of the method.
-		     * @param {...*} [arg] Arguments to be partially applied.
-		     * @returns {Function} Returns the new bound function.
-		     * @example
-		     *
-		     * var object = {
-		     *   'name': 'fred',
-		     *   'greet': function(greeting) {
-		     *     return greeting + ' ' + this.name;
-		     *   }
-		     * };
-		     *
-		     * var func = _.bindKey(object, 'greet', 'hi');
-		     * func();
-		     * // => 'hi fred'
-		     *
-		     * object.greet = function(greeting) {
-		     *   return greeting + 'ya ' + this.name + '!';
-		     * };
-		     *
-		     * func();
-		     * // => 'hiya fred!'
-		     */
-		    function bindKey(object, key) {
-		      return arguments.length > 2
-		        ? createWrapper(key, 19, slice(arguments, 2), null, object)
-		        : createWrapper(key, 3, null, null, object);
-		    }
-
-		    /**
-		     * Creates a function that is the composition of the provided functions,
-		     * where each function consumes the return value of the function that follows.
-		     * For example, composing the functions `f()`, `g()`, and `h()` produces `f(g(h()))`.
-		     * Each function is executed with the `this` binding of the composed function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {...Function} [func] Functions to compose.
-		     * @returns {Function} Returns the new composed function.
-		     * @example
-		     *
-		     * var realNameMap = {
-		     *   'pebbles': 'penelope'
-		     * };
-		     *
-		     * var format = function(name) {
-		     *   name = realNameMap[name.toLowerCase()] || name;
-		     *   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-		     * };
-		     *
-		     * var greet = function(formatted) {
-		     *   return 'Hiya ' + formatted + '!';
-		     * };
-		     *
-		     * var welcome = _.compose(greet, format);
-		     * welcome('pebbles');
-		     * // => 'Hiya Penelope!'
-		     */
-		    function compose() {
-		      var funcs = arguments,
-		          length = funcs.length;
-
-		      while (length--) {
-		        if (!isFunction(funcs[length])) {
-		          throw new TypeError;
-		        }
-		      }
-		      return function() {
-		        var args = arguments,
-		            length = funcs.length;
-
-		        while (length--) {
-		          args = [funcs[length].apply(this, args)];
-		        }
-		        return args[0];
-		      };
-		    }
-
-		    /**
-		     * Creates a function which accepts one or more arguments of `func` that when
-		     * invoked either executes `func` returning its result, if all `func` arguments
-		     * have been provided, or returns a function that accepts one or more of the
-		     * remaining `func` arguments, and so on. The arity of `func` can be specified
-		     * if `func.length` is not sufficient.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to curry.
-		     * @param {number} [arity=func.length] The arity of `func`.
-		     * @returns {Function} Returns the new curried function.
-		     * @example
-		     *
-		     * var curried = _.curry(function(a, b, c) {
-		     *   console.log(a + b + c);
-		     * });
-		     *
-		     * curried(1)(2)(3);
-		     * // => 6
-		     *
-		     * curried(1, 2)(3);
-		     * // => 6
-		     *
-		     * curried(1, 2, 3);
-		     * // => 6
-		     */
-		    function curry(func, arity) {
-		      arity = typeof arity == 'number' ? arity : (+arity || func.length);
-		      return createWrapper(func, 4, null, null, null, arity);
-		    }
-
-		    /**
-		     * Creates a function that will delay the execution of `func` until after
-		     * `wait` milliseconds have elapsed since the last time it was invoked.
-		     * Provide an options object to indicate that `func` should be invoked on
-		     * the leading and/or trailing edge of the `wait` timeout. Subsequent calls
-		     * to the debounced function will return the result of the last `func` call.
-		     *
-		     * Note: If `leading` and `trailing` options are `true` `func` will be called
-		     * on the trailing edge of the timeout only if the the debounced function is
-		     * invoked more than once during the `wait` timeout.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to debounce.
-		     * @param {number} wait The number of milliseconds to delay.
-		     * @param {Object} [options] The options object.
-		     * @param {boolean} [options.leading=false] Specify execution on the leading edge of the timeout.
-		     * @param {number} [options.maxWait] The maximum time `func` is allowed to be delayed before it's called.
-		     * @param {boolean} [options.trailing=true] Specify execution on the trailing edge of the timeout.
-		     * @returns {Function} Returns the new debounced function.
-		     * @example
-		     *
-		     * // avoid costly calculations while the window size is in flux
-		     * var lazyLayout = _.debounce(calculateLayout, 150);
-		     * jQuery(window).on('resize', lazyLayout);
-		     *
-		     * // execute `sendMail` when the click event is fired, debouncing subsequent calls
-		     * jQuery('#postbox').on('click', _.debounce(sendMail, 300, {
-		     *   'leading': true,
-		     *   'trailing': false
-		     * });
-		     *
-		     * // ensure `batchLog` is executed once after 1 second of debounced calls
-		     * var source = new EventSource('/stream');
-		     * source.addEventListener('message', _.debounce(batchLog, 250, {
-		     *   'maxWait': 1000
-		     * }, false);
-		     */
-		    function debounce(func, wait, options) {
-		      var args,
-		          maxTimeoutId,
-		          result,
-		          stamp,
-		          thisArg,
-		          timeoutId,
-		          trailingCall,
-		          lastCalled = 0,
-		          maxWait = false,
-		          trailing = true;
-
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      wait = nativeMax(0, wait) || 0;
-		      if (options === true) {
-		        var leading = true;
-		        trailing = false;
-		      } else if (isObject(options)) {
-		        leading = options.leading;
-		        maxWait = 'maxWait' in options && (nativeMax(wait, options.maxWait) || 0);
-		        trailing = 'trailing' in options ? options.trailing : trailing;
-		      }
-		      var delayed = function() {
-		        var remaining = wait - (now() - stamp);
-		        if (remaining <= 0) {
-		          if (maxTimeoutId) {
-		            clearTimeout(maxTimeoutId);
-		          }
-		          var isCalled = trailingCall;
-		          maxTimeoutId = timeoutId = trailingCall = undefined;
-		          if (isCalled) {
-		            lastCalled = now();
-		            result = func.apply(thisArg, args);
-		            if (!timeoutId && !maxTimeoutId) {
-		              args = thisArg = null;
-		            }
-		          }
-		        } else {
-		          timeoutId = setTimeout(delayed, remaining);
-		        }
-		      };
-
-		      var maxDelayed = function() {
-		        if (timeoutId) {
-		          clearTimeout(timeoutId);
-		        }
-		        maxTimeoutId = timeoutId = trailingCall = undefined;
-		        if (trailing || (maxWait !== wait)) {
-		          lastCalled = now();
-		          result = func.apply(thisArg, args);
-		          if (!timeoutId && !maxTimeoutId) {
-		            args = thisArg = null;
-		          }
-		        }
-		      };
-
-		      return function() {
-		        args = arguments;
-		        stamp = now();
-		        thisArg = this;
-		        trailingCall = trailing && (timeoutId || !leading);
-
-		        if (maxWait === false) {
-		          var leadingCall = leading && !timeoutId;
-		        } else {
-		          if (!maxTimeoutId && !leading) {
-		            lastCalled = stamp;
-		          }
-		          var remaining = maxWait - (stamp - lastCalled),
-		              isCalled = remaining <= 0;
-
-		          if (isCalled) {
-		            if (maxTimeoutId) {
-		              maxTimeoutId = clearTimeout(maxTimeoutId);
-		            }
-		            lastCalled = stamp;
-		            result = func.apply(thisArg, args);
-		          }
-		          else if (!maxTimeoutId) {
-		            maxTimeoutId = setTimeout(maxDelayed, remaining);
-		          }
-		        }
-		        if (isCalled && timeoutId) {
-		          timeoutId = clearTimeout(timeoutId);
-		        }
-		        else if (!timeoutId && wait !== maxWait) {
-		          timeoutId = setTimeout(delayed, wait);
-		        }
-		        if (leadingCall) {
-		          isCalled = true;
-		          result = func.apply(thisArg, args);
-		        }
-		        if (isCalled && !timeoutId && !maxTimeoutId) {
-		          args = thisArg = null;
-		        }
-		        return result;
-		      };
-		    }
-
-		    /**
-		     * Defers executing the `func` function until the current call stack has cleared.
-		     * Additional arguments will be provided to `func` when it is invoked.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to defer.
-		     * @param {...*} [arg] Arguments to invoke the function with.
-		     * @returns {number} Returns the timer id.
-		     * @example
-		     *
-		     * _.defer(function(text) { console.log(text); }, 'deferred');
-		     * // logs 'deferred' after one or more milliseconds
-		     */
-		    function defer(func) {
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      var args = slice(arguments, 1);
-		      return setTimeout(function() { func.apply(undefined, args); }, 1);
-		    }
-
-		    /**
-		     * Executes the `func` function after `wait` milliseconds. Additional arguments
-		     * will be provided to `func` when it is invoked.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to delay.
-		     * @param {number} wait The number of milliseconds to delay execution.
-		     * @param {...*} [arg] Arguments to invoke the function with.
-		     * @returns {number} Returns the timer id.
-		     * @example
-		     *
-		     * _.delay(function(text) { console.log(text); }, 1000, 'later');
-		     * // => logs 'later' after one second
-		     */
-		    function delay(func, wait) {
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      var args = slice(arguments, 2);
-		      return setTimeout(function() { func.apply(undefined, args); }, wait);
-		    }
-
-		    /**
-		     * Creates a function that memoizes the result of `func`. If `resolver` is
-		     * provided it will be used to determine the cache key for storing the result
-		     * based on the arguments provided to the memoized function. By default, the
-		     * first argument provided to the memoized function is used as the cache key.
-		     * The `func` is executed with the `this` binding of the memoized function.
-		     * The result cache is exposed as the `cache` property on the memoized function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to have its output memoized.
-		     * @param {Function} [resolver] A function used to resolve the cache key.
-		     * @returns {Function} Returns the new memoizing function.
-		     * @example
-		     *
-		     * var fibonacci = _.memoize(function(n) {
-		     *   return n < 2 ? n : fibonacci(n - 1) + fibonacci(n - 2);
-		     * });
-		     *
-		     * fibonacci(9)
-		     * // => 34
-		     *
-		     * var data = {
-		     *   'fred': { 'name': 'fred', 'age': 40 },
-		     *   'pebbles': { 'name': 'pebbles', 'age': 1 }
-		     * };
-		     *
-		     * // modifying the result cache
-		     * var get = _.memoize(function(name) { return data[name]; }, _.identity);
-		     * get('pebbles');
-		     * // => { 'name': 'pebbles', 'age': 1 }
-		     *
-		     * get.cache.pebbles.name = 'penelope';
-		     * get('pebbles');
-		     * // => { 'name': 'penelope', 'age': 1 }
-		     */
-		    function memoize(func, resolver) {
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      var memoized = function() {
-		        var cache = memoized.cache,
-		            key = resolver ? resolver.apply(this, arguments) : keyPrefix + arguments[0];
-
-		        return hasOwnProperty.call(cache, key)
-		          ? cache[key]
-		          : (cache[key] = func.apply(this, arguments));
-		      }
-		      memoized.cache = {};
-		      return memoized;
-		    }
-
-		    /**
-		     * Creates a function that is restricted to execute `func` once. Repeat calls to
-		     * the function will return the value of the first call. The `func` is executed
-		     * with the `this` binding of the created function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to restrict.
-		     * @returns {Function} Returns the new restricted function.
-		     * @example
-		     *
-		     * var initialize = _.once(createApplication);
-		     * initialize();
-		     * initialize();
-		     * // `initialize` executes `createApplication` once
-		     */
-		    function once(func) {
-		      var ran,
-		          result;
-
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      return function() {
-		        if (ran) {
-		          return result;
-		        }
-		        ran = true;
-		        result = func.apply(this, arguments);
-
-		        // clear the `func` variable so the function may be garbage collected
-		        func = null;
-		        return result;
-		      };
-		    }
-
-		    /**
-		     * Creates a function that, when called, invokes `func` with any additional
-		     * `partial` arguments prepended to those provided to the new function. This
-		     * method is similar to `_.bind` except it does **not** alter the `this` binding.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to partially apply arguments to.
-		     * @param {...*} [arg] Arguments to be partially applied.
-		     * @returns {Function} Returns the new partially applied function.
-		     * @example
-		     *
-		     * var greet = function(greeting, name) { return greeting + ' ' + name; };
-		     * var hi = _.partial(greet, 'hi');
-		     * hi('fred');
-		     * // => 'hi fred'
-		     */
-		    function partial(func) {
-		      return createWrapper(func, 16, slice(arguments, 1));
-		    }
-
-		    /**
-		     * This method is like `_.partial` except that `partial` arguments are
-		     * appended to those provided to the new function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to partially apply arguments to.
-		     * @param {...*} [arg] Arguments to be partially applied.
-		     * @returns {Function} Returns the new partially applied function.
-		     * @example
-		     *
-		     * var defaultsDeep = _.partialRight(_.merge, _.defaults);
-		     *
-		     * var options = {
-		     *   'variable': 'data',
-		     *   'imports': { 'jq': $ }
-		     * };
-		     *
-		     * defaultsDeep(options, _.templateSettings);
-		     *
-		     * options.variable
-		     * // => 'data'
-		     *
-		     * options.imports
-		     * // => { '_': _, 'jq': $ }
-		     */
-		    function partialRight(func) {
-		      return createWrapper(func, 32, null, slice(arguments, 1));
-		    }
-
-		    /**
-		     * Creates a function that, when executed, will only call the `func` function
-		     * at most once per every `wait` milliseconds. Provide an options object to
-		     * indicate that `func` should be invoked on the leading and/or trailing edge
-		     * of the `wait` timeout. Subsequent calls to the throttled function will
-		     * return the result of the last `func` call.
-		     *
-		     * Note: If `leading` and `trailing` options are `true` `func` will be called
-		     * on the trailing edge of the timeout only if the the throttled function is
-		     * invoked more than once during the `wait` timeout.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {Function} func The function to throttle.
-		     * @param {number} wait The number of milliseconds to throttle executions to.
-		     * @param {Object} [options] The options object.
-		     * @param {boolean} [options.leading=true] Specify execution on the leading edge of the timeout.
-		     * @param {boolean} [options.trailing=true] Specify execution on the trailing edge of the timeout.
-		     * @returns {Function} Returns the new throttled function.
-		     * @example
-		     *
-		     * // avoid excessively updating the position while scrolling
-		     * var throttled = _.throttle(updatePosition, 100);
-		     * jQuery(window).on('scroll', throttled);
-		     *
-		     * // execute `renewToken` when the click event is fired, but not more than once every 5 minutes
-		     * jQuery('.interactive').on('click', _.throttle(renewToken, 300000, {
-		     *   'trailing': false
-		     * }));
-		     */
-		    function throttle(func, wait, options) {
-		      var leading = true,
-		          trailing = true;
-
-		      if (!isFunction(func)) {
-		        throw new TypeError;
-		      }
-		      if (options === false) {
-		        leading = false;
-		      } else if (isObject(options)) {
-		        leading = 'leading' in options ? options.leading : leading;
-		        trailing = 'trailing' in options ? options.trailing : trailing;
-		      }
-		      debounceOptions.leading = leading;
-		      debounceOptions.maxWait = wait;
-		      debounceOptions.trailing = trailing;
-
-		      return debounce(func, wait, debounceOptions);
-		    }
-
-		    /**
-		     * Creates a function that provides `value` to the wrapper function as its
-		     * first argument. Additional arguments provided to the function are appended
-		     * to those provided to the wrapper function. The wrapper is executed with
-		     * the `this` binding of the created function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Functions
-		     * @param {*} value The value to wrap.
-		     * @param {Function} wrapper The wrapper function.
-		     * @returns {Function} Returns the new function.
-		     * @example
-		     *
-		     * var p = _.wrap(_.escape, function(func, text) {
-		     *   return '<p>' + func(text) + '</p>';
-		     * });
-		     *
-		     * p('Fred, Wilma, & Pebbles');
-		     * // => '<p>Fred, Wilma, &amp; Pebbles</p>'
-		     */
-		    function wrap(value, wrapper) {
-		      return createWrapper(wrapper, 16, [value]);
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates a function that returns `value`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {*} value The value to return from the new function.
-		     * @returns {Function} Returns the new function.
-		     * @example
-		     *
-		     * var object = { 'name': 'fred' };
-		     * var getter = _.constant(object);
-		     * getter() === object;
-		     * // => true
-		     */
-		    function constant(value) {
-		      return function() {
-		        return value;
-		      };
-		    }
-
-		    /**
-		     * Produces a callback bound to an optional `thisArg`. If `func` is a property
-		     * name the created callback will return the property value for a given element.
-		     * If `func` is an object the created callback will return `true` for elements
-		     * that contain the equivalent object properties, otherwise it will return `false`.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {*} [func=identity] The value to convert to a callback.
-		     * @param {*} [thisArg] The `this` binding of the created callback.
-		     * @param {number} [argCount] The number of arguments the callback accepts.
-		     * @returns {Function} Returns a callback function.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * // wrap to create custom callback shorthands
-		     * _.createCallback = _.wrap(_.createCallback, function(func, callback, thisArg) {
-		     *   var match = /^(.+?)__([gl]t)(.+)$/.exec(callback);
-		     *   return !match ? func(callback, thisArg) : function(object) {
-		     *     return match[2] == 'gt' ? object[match[1]] > match[3] : object[match[1]] < match[3];
-		     *   };
-		     * });
-		     *
-		     * _.filter(characters, 'age__gt38');
-		     * // => [{ 'name': 'fred', 'age': 40 }]
-		     */
-		    function createCallback(func, thisArg, argCount) {
-		      var type = typeof func;
-		      if (func == null || type == 'function') {
-		        return baseCreateCallback(func, thisArg, argCount);
-		      }
-		      // handle "_.pluck" style callback shorthands
-		      if (type != 'object') {
-		        return property(func);
-		      }
-		      var props = keys(func),
-		          key = props[0],
-		          a = func[key];
-
-		      // handle "_.where" style callback shorthands
-		      if (props.length == 1 && a === a && !isObject(a)) {
-		        // fast path the common case of providing an object with a single
-		        // property containing a primitive value
-		        return function(object) {
-		          var b = object[key];
-		          return a === b && (a !== 0 || (1 / a == 1 / b));
-		        };
-		      }
-		      return function(object) {
-		        var length = props.length,
-		            result = false;
-
-		        while (length--) {
-		          if (!(result = baseIsEqual(object[props[length]], func[props[length]], null, true))) {
-		            break;
-		          }
-		        }
-		        return result;
-		      };
-		    }
-
-		    /**
-		     * Converts the characters `&`, `<`, `>`, `"`, and `'` in `string` to their
-		     * corresponding HTML entities.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} string The string to escape.
-		     * @returns {string} Returns the escaped string.
-		     * @example
-		     *
-		     * _.escape('Fred, Wilma, & Pebbles');
-		     * // => 'Fred, Wilma, &amp; Pebbles'
-		     */
-		    function escape(string) {
-		      return string == null ? '' : String(string).replace(reUnescapedHtml, escapeHtmlChar);
-		    }
-
-		    /**
-		     * This method returns the first argument provided to it.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {*} value Any value.
-		     * @returns {*} Returns `value`.
-		     * @example
-		     *
-		     * var object = { 'name': 'fred' };
-		     * _.identity(object) === object;
-		     * // => true
-		     */
-		    function identity(value) {
-		      return value;
-		    }
-
-		    /**
-		     * Adds function properties of a source object to the destination object.
-		     * If `object` is a function methods will be added to its prototype as well.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {Function|Object} [object=lodash] object The destination object.
-		     * @param {Object} source The object of functions to add.
-		     * @param {Object} [options] The options object.
-		     * @param {boolean} [options.chain=true] Specify whether the functions added are chainable.
-		     * @example
-		     *
-		     * function capitalize(string) {
-		     *   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-		     * }
-		     *
-		     * _.mixin({ 'capitalize': capitalize });
-		     * _.capitalize('fred');
-		     * // => 'Fred'
-		     *
-		     * _('fred').capitalize().value();
-		     * // => 'Fred'
-		     *
-		     * _.mixin({ 'capitalize': capitalize }, { 'chain': false });
-		     * _('fred').capitalize();
-		     * // => 'Fred'
-		     */
-		    function mixin(object, source, options) {
-		      var chain = true,
-		          methodNames = source && functions(source);
-
-		      if (!source || (!options && !methodNames.length)) {
-		        if (options == null) {
-		          options = source;
-		        }
-		        ctor = lodashWrapper;
-		        source = object;
-		        object = lodash;
-		        methodNames = functions(source);
-		      }
-		      if (options === false) {
-		        chain = false;
-		      } else if (isObject(options) && 'chain' in options) {
-		        chain = options.chain;
-		      }
-		      var ctor = object,
-		          isFunc = isFunction(ctor);
-
-		      forEach(methodNames, function(methodName) {
-		        var func = object[methodName] = source[methodName];
-		        if (isFunc) {
-		          ctor.prototype[methodName] = function() {
-		            var chainAll = this.__chain__,
-		                value = this.__wrapped__,
-		                args = [value];
-
-		            push.apply(args, arguments);
-		            var result = func.apply(object, args);
-		            if (chain || chainAll) {
-		              if (value === result && isObject(result)) {
-		                return this;
-		              }
-		              result = new ctor(result);
-		              result.__chain__ = chainAll;
-		            }
-		            return result;
-		          };
-		        }
-		      });
-		    }
-
-		    /**
-		     * Reverts the '_' variable to its previous value and returns a reference to
-		     * the `lodash` function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @returns {Function} Returns the `lodash` function.
-		     * @example
-		     *
-		     * var lodash = _.noConflict();
-		     */
-		    function noConflict() {
-		      context._ = oldDash;
-		      return this;
-		    }
-
-		    /**
-		     * A no-operation function.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @example
-		     *
-		     * var object = { 'name': 'fred' };
-		     * _.noop(object) === undefined;
-		     * // => true
-		     */
-		    function noop() {
-		      // no operation performed
-		    }
-
-		    /**
-		     * Gets the number of milliseconds that have elapsed since the Unix epoch
-		     * (1 January 1970 00:00:00 UTC).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @example
-		     *
-		     * var stamp = _.now();
-		     * _.defer(function() { console.log(_.now() - stamp); });
-		     * // => logs the number of milliseconds it took for the deferred function to be called
-		     */
-		    var now = isNative(now = Date.now) && now || function() {
-		      return new Date().getTime();
-		    };
-
-		    /**
-		     * Converts the given value into an integer of the specified radix.
-		     * If `radix` is `undefined` or `0` a `radix` of `10` is used unless the
-		     * `value` is a hexadecimal, in which case a `radix` of `16` is used.
-		     *
-		     * Note: This method avoids differences in native ES3 and ES5 `parseInt`
-		     * implementations. See http://es5.github.io/#E.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} value The value to parse.
-		     * @param {number} [radix] The radix used to interpret the value to parse.
-		     * @returns {number} Returns the new integer value.
-		     * @example
-		     *
-		     * _.parseInt('08');
-		     * // => 8
-		     */
-		    var parseInt = nativeParseInt(whitespace + '08') == 8 ? nativeParseInt : function(value, radix) {
-		      // Firefox < 21 and Opera < 15 follow the ES3 specified implementation of `parseInt`
-		      return nativeParseInt(isString(value) ? value.replace(reLeadingSpacesAndZeros, '') : value, radix || 0);
-		    };
-
-		    /**
-		     * Creates a "_.pluck" style function, which returns the `key` value of a
-		     * given object.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} key The name of the property to retrieve.
-		     * @returns {Function} Returns the new function.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'fred',   'age': 40 },
-		     *   { 'name': 'barney', 'age': 36 }
-		     * ];
-		     *
-		     * var getName = _.property('name');
-		     *
-		     * _.map(characters, getName);
-		     * // => ['barney', 'fred']
-		     *
-		     * _.sortBy(characters, getName);
-		     * // => [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred',   'age': 40 }]
-		     */
-		    function property(key) {
-		      return function(object) {
-		        return object[key];
-		      };
-		    }
-
-		    /**
-		     * Produces a random number between `min` and `max` (inclusive). If only one
-		     * argument is provided a number between `0` and the given number will be
-		     * returned. If `floating` is truey or either `min` or `max` are floats a
-		     * floating-point number will be returned instead of an integer.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {number} [min=0] The minimum possible value.
-		     * @param {number} [max=1] The maximum possible value.
-		     * @param {boolean} [floating=false] Specify returning a floating-point number.
-		     * @returns {number} Returns a random number.
-		     * @example
-		     *
-		     * _.random(0, 5);
-		     * // => an integer between 0 and 5
-		     *
-		     * _.random(5);
-		     * // => also an integer between 0 and 5
-		     *
-		     * _.random(5, true);
-		     * // => a floating-point number between 0 and 5
-		     *
-		     * _.random(1.2, 5.2);
-		     * // => a floating-point number between 1.2 and 5.2
-		     */
-		    function random(min, max, floating) {
-		      var noMin = min == null,
-		          noMax = max == null;
-
-		      if (floating == null) {
-		        if (typeof min == 'boolean' && noMax) {
-		          floating = min;
-		          min = 1;
-		        }
-		        else if (!noMax && typeof max == 'boolean') {
-		          floating = max;
-		          noMax = true;
-		        }
-		      }
-		      if (noMin && noMax) {
-		        max = 1;
-		      }
-		      min = +min || 0;
-		      if (noMax) {
-		        max = min;
-		        min = 0;
-		      } else {
-		        max = +max || 0;
-		      }
-		      if (floating || min % 1 || max % 1) {
-		        var rand = nativeRandom();
-		        return nativeMin(min + (rand * (max - min + parseFloat('1e-' + ((rand +'').length - 1)))), max);
-		      }
-		      return baseRandom(min, max);
-		    }
-
-		    /**
-		     * Resolves the value of property `key` on `object`. If `key` is a function
-		     * it will be invoked with the `this` binding of `object` and its result returned,
-		     * else the property value is returned. If `object` is falsey then `undefined`
-		     * is returned.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {Object} object The object to inspect.
-		     * @param {string} key The name of the property to resolve.
-		     * @returns {*} Returns the resolved value.
-		     * @example
-		     *
-		     * var object = {
-		     *   'cheese': 'crumpets',
-		     *   'stuff': function() {
-		     *     return 'nonsense';
-		     *   }
-		     * };
-		     *
-		     * _.result(object, 'cheese');
-		     * // => 'crumpets'
-		     *
-		     * _.result(object, 'stuff');
-		     * // => 'nonsense'
-		     */
-		    function result(object, key) {
-		      if (object) {
-		        var value = object[key];
-		        return isFunction(value) ? object[key]() : value;
-		      }
-		    }
-
-		    /**
-		     * A micro-templating method that handles arbitrary delimiters, preserves
-		     * whitespace, and correctly escapes quotes within interpolated code.
-		     *
-		     * Note: In the development build, `_.template` utilizes sourceURLs for easier
-		     * debugging. See http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl
-		     *
-		     * For more information on precompiling templates see:
-		     * http://lodash.com/custom-builds
-		     *
-		     * For more information on Chrome extension sandboxes see:
-		     * http://developer.chrome.com/stable/extensions/sandboxingEval.html
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} text The template text.
-		     * @param {Object} data The data object used to populate the text.
-		     * @param {Object} [options] The options object.
-		     * @param {RegExp} [options.escape] The "escape" delimiter.
-		     * @param {RegExp} [options.evaluate] The "evaluate" delimiter.
-		     * @param {Object} [options.imports] An object to import into the template as local variables.
-		     * @param {RegExp} [options.interpolate] The "interpolate" delimiter.
-		     * @param {string} [sourceURL] The sourceURL of the template's compiled source.
-		     * @param {string} [variable] The data object variable name.
-		     * @returns {Function|string} Returns a compiled function when no `data` object
-		     *  is given, else it returns the interpolated text.
-		     * @example
-		     *
-		     * // using the "interpolate" delimiter to create a compiled template
-		     * var compiled = _.template('hello <%= name %>');
-		     * compiled({ 'name': 'fred' });
-		     * // => 'hello fred'
-		     *
-		     * // using the "escape" delimiter to escape HTML in data property values
-		     * _.template('<b><%- value %></b>', { 'value': '<script>' });
-		     * // => '<b>&lt;script&gt;</b>'
-		     *
-		     * // using the "evaluate" delimiter to generate HTML
-		     * var list = '<% _.forEach(people, function(name) { %><li><%- name %></li><% }); %>';
-		     * _.template(list, { 'people': ['fred', 'barney'] });
-		     * // => '<li>fred</li><li>barney</li>'
-		     *
-		     * // using the ES6 delimiter as an alternative to the default "interpolate" delimiter
-		     * _.template('hello ${ name }', { 'name': 'pebbles' });
-		     * // => 'hello pebbles'
-		     *
-		     * // using the internal `print` function in "evaluate" delimiters
-		     * _.template('<% print("hello " + name); %>!', { 'name': 'barney' });
-		     * // => 'hello barney!'
-		     *
-		     * // using a custom template delimiters
-		     * _.templateSettings = {
-		     *   'interpolate': /{{([\s\S]+?)}}/g
-		     * };
-		     *
-		     * _.template('hello {{ name }}!', { 'name': 'mustache' });
-		     * // => 'hello mustache!'
-		     *
-		     * // using the `imports` option to import jQuery
-		     * var list = '<% jq.each(people, function(name) { %><li><%- name %></li><% }); %>';
-		     * _.template(list, { 'people': ['fred', 'barney'] }, { 'imports': { 'jq': jQuery } });
-		     * // => '<li>fred</li><li>barney</li>'
-		     *
-		     * // using the `sourceURL` option to specify a custom sourceURL for the template
-		     * var compiled = _.template('hello <%= name %>', null, { 'sourceURL': '/basic/greeting.jst' });
-		     * compiled(data);
-		     * // => find the source of "greeting.jst" under the Sources tab or Resources panel of the web inspector
-		     *
-		     * // using the `variable` option to ensure a with-statement isn't used in the compiled template
-		     * var compiled = _.template('hi <%= data.name %>!', null, { 'variable': 'data' });
-		     * compiled.source;
-		     * // => function(data) {
-		     *   var __t, __p = '', __e = _.escape;
-		     *   __p += 'hi ' + ((__t = ( data.name )) == null ? '' : __t) + '!';
-		     *   return __p;
-		     * }
-		     *
-		     * // using the `source` property to inline compiled templates for meaningful
-		     * // line numbers in error messages and a stack trace
-		     * fs.writeFileSync(path.join(cwd, 'jst.js'), '\
-		     *   var JST = {\
-		     *     "main": ' + _.template(mainText).source + '\
-		     *   };\
-		     * ');
-		     */
-		    function template(text, data, options) {
-		      // based on John Resig's `tmpl` implementation
-		      // http://ejohn.org/blog/javascript-micro-templating/
-		      // and Laura Doktorova's doT.js
-		      // https://github.com/olado/doT
-		      var settings = lodash.templateSettings;
-		      text = String(text || '');
-
-		      // avoid missing dependencies when `iteratorTemplate` is not defined
-		      options = defaults({}, options, settings);
-
-		      var imports = defaults({}, options.imports, settings.imports),
-		          importsKeys = keys(imports),
-		          importsValues = values(imports);
-
-		      var isEvaluating,
-		          index = 0,
-		          interpolate = options.interpolate || reNoMatch,
-		          source = "__p += '";
-
-		      // compile the regexp to match each delimiter
-		      var reDelimiters = RegExp(
-		        (options.escape || reNoMatch).source + '|' +
-		        interpolate.source + '|' +
-		        (interpolate === reInterpolate ? reEsTemplate : reNoMatch).source + '|' +
-		        (options.evaluate || reNoMatch).source + '|$'
-		      , 'g');
-
-		      text.replace(reDelimiters, function(match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
-		        interpolateValue || (interpolateValue = esTemplateValue);
-
-		        // escape characters that cannot be included in string literals
-		        source += text.slice(index, offset).replace(reUnescapedString, escapeStringChar);
-
-		        // replace delimiters with snippets
-		        if (escapeValue) {
-		          source += "' +\n__e(" + escapeValue + ") +\n'";
-		        }
-		        if (evaluateValue) {
-		          isEvaluating = true;
-		          source += "';\n" + evaluateValue + ";\n__p += '";
-		        }
-		        if (interpolateValue) {
-		          source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'";
-		        }
-		        index = offset + match.length;
-
-		        // the JS engine embedded in Adobe products requires returning the `match`
-		        // string in order to produce the correct `offset` value
-		        return match;
-		      });
-
-		      source += "';\n";
-
-		      // if `variable` is not specified, wrap a with-statement around the generated
-		      // code to add the data object to the top of the scope chain
-		      var variable = options.variable,
-		          hasVariable = variable;
-
-		      if (!hasVariable) {
-		        variable = 'obj';
-		        source = 'with (' + variable + ') {\n' + source + '\n}\n';
-		      }
-		      // cleanup code by stripping empty strings
-		      source = (isEvaluating ? source.replace(reEmptyStringLeading, '') : source)
-		        .replace(reEmptyStringMiddle, '$1')
-		        .replace(reEmptyStringTrailing, '$1;');
-
-		      // frame code as the function body
-		      source = 'function(' + variable + ') {\n' +
-		        (hasVariable ? '' : variable + ' || (' + variable + ' = {});\n') +
-		        "var __t, __p = '', __e = _.escape" +
-		        (isEvaluating
-		          ? ', __j = Array.prototype.join;\n' +
-		            "function print() { __p += __j.call(arguments, '') }\n"
-		          : ';\n'
-		        ) +
-		        source +
-		        'return __p\n}';
-
-		      // Use a sourceURL for easier debugging.
-		      // http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl
-		      var sourceURL = '\n/*\n//# sourceURL=' + (options.sourceURL || '/lodash/template/source[' + (templateCounter++) + ']') + '\n*/';
-
-		      try {
-		        var result = Function(importsKeys, 'return ' + source + sourceURL).apply(undefined, importsValues);
-		      } catch(e) {
-		        e.source = source;
-		        throw e;
-		      }
-		      if (data) {
-		        return result(data);
-		      }
-		      // provide the compiled function's source by its `toString` method, in
-		      // supported environments, or the `source` property as a convenience for
-		      // inlining compiled templates during the build process
-		      result.source = source;
-		      return result;
-		    }
-
-		    /**
-		     * Executes the callback `n` times, returning an array of the results
-		     * of each callback execution. The callback is bound to `thisArg` and invoked
-		     * with one argument; (index).
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {number} n The number of times to execute the callback.
-		     * @param {Function} callback The function called per iteration.
-		     * @param {*} [thisArg] The `this` binding of `callback`.
-		     * @returns {Array} Returns an array of the results of each `callback` execution.
-		     * @example
-		     *
-		     * var diceRolls = _.times(3, _.partial(_.random, 1, 6));
-		     * // => [3, 6, 4]
-		     *
-		     * _.times(3, function(n) { mage.castSpell(n); });
-		     * // => calls `mage.castSpell(n)` three times, passing `n` of `0`, `1`, and `2` respectively
-		     *
-		     * _.times(3, function(n) { this.cast(n); }, mage);
-		     * // => also calls `mage.castSpell(n)` three times
-		     */
-		    function times(n, callback, thisArg) {
-		      n = (n = +n) > -1 ? n : 0;
-		      var index = -1,
-		          result = Array(n);
-
-		      callback = baseCreateCallback(callback, thisArg, 1);
-		      while (++index < n) {
-		        result[index] = callback(index);
-		      }
-		      return result;
-		    }
-
-		    /**
-		     * The inverse of `_.escape` this method converts the HTML entities
-		     * `&amp;`, `&lt;`, `&gt;`, `&quot;`, and `&#39;` in `string` to their
-		     * corresponding characters.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} string The string to unescape.
-		     * @returns {string} Returns the unescaped string.
-		     * @example
-		     *
-		     * _.unescape('Fred, Barney &amp; Pebbles');
-		     * // => 'Fred, Barney & Pebbles'
-		     */
-		    function unescape(string) {
-		      return string == null ? '' : String(string).replace(reEscapedHtml, unescapeHtmlChar);
-		    }
-
-		    /**
-		     * Generates a unique ID. If `prefix` is provided the ID will be appended to it.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Utilities
-		     * @param {string} [prefix] The value to prefix the ID with.
-		     * @returns {string} Returns the unique ID.
-		     * @example
-		     *
-		     * _.uniqueId('contact_');
-		     * // => 'contact_104'
-		     *
-		     * _.uniqueId();
-		     * // => '105'
-		     */
-		    function uniqueId(prefix) {
-		      var id = ++idCounter;
-		      return String(prefix == null ? '' : prefix) + id;
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * Creates a `lodash` object that wraps the given value with explicit
-		     * method chaining enabled.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Chaining
-		     * @param {*} value The value to wrap.
-		     * @returns {Object} Returns the wrapper object.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney',  'age': 36 },
-		     *   { 'name': 'fred',    'age': 40 },
-		     *   { 'name': 'pebbles', 'age': 1 }
-		     * ];
-		     *
-		     * var youngest = _.chain(characters)
-		     *     .sortBy('age')
-		     *     .map(function(chr) { return chr.name + ' is ' + chr.age; })
-		     *     .first()
-		     *     .value();
-		     * // => 'pebbles is 1'
-		     */
-		    function chain(value) {
-		      value = new lodashWrapper(value);
-		      value.__chain__ = true;
-		      return value;
-		    }
-
-		    /**
-		     * Invokes `interceptor` with the `value` as the first argument and then
-		     * returns `value`. The purpose of this method is to "tap into" a method
-		     * chain in order to perform operations on intermediate results within
-		     * the chain.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @category Chaining
-		     * @param {*} value The value to provide to `interceptor`.
-		     * @param {Function} interceptor The function to invoke.
-		     * @returns {*} Returns `value`.
-		     * @example
-		     *
-		     * _([1, 2, 3, 4])
-		     *  .tap(function(array) { array.pop(); })
-		     *  .reverse()
-		     *  .value();
-		     * // => [3, 2, 1]
-		     */
-		    function tap(value, interceptor) {
-		      interceptor(value);
-		      return value;
-		    }
-
-		    /**
-		     * Enables explicit method chaining on the wrapper object.
-		     *
-		     * @name chain
-		     * @memberOf _
-		     * @category Chaining
-		     * @returns {*} Returns the wrapper object.
-		     * @example
-		     *
-		     * var characters = [
-		     *   { 'name': 'barney', 'age': 36 },
-		     *   { 'name': 'fred',   'age': 40 }
-		     * ];
-		     *
-		     * // without explicit chaining
-		     * _(characters).first();
-		     * // => { 'name': 'barney', 'age': 36 }
-		     *
-		     * // with explicit chaining
-		     * _(characters).chain()
-		     *   .first()
-		     *   .pick('age')
-		     *   .value();
-		     * // => { 'age': 36 }
-		     */
-		    function wrapperChain() {
-		      this.__chain__ = true;
-		      return this;
-		    }
-
-		    /**
-		     * Produces the `toString` result of the wrapped value.
-		     *
-		     * @name toString
-		     * @memberOf _
-		     * @category Chaining
-		     * @returns {string} Returns the string result.
-		     * @example
-		     *
-		     * _([1, 2, 3]).toString();
-		     * // => '1,2,3'
-		     */
-		    function wrapperToString() {
-		      return String(this.__wrapped__);
-		    }
-
-		    /**
-		     * Extracts the wrapped value.
-		     *
-		     * @name valueOf
-		     * @memberOf _
-		     * @alias value
-		     * @category Chaining
-		     * @returns {*} Returns the wrapped value.
-		     * @example
-		     *
-		     * _([1, 2, 3]).valueOf();
-		     * // => [1, 2, 3]
-		     */
-		    function wrapperValueOf() {
-		      return this.__wrapped__;
-		    }
-
-		    /*--------------------------------------------------------------------------*/
-
-		    // add functions that return wrapped values when chaining
-		    lodash.after = after;
-		    lodash.assign = assign;
-		    lodash.at = at;
-		    lodash.bind = bind;
-		    lodash.bindAll = bindAll;
-		    lodash.bindKey = bindKey;
-		    lodash.chain = chain;
-		    lodash.compact = compact;
-		    lodash.compose = compose;
-		    lodash.constant = constant;
-		    lodash.countBy = countBy;
-		    lodash.create = create;
-		    lodash.createCallback = createCallback;
-		    lodash.curry = curry;
-		    lodash.debounce = debounce;
-		    lodash.defaults = defaults;
-		    lodash.defer = defer;
-		    lodash.delay = delay;
-		    lodash.difference = difference;
-		    lodash.filter = filter;
-		    lodash.flatten = flatten;
-		    lodash.forEach = forEach;
-		    lodash.forEachRight = forEachRight;
-		    lodash.forIn = forIn;
-		    lodash.forInRight = forInRight;
-		    lodash.forOwn = forOwn;
-		    lodash.forOwnRight = forOwnRight;
-		    lodash.functions = functions;
-		    lodash.groupBy = groupBy;
-		    lodash.indexBy = indexBy;
-		    lodash.initial = initial;
-		    lodash.intersection = intersection;
-		    lodash.invert = invert;
-		    lodash.invoke = invoke;
-		    lodash.keys = keys;
-		    lodash.map = map;
-		    lodash.mapValues = mapValues;
-		    lodash.max = max;
-		    lodash.memoize = memoize;
-		    lodash.merge = merge;
-		    lodash.min = min;
-		    lodash.omit = omit;
-		    lodash.once = once;
-		    lodash.pairs = pairs;
-		    lodash.partial = partial;
-		    lodash.partialRight = partialRight;
-		    lodash.pick = pick;
-		    lodash.pluck = pluck;
-		    lodash.property = property;
-		    lodash.pull = pull;
-		    lodash.range = range;
-		    lodash.reject = reject;
-		    lodash.remove = remove;
-		    lodash.rest = rest;
-		    lodash.shuffle = shuffle;
-		    lodash.sortBy = sortBy;
-		    lodash.tap = tap;
-		    lodash.throttle = throttle;
-		    lodash.times = times;
-		    lodash.toArray = toArray;
-		    lodash.transform = transform;
-		    lodash.union = union;
-		    lodash.uniq = uniq;
-		    lodash.values = values;
-		    lodash.where = where;
-		    lodash.without = without;
-		    lodash.wrap = wrap;
-		    lodash.xor = xor;
-		    lodash.zip = zip;
-		    lodash.zipObject = zipObject;
-
-		    // add aliases
-		    lodash.collect = map;
-		    lodash.drop = rest;
-		    lodash.each = forEach;
-		    lodash.eachRight = forEachRight;
-		    lodash.extend = assign;
-		    lodash.methods = functions;
-		    lodash.object = zipObject;
-		    lodash.select = filter;
-		    lodash.tail = rest;
-		    lodash.unique = uniq;
-		    lodash.unzip = zip;
-
-		    // add functions to `lodash.prototype`
-		    mixin(lodash);
-
-		    /*--------------------------------------------------------------------------*/
-
-		    // add functions that return unwrapped values when chaining
-		    lodash.clone = clone;
-		    lodash.cloneDeep = cloneDeep;
-		    lodash.contains = contains;
-		    lodash.escape = escape;
-		    lodash.every = every;
-		    lodash.find = find;
-		    lodash.findIndex = findIndex;
-		    lodash.findKey = findKey;
-		    lodash.findLast = findLast;
-		    lodash.findLastIndex = findLastIndex;
-		    lodash.findLastKey = findLastKey;
-		    lodash.has = has;
-		    lodash.identity = identity;
-		    lodash.indexOf = indexOf;
-		    lodash.isArguments = isArguments;
-		    lodash.isArray = isArray;
-		    lodash.isBoolean = isBoolean;
-		    lodash.isDate = isDate;
-		    lodash.isElement = isElement;
-		    lodash.isEmpty = isEmpty;
-		    lodash.isEqual = isEqual;
-		    lodash.isFinite = isFinite;
-		    lodash.isFunction = isFunction;
-		    lodash.isNaN = isNaN;
-		    lodash.isNull = isNull;
-		    lodash.isNumber = isNumber;
-		    lodash.isObject = isObject;
-		    lodash.isPlainObject = isPlainObject;
-		    lodash.isRegExp = isRegExp;
-		    lodash.isString = isString;
-		    lodash.isUndefined = isUndefined;
-		    lodash.lastIndexOf = lastIndexOf;
-		    lodash.mixin = mixin;
-		    lodash.noConflict = noConflict;
-		    lodash.noop = noop;
-		    lodash.now = now;
-		    lodash.parseInt = parseInt;
-		    lodash.random = random;
-		    lodash.reduce = reduce;
-		    lodash.reduceRight = reduceRight;
-		    lodash.result = result;
-		    lodash.runInContext = runInContext;
-		    lodash.size = size;
-		    lodash.some = some;
-		    lodash.sortedIndex = sortedIndex;
-		    lodash.template = template;
-		    lodash.unescape = unescape;
-		    lodash.uniqueId = uniqueId;
-
-		    // add aliases
-		    lodash.all = every;
-		    lodash.any = some;
-		    lodash.detect = find;
-		    lodash.findWhere = find;
-		    lodash.foldl = reduce;
-		    lodash.foldr = reduceRight;
-		    lodash.include = contains;
-		    lodash.inject = reduce;
-
-		    mixin(function() {
-		      var source = {}
-		      forOwn(lodash, function(func, methodName) {
-		        if (!lodash.prototype[methodName]) {
-		          source[methodName] = func;
-		        }
-		      });
-		      return source;
-		    }(), false);
-
-		    /*--------------------------------------------------------------------------*/
-
-		    // add functions capable of returning wrapped and unwrapped values when chaining
-		    lodash.first = first;
-		    lodash.last = last;
-		    lodash.sample = sample;
-
-		    // add aliases
-		    lodash.take = first;
-		    lodash.head = first;
-
-		    forOwn(lodash, function(func, methodName) {
-		      var callbackable = methodName !== 'sample';
-		      if (!lodash.prototype[methodName]) {
-		        lodash.prototype[methodName]= function(n, guard) {
-		          var chainAll = this.__chain__,
-		              result = func(this.__wrapped__, n, guard);
-
-		          return !chainAll && (n == null || (guard && !(callbackable && typeof n == 'function')))
-		            ? result
-		            : new lodashWrapper(result, chainAll);
-		        };
-		      }
-		    });
-
-		    /*--------------------------------------------------------------------------*/
-
-		    /**
-		     * The semantic version number.
-		     *
-		     * @static
-		     * @memberOf _
-		     * @type string
-		     */
-		    lodash.VERSION = '2.4.1';
-
-		    // add "Chaining" functions to the wrapper
-		    lodash.prototype.chain = wrapperChain;
-		    lodash.prototype.toString = wrapperToString;
-		    lodash.prototype.value = wrapperValueOf;
-		    lodash.prototype.valueOf = wrapperValueOf;
-
-		    // add `Array` functions that return unwrapped values
-		    baseEach(['join', 'pop', 'shift'], function(methodName) {
-		      var func = arrayRef[methodName];
-		      lodash.prototype[methodName] = function() {
-		        var chainAll = this.__chain__,
-		            result = func.apply(this.__wrapped__, arguments);
-
-		        return chainAll
-		          ? new lodashWrapper(result, chainAll)
-		          : result;
-		      };
-		    });
-
-		    // add `Array` functions that return the existing wrapped value
-		    baseEach(['push', 'reverse', 'sort', 'unshift'], function(methodName) {
-		      var func = arrayRef[methodName];
-		      lodash.prototype[methodName] = function() {
-		        func.apply(this.__wrapped__, arguments);
-		        return this;
-		      };
-		    });
-
-		    // add `Array` functions that return new wrapped values
-		    baseEach(['concat', 'slice', 'splice'], function(methodName) {
-		      var func = arrayRef[methodName];
-		      lodash.prototype[methodName] = function() {
-		        return new lodashWrapper(func.apply(this.__wrapped__, arguments), this.__chain__);
-		      };
-		    });
-
-		    // avoid array-like object bugs with `Array#shift` and `Array#splice`
-		    // in IE < 9, Firefox < 10, Narwhal, and RingoJS
-		    if (!support.spliceObjects) {
-		      baseEach(['pop', 'shift', 'splice'], function(methodName) {
-		        var func = arrayRef[methodName],
-		            isSplice = methodName == 'splice';
-
-		        lodash.prototype[methodName] = function() {
-		          var chainAll = this.__chain__,
-		              value = this.__wrapped__,
-		              result = func.apply(value, arguments);
-
-		          if (value.length === 0) {
-		            delete value[0];
-		          }
-		          return (chainAll || isSplice)
-		            ? new lodashWrapper(result, chainAll)
-		            : result;
-		        };
-		      });
-		    }
-
-		    return lodash;
-		  }
-
-		  /*--------------------------------------------------------------------------*/
-
-		  // expose Lo-Dash
-		  var _ = runInContext();
-
-		  // some AMD build optimizers like r.js check for condition patterns like the following:
-		  if (true) {
-		    // Expose Lo-Dash to the global object even when an AMD loader is present in
-		    // case Lo-Dash is loaded with a RequireJS shim config.
-		    // See http://requirejs.org/docs/api.html#config-shim
-		    root._ = _;
-
-		    // define as an anonymous module so, through path mapping, it can be
-		    // referenced as the "underscore" module
-		    !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
-		      return _;
-		    }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-		  }
-		  // check for `exports` after `define` in case a build optimizer adds an `exports` object
-		  else if (freeExports && freeModule) {
-		    // in Node.js or RingoJS
-		    if (moduleExports) {
-		      (freeModule.exports = _)._ = _;
-		    }
-		    // in Narwhal or Rhino -require
-		    else {
-		      freeExports._ = _;
-		    }
-		  }
-		  else {
-		    // in a browser or Rhino
-		    root._ = _;
-		  }
-		}.call(this));
-		
-		/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)(module), (function() { return this; }())))
-
-	/***/ },
-	/* 14 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		module.exports = function(module) {
-			if(!module.webpackPolyfill) {
-				module.deprecate = function() {};
-				module.paths = [];
-				// module.parent = undefined by default
-				module.children = [];
-				module.webpackPolyfill = 1;
-			}
-			return module;
-		}
-
-
 	/***/ }
 	/******/ ])
 	});
-
+	;
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -12842,10 +5837,10 @@
 
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var keyMirror = __webpack_require__(40)
+	var keyMirror = __webpack_require__(45)
 
 	module.exports = keyMirror({
 	  SPAWN_PIECE: null,
@@ -12860,63 +5855,66 @@
 
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule React
 	 */
 
 	"use strict";
 
-	var DOMPropertyOperations = __webpack_require__(19);
-	var EventPluginUtils = __webpack_require__(20);
-	var ReactChildren = __webpack_require__(21);
-	var ReactComponent = __webpack_require__(22);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactContext = __webpack_require__(24);
-	var ReactCurrentOwner = __webpack_require__(25);
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactDOM = __webpack_require__(27);
-	var ReactDOMComponent = __webpack_require__(28);
-	var ReactDefaultInjection = __webpack_require__(29);
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactMount = __webpack_require__(31);
-	var ReactMultiChild = __webpack_require__(32);
-	var ReactPerf = __webpack_require__(33);
-	var ReactPropTypes = __webpack_require__(34);
-	var ReactServerRendering = __webpack_require__(35);
-	var ReactTextComponent = __webpack_require__(36);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var EventPluginUtils = __webpack_require__(22);
+	var ReactChildren = __webpack_require__(23);
+	var ReactComponent = __webpack_require__(24);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactContext = __webpack_require__(26);
+	var ReactCurrentOwner = __webpack_require__(27);
+	var ReactElement = __webpack_require__(28);
+	var ReactElementValidator = __webpack_require__(29);
+	var ReactDOM = __webpack_require__(30);
+	var ReactDOMComponent = __webpack_require__(31);
+	var ReactDefaultInjection = __webpack_require__(32);
+	var ReactInstanceHandles = __webpack_require__(33);
+	var ReactLegacyElement = __webpack_require__(34);
+	var ReactMount = __webpack_require__(35);
+	var ReactMultiChild = __webpack_require__(36);
+	var ReactPerf = __webpack_require__(37);
+	var ReactPropTypes = __webpack_require__(38);
+	var ReactServerRendering = __webpack_require__(39);
+	var ReactTextComponent = __webpack_require__(40);
 
-	var onlyChild = __webpack_require__(37);
-	var warning = __webpack_require__(38);
+	var assign = __webpack_require__(41);
+	var deprecated = __webpack_require__(42);
+	var onlyChild = __webpack_require__(43);
 
 	ReactDefaultInjection.inject();
 
-	// Specifying arguments isn't necessary since we just use apply anyway, but it
-	// makes it clear for those actually consuming this API.
-	function createDescriptor(type, props, children) {
-	  var args = Array.prototype.slice.call(arguments, 1);
-	  return type.apply(null, args);
-	}
+	var createElement = ReactElement.createElement;
+	var createFactory = ReactElement.createFactory;
 
 	if ("production" !== process.env.NODE_ENV) {
-	  var _warnedForDeprecation = false;
+	  createElement = ReactElementValidator.createElement;
+	  createFactory = ReactElementValidator.createFactory;
 	}
+
+	// TODO: Drop legacy elements once classes no longer export these factories
+	createElement = ReactLegacyElement.wrapCreateElement(
+	  createElement
+	);
+	createFactory = ReactLegacyElement.wrapCreateFactory(
+	  createFactory
+	);
+
+	var render = ReactPerf.measure('React', 'render', ReactMount.render);
 
 	var React = {
 	  Children: {
@@ -12931,33 +5929,58 @@
 	    EventPluginUtils.useTouchEvents = shouldUseTouch;
 	  },
 	  createClass: ReactCompositeComponent.createClass,
-	  createDescriptor: function() {
-	    if ("production" !== process.env.NODE_ENV) {
-	      ("production" !== process.env.NODE_ENV ? warning(
-	        _warnedForDeprecation,
-	        'React.createDescriptor is deprecated and will be removed in the ' +
-	        'next version of React. Use React.createElement instead.'
-	      ) : null);
-	      _warnedForDeprecation = true;
-	    }
-	    return createDescriptor.apply(this, arguments);
-	  },
-	  createElement: createDescriptor,
+	  createElement: createElement,
+	  createFactory: createFactory,
 	  constructAndRenderComponent: ReactMount.constructAndRenderComponent,
 	  constructAndRenderComponentByID: ReactMount.constructAndRenderComponentByID,
-	  renderComponent: ReactPerf.measure(
+	  render: render,
+	  renderToString: ReactServerRendering.renderToString,
+	  renderToStaticMarkup: ReactServerRendering.renderToStaticMarkup,
+	  unmountComponentAtNode: ReactMount.unmountComponentAtNode,
+	  isValidClass: ReactLegacyElement.isValidClass,
+	  isValidElement: ReactElement.isValidElement,
+	  withContext: ReactContext.withContext,
+
+	  // Hook for JSX spread, don't use this for anything else.
+	  __spread: assign,
+
+	  // Deprecations (remove for 0.13)
+	  renderComponent: deprecated(
 	    'React',
 	    'renderComponent',
-	    ReactMount.renderComponent
+	    'render',
+	    this,
+	    render
 	  ),
-	  renderComponentToString: ReactServerRendering.renderComponentToString,
-	  renderComponentToStaticMarkup:
-	    ReactServerRendering.renderComponentToStaticMarkup,
-	  unmountComponentAtNode: ReactMount.unmountComponentAtNode,
-	  isValidClass: ReactDescriptor.isValidFactory,
-	  isValidComponent: ReactDescriptor.isValidDescriptor,
-	  withContext: ReactContext.withContext,
-	  __internals: {
+	  renderComponentToString: deprecated(
+	    'React',
+	    'renderComponentToString',
+	    'renderToString',
+	    this,
+	    ReactServerRendering.renderToString
+	  ),
+	  renderComponentToStaticMarkup: deprecated(
+	    'React',
+	    'renderComponentToStaticMarkup',
+	    'renderToStaticMarkup',
+	    this,
+	    ReactServerRendering.renderToStaticMarkup
+	  ),
+	  isValidComponent: deprecated(
+	    'React',
+	    'isValidComponent',
+	    'isValidElement',
+	    this,
+	    ReactElement.isValidElement
+	  )
+	};
+
+	// Inject the runtime into a devtools global hook regardless of browser.
+	// Allows for debugging when the hook is injected on the page.
+	if (
+	  typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined' &&
+	  typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.inject === 'function') {
+	  __REACT_DEVTOOLS_GLOBAL_HOOK__.inject({
 	    Component: ReactComponent,
 	    CurrentOwner: ReactCurrentOwner,
 	    DOMComponent: ReactDOMComponent,
@@ -12966,18 +5989,23 @@
 	    Mount: ReactMount,
 	    MultiChild: ReactMultiChild,
 	    TextComponent: ReactTextComponent
-	  }
-	};
+	  });
+	}
 
 	if ("production" !== process.env.NODE_ENV) {
-	  var ExecutionEnvironment = __webpack_require__(39);
-	  if (ExecutionEnvironment.canUseDOM &&
-	      window.top === window.self &&
-	      navigator.userAgent.indexOf('Chrome') > -1) {
-	    console.debug(
-	      'Download the React DevTools for a better development experience: ' +
-	      'http://fb.me/react-devtools'
-	    );
+	  var ExecutionEnvironment = __webpack_require__(44);
+	  if (ExecutionEnvironment.canUseDOM && window.top === window.self) {
+
+	    // If we're in Chrome, look for the devtools marker and provide a download
+	    // link if not installed.
+	    if (navigator.userAgent.indexOf('Chrome') > -1) {
+	      if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === 'undefined') {
+	        console.debug(
+	          'Download the React DevTools for a better development experience: ' +
+	          'http://fb.me/react-devtools'
+	        );
+	      }
+	    }
 
 	    var expectedFeatures = [
 	      // shims
@@ -12997,7 +6025,7 @@
 	      Object.freeze
 	    ];
 
-	    for (var i in expectedFeatures) {
+	    for (var i = 0; i < expectedFeatures.length; i++) {
 	      if (!expectedFeatures[i]) {
 	        console.error(
 	          'One or more ES5 shim/shams expected by React are not available: ' +
@@ -13011,21 +6039,21 @@
 
 	// Version exists only in the open-source version of React, not in Facebook's
 	// internal version.
-	React.version = '0.11.2';
+	React.version = '0.12.2';
 
 	module.exports = React;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tetriminos = __webpack_require__(17)
-	var Map = __webpack_require__(10).Immutable.Map
-	var pieceHelper = __webpack_require__(15)
-	var coord = __webpack_require__(18)
-	var range = __webpack_require__(102).range
+	var Tetriminos = __webpack_require__(19)
+	var Map = __webpack_require__(12).Immutable.Map
+	var pieceHelper = __webpack_require__(17)
+	var coord = __webpack_require__(20)
+	var range = __webpack_require__(105).range
 
 	/**
 	 * @param {Array<Coord>} coords
@@ -13133,14 +6161,14 @@
 
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var BoardPiece = __webpack_require__(16)
-	var Tetriminos = __webpack_require__(17)
-	var coord = __webpack_require__(18)
-	var isArray = __webpack_require__(102).isArray
-	var uniq = __webpack_require__(102).uniq
+	var BoardPiece = __webpack_require__(18)
+	var Tetriminos = __webpack_require__(19)
+	var coord = __webpack_require__(20)
+	var isArray = __webpack_require__(105).isArray
+	var uniq = __webpack_require__(105).uniq
 
 	/**
 	 * Takes an inputted BoardPiece and rotates it some number of turns
@@ -13185,12 +6213,12 @@
 
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Tetriminos = __webpack_require__(17)
-	var coord = __webpack_require__(18)
-	var Record = __webpack_require__(10).Immutable.Record
+	var Tetriminos = __webpack_require__(19)
+	var coord = __webpack_require__(20)
+	var Record = __webpack_require__(12).Immutable.Record
 
 	var PieceStruct = Record({
 	  type: null,
@@ -13220,10 +6248,10 @@
 
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var coord = __webpack_require__(18)
+	var coord = __webpack_require__(20)
 
 	/**
 	 * Definitions for each tetrimino
@@ -13304,14 +6332,14 @@
 
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Convenience function to create Coord records
 	 */
-	var Record = __webpack_require__(10).Immutable.Record
-	var isArray = __webpack_require__(102).isArray
+	var Record = __webpack_require__(12).Immutable.Record
+	var isArray = __webpack_require__(105).isArray
 
 	var Coord = Record({ x: 0, y: 0})
 
@@ -13328,23 +6356,16 @@
 
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule DOMPropertyOperations
 	 * @typechecks static-only
@@ -13352,11 +6373,11 @@
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
+	var DOMProperty = __webpack_require__(47);
 
-	var escapeTextForBrowser = __webpack_require__(43);
-	var memoizeStringOnly = __webpack_require__(44);
-	var warning = __webpack_require__(38);
+	var escapeTextForBrowser = __webpack_require__(48);
+	var memoizeStringOnly = __webpack_require__(49);
+	var warning = __webpack_require__(50);
 
 	function shouldIgnoreValue(name, value) {
 	  return value == null ||
@@ -13471,10 +6492,17 @@
 	      } else if (shouldIgnoreValue(name, value)) {
 	        this.deleteValueForProperty(node, name);
 	      } else if (DOMProperty.mustUseAttribute[name]) {
+	        // `setAttribute` with objects becomes only `[object]` in IE8/9,
+	        // ('' + value) makes it output the correct toString()-value.
 	        node.setAttribute(DOMProperty.getAttributeName[name], '' + value);
 	      } else {
 	        var propName = DOMProperty.getPropertyName[name];
-	        if (!DOMProperty.hasSideEffects[name] || node[propName] !== value) {
+	        // Must explicitly cast values for HAS_SIDE_EFFECTS-properties to the
+	        // property type before comparing; only `value` does and is string.
+	        if (!DOMProperty.hasSideEffects[name] ||
+	            ('' + node[propName]) !== ('' + value)) {
+	          // Contrary to `setAttribute`, object properties are properly
+	          // `toString`ed by IE8/9.
 	          node[propName] = value;
 	        }
 	      }
@@ -13510,7 +6538,7 @@
 	          propName
 	        );
 	        if (!DOMProperty.hasSideEffects[name] ||
-	            node[propName] !== defaultValue) {
+	            ('' + node[propName]) !== defaultValue) {
 	          node[propName] = defaultValue;
 	        }
 	      }
@@ -13525,35 +6553,28 @@
 
 	module.exports = DOMPropertyOperations;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 20 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EventPluginUtils
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
+	var EventConstants = __webpack_require__(51);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Injected dependencies:
@@ -13756,36 +6777,29 @@
 
 	module.exports = EventPluginUtils;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactChildren
 	 */
 
 	"use strict";
 
-	var PooledClass = __webpack_require__(47);
+	var PooledClass = __webpack_require__(53);
 
-	var traverseAllChildren = __webpack_require__(48);
-	var warning = __webpack_require__(38);
+	var traverseAllChildren = __webpack_require__(54);
+	var warning = __webpack_require__(50);
 
 	var twoArgumentPooler = PooledClass.twoArgumentPooler;
 	var threeArgumentPooler = PooledClass.threeArgumentPooler;
@@ -13916,39 +6930,32 @@
 
 	module.exports = ReactChildren;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactComponent
 	 */
 
 	"use strict";
 
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactOwner = __webpack_require__(49);
-	var ReactUpdates = __webpack_require__(50);
+	var ReactElement = __webpack_require__(28);
+	var ReactOwner = __webpack_require__(55);
+	var ReactUpdates = __webpack_require__(56);
 
-	var invariant = __webpack_require__(46);
-	var keyMirror = __webpack_require__(51);
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
+	var keyMirror = __webpack_require__(57);
 
 	/**
 	 * Every React component is in one of these life cycles.
@@ -14071,11 +7078,11 @@
 	     * @public
 	     */
 	    setProps: function(partialProps, callback) {
-	      // Merge with the pending descriptor if it exists, otherwise with existing
-	      // descriptor props.
-	      var descriptor = this._pendingDescriptor || this._descriptor;
+	      // Merge with the pending element if it exists, otherwise with existing
+	      // element props.
+	      var element = this._pendingElement || this._currentElement;
 	      this.replaceProps(
-	        merge(descriptor.props, partialProps),
+	        assign({}, element.props, partialProps),
 	        callback
 	      );
 	    },
@@ -14101,10 +7108,10 @@
 	        '`render` method to pass the correct value as props to the component ' +
 	        'where it is created.'
 	      ) : invariant(this._mountDepth === 0));
-	      // This is a deoptimized path. We optimize for always having a descriptor.
-	      // This creates an extra internal descriptor.
-	      this._pendingDescriptor = ReactDescriptor.cloneAndReplaceProps(
-	        this._pendingDescriptor || this._descriptor,
+	      // This is a deoptimized path. We optimize for always having a element.
+	      // This creates an extra internal element.
+	      this._pendingElement = ReactElement.cloneAndReplaceProps(
+	        this._pendingElement || this._currentElement,
 	        props
 	      );
 	      ReactUpdates.enqueueUpdate(this, callback);
@@ -14119,12 +7126,12 @@
 	     * @internal
 	     */
 	    _setPropsInternal: function(partialProps, callback) {
-	      // This is a deoptimized path. We optimize for always having a descriptor.
-	      // This creates an extra internal descriptor.
-	      var descriptor = this._pendingDescriptor || this._descriptor;
-	      this._pendingDescriptor = ReactDescriptor.cloneAndReplaceProps(
-	        descriptor,
-	        merge(descriptor.props, partialProps)
+	      // This is a deoptimized path. We optimize for always having a element.
+	      // This creates an extra internal element.
+	      var element = this._pendingElement || this._currentElement;
+	      this._pendingElement = ReactElement.cloneAndReplaceProps(
+	        element,
+	        assign({}, element.props, partialProps)
 	      );
 	      ReactUpdates.enqueueUpdate(this, callback);
 	    },
@@ -14135,19 +7142,19 @@
 	     * Subclasses that override this method should make sure to invoke
 	     * `ReactComponent.Mixin.construct.call(this, ...)`.
 	     *
-	     * @param {ReactDescriptor} descriptor
+	     * @param {ReactElement} element
 	     * @internal
 	     */
-	    construct: function(descriptor) {
+	    construct: function(element) {
 	      // This is the public exposed props object after it has been processed
-	      // with default props. The descriptor's props represents the true internal
+	      // with default props. The element's props represents the true internal
 	      // state of the props.
-	      this.props = descriptor.props;
+	      this.props = element.props;
 	      // Record the component responsible for creating this component.
-	      // This is accessible through the descriptor but we maintain an extra
+	      // This is accessible through the element but we maintain an extra
 	      // field for compatibility with devtools and as a way to make an
 	      // incremental update. TODO: Consider deprecating this field.
-	      this._owner = descriptor._owner;
+	      this._owner = element._owner;
 
 	      // All components start unmounted.
 	      this._lifeCycleState = ComponentLifeCycle.UNMOUNTED;
@@ -14155,10 +7162,10 @@
 	      // See ReactUpdates.
 	      this._pendingCallbacks = null;
 
-	      // We keep the old descriptor and a reference to the pending descriptor
+	      // We keep the old element and a reference to the pending element
 	      // to track updates.
-	      this._descriptor = descriptor;
-	      this._pendingDescriptor = null;
+	      this._currentElement = element;
+	      this._pendingElement = null;
 	    },
 
 	    /**
@@ -14183,10 +7190,10 @@
 	        'single component instance in multiple places.',
 	        rootID
 	      ) : invariant(!this.isMounted()));
-	      var props = this._descriptor.props;
-	      if (props.ref != null) {
-	        var owner = this._descriptor._owner;
-	        ReactOwner.addComponentAsRefTo(this, props.ref, owner);
+	      var ref = this._currentElement.ref;
+	      if (ref != null) {
+	        var owner = this._currentElement._owner;
+	        ReactOwner.addComponentAsRefTo(this, ref, owner);
 	      }
 	      this._rootNodeID = rootID;
 	      this._lifeCycleState = ComponentLifeCycle.MOUNTED;
@@ -14209,9 +7216,9 @@
 	        this.isMounted(),
 	        'unmountComponent(): Can only unmount a mounted component.'
 	      ) : invariant(this.isMounted()));
-	      var props = this.props;
-	      if (props.ref != null) {
-	        ReactOwner.removeComponentAsRefFrom(this, props.ref, this._owner);
+	      var ref = this._currentElement.ref;
+	      if (ref != null) {
+	        ReactOwner.removeComponentAsRefFrom(this, ref, this._owner);
 	      }
 	      unmountIDFromEnvironment(this._rootNodeID);
 	      this._rootNodeID = null;
@@ -14229,49 +7236,49 @@
 	     * @param {ReactReconcileTransaction} transaction
 	     * @internal
 	     */
-	    receiveComponent: function(nextDescriptor, transaction) {
+	    receiveComponent: function(nextElement, transaction) {
 	      ("production" !== process.env.NODE_ENV ? invariant(
 	        this.isMounted(),
 	        'receiveComponent(...): Can only update a mounted component.'
 	      ) : invariant(this.isMounted()));
-	      this._pendingDescriptor = nextDescriptor;
+	      this._pendingElement = nextElement;
 	      this.performUpdateIfNecessary(transaction);
 	    },
 
 	    /**
-	     * If `_pendingDescriptor` is set, update the component.
+	     * If `_pendingElement` is set, update the component.
 	     *
 	     * @param {ReactReconcileTransaction} transaction
 	     * @internal
 	     */
 	    performUpdateIfNecessary: function(transaction) {
-	      if (this._pendingDescriptor == null) {
+	      if (this._pendingElement == null) {
 	        return;
 	      }
-	      var prevDescriptor = this._descriptor;
-	      var nextDescriptor = this._pendingDescriptor;
-	      this._descriptor = nextDescriptor;
-	      this.props = nextDescriptor.props;
-	      this._owner = nextDescriptor._owner;
-	      this._pendingDescriptor = null;
-	      this.updateComponent(transaction, prevDescriptor);
+	      var prevElement = this._currentElement;
+	      var nextElement = this._pendingElement;
+	      this._currentElement = nextElement;
+	      this.props = nextElement.props;
+	      this._owner = nextElement._owner;
+	      this._pendingElement = null;
+	      this.updateComponent(transaction, prevElement);
 	    },
 
 	    /**
 	     * Updates the component's currently mounted representation.
 	     *
 	     * @param {ReactReconcileTransaction} transaction
-	     * @param {object} prevDescriptor
+	     * @param {object} prevElement
 	     * @internal
 	     */
-	    updateComponent: function(transaction, prevDescriptor) {
-	      var nextDescriptor = this._descriptor;
+	    updateComponent: function(transaction, prevElement) {
+	      var nextElement = this._currentElement;
 
 	      // If either the owner or a `ref` has changed, make sure the newest owner
 	      // has stored a reference to `this`, and the previous owner (if different)
-	      // has forgotten the reference to `this`. We use the descriptor instead
+	      // has forgotten the reference to `this`. We use the element instead
 	      // of the public this.props because the post processing cannot determine
-	      // a ref. The ref conceptually lives on the descriptor.
+	      // a ref. The ref conceptually lives on the element.
 
 	      // TODO: Should this even be possible? The owner cannot change because
 	      // it's forbidden by shouldUpdateReactComponent. The ref can change
@@ -14279,19 +7286,19 @@
 	      // is made. It probably belongs where the key checking and
 	      // instantiateReactComponent is done.
 
-	      if (nextDescriptor._owner !== prevDescriptor._owner ||
-	          nextDescriptor.props.ref !== prevDescriptor.props.ref) {
-	        if (prevDescriptor.props.ref != null) {
+	      if (nextElement._owner !== prevElement._owner ||
+	          nextElement.ref !== prevElement.ref) {
+	        if (prevElement.ref != null) {
 	          ReactOwner.removeComponentAsRefFrom(
-	            this, prevDescriptor.props.ref, prevDescriptor._owner
+	            this, prevElement.ref, prevElement._owner
 	          );
 	        }
 	        // Correct, even if the owner is the same, and only the ref has changed.
-	        if (nextDescriptor.props.ref != null) {
+	        if (nextElement.ref != null) {
 	          ReactOwner.addComponentAsRefTo(
 	            this,
-	            nextDescriptor.props.ref,
-	            nextDescriptor._owner
+	            nextElement.ref,
+	            nextElement._owner
 	          );
 	        }
 	      }
@@ -14305,7 +7312,7 @@
 	     * @param {boolean} shouldReuseMarkup If true, do not insert markup
 	     * @final
 	     * @internal
-	     * @see {ReactMount.renderComponent}
+	     * @see {ReactMount.render}
 	     */
 	    mountComponentIntoNode: function(rootID, container, shouldReuseMarkup) {
 	      var transaction = ReactUpdates.ReactReconcileTransaction.getPooled();
@@ -14369,55 +7376,51 @@
 
 	module.exports = ReactComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactCompositeComponent
 	 */
 
 	"use strict";
 
-	var ReactComponent = __webpack_require__(22);
-	var ReactContext = __webpack_require__(24);
-	var ReactCurrentOwner = __webpack_require__(25);
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactDescriptorValidator = __webpack_require__(53);
-	var ReactEmptyComponent = __webpack_require__(54);
-	var ReactErrorUtils = __webpack_require__(55);
-	var ReactOwner = __webpack_require__(49);
-	var ReactPerf = __webpack_require__(33);
-	var ReactPropTransferer = __webpack_require__(56);
-	var ReactPropTypeLocations = __webpack_require__(57);
-	var ReactPropTypeLocationNames = __webpack_require__(58);
-	var ReactUpdates = __webpack_require__(50);
+	var ReactComponent = __webpack_require__(24);
+	var ReactContext = __webpack_require__(26);
+	var ReactCurrentOwner = __webpack_require__(27);
+	var ReactElement = __webpack_require__(28);
+	var ReactElementValidator = __webpack_require__(29);
+	var ReactEmptyComponent = __webpack_require__(58);
+	var ReactErrorUtils = __webpack_require__(59);
+	var ReactLegacyElement = __webpack_require__(34);
+	var ReactOwner = __webpack_require__(55);
+	var ReactPerf = __webpack_require__(37);
+	var ReactPropTransferer = __webpack_require__(60);
+	var ReactPropTypeLocations = __webpack_require__(61);
+	var ReactPropTypeLocationNames = __webpack_require__(62);
+	var ReactUpdates = __webpack_require__(56);
 
-	var instantiateReactComponent = __webpack_require__(59);
-	var invariant = __webpack_require__(46);
-	var keyMirror = __webpack_require__(51);
-	var merge = __webpack_require__(52);
-	var mixInto = __webpack_require__(60);
-	var monitorCodeUse = __webpack_require__(61);
-	var mapObject = __webpack_require__(62);
-	var shouldUpdateReactComponent = __webpack_require__(63);
-	var warning = __webpack_require__(38);
+	var assign = __webpack_require__(41);
+	var instantiateReactComponent = __webpack_require__(63);
+	var invariant = __webpack_require__(52);
+	var keyMirror = __webpack_require__(57);
+	var keyOf = __webpack_require__(64);
+	var monitorCodeUse = __webpack_require__(65);
+	var mapObject = __webpack_require__(66);
+	var shouldUpdateReactComponent = __webpack_require__(67);
+	var warning = __webpack_require__(50);
+
+	var MIXINS_KEY = keyOf({mixins: null});
 
 	/**
 	 * Policies that describe methods in `ReactCompositeComponentInterface`.
@@ -14722,7 +7725,8 @@
 	      childContextTypes,
 	      ReactPropTypeLocations.childContext
 	    );
-	    Constructor.childContextTypes = merge(
+	    Constructor.childContextTypes = assign(
+	      {},
 	      Constructor.childContextTypes,
 	      childContextTypes
 	    );
@@ -14733,7 +7737,11 @@
 	      contextTypes,
 	      ReactPropTypeLocations.context
 	    );
-	    Constructor.contextTypes = merge(Constructor.contextTypes, contextTypes);
+	    Constructor.contextTypes = assign(
+	      {},
+	      Constructor.contextTypes,
+	      contextTypes
+	    );
 	  },
 	  /**
 	   * Special case getDefaultProps which should move into statics but requires
@@ -14755,7 +7763,11 @@
 	      propTypes,
 	      ReactPropTypeLocations.prop
 	    );
-	    Constructor.propTypes = merge(Constructor.propTypes, propTypes);
+	    Constructor.propTypes = assign(
+	      {},
+	      Constructor.propTypes,
+	      propTypes
+	    );
 	  },
 	  statics: function(Constructor, statics) {
 	    mixStaticSpecIntoComponent(Constructor, statics);
@@ -14824,11 +7836,12 @@
 	    'replaceState(...): Can only update a mounted or mounting component.'
 	  ) : invariant(instance.isMounted() ||
 	    compositeLifeCycleState === CompositeLifeCycle.MOUNTING));
-	  ("production" !== process.env.NODE_ENV ? invariant(compositeLifeCycleState !== CompositeLifeCycle.RECEIVING_STATE,
+	  ("production" !== process.env.NODE_ENV ? invariant(
+	    ReactCurrentOwner.current == null,
 	    'replaceState(...): Cannot update during an existing state transition ' +
-	    '(such as within `render`). This could potentially cause an infinite ' +
-	    'loop so it is forbidden.'
-	  ) : invariant(compositeLifeCycleState !== CompositeLifeCycle.RECEIVING_STATE));
+	    '(such as within `render`). Render methods should be a pure function ' +
+	    'of props and state.'
+	  ) : invariant(ReactCurrentOwner.current == null));
 	  ("production" !== process.env.NODE_ENV ? invariant(compositeLifeCycleState !== CompositeLifeCycle.UNMOUNTING,
 	    'replaceState(...): Cannot update while unmounting component. This ' +
 	    'usually means you called setState() on an unmounted component.'
@@ -14836,28 +7849,45 @@
 	}
 
 	/**
-	 * Custom version of `mixInto` which handles policy validation and reserved
+	 * Mixin helper which handles policy validation and reserved
 	 * specification keys when building `ReactCompositeComponent` classses.
 	 */
 	function mixSpecIntoComponent(Constructor, spec) {
+	  if (!spec) {
+	    return;
+	  }
+
 	  ("production" !== process.env.NODE_ENV ? invariant(
-	    !ReactDescriptor.isValidFactory(spec),
+	    !ReactLegacyElement.isValidFactory(spec),
 	    'ReactCompositeComponent: You\'re attempting to ' +
 	    'use a component class as a mixin. Instead, just use a regular object.'
-	  ) : invariant(!ReactDescriptor.isValidFactory(spec)));
+	  ) : invariant(!ReactLegacyElement.isValidFactory(spec)));
 	  ("production" !== process.env.NODE_ENV ? invariant(
-	    !ReactDescriptor.isValidDescriptor(spec),
+	    !ReactElement.isValidElement(spec),
 	    'ReactCompositeComponent: You\'re attempting to ' +
 	    'use a component as a mixin. Instead, just use a regular object.'
-	  ) : invariant(!ReactDescriptor.isValidDescriptor(spec)));
+	  ) : invariant(!ReactElement.isValidElement(spec)));
 
 	  var proto = Constructor.prototype;
+
+	  // By handling mixins before any other properties, we ensure the same
+	  // chaining order is applied to methods with DEFINE_MANY policy, whether
+	  // mixins are listed before or after these methods in the spec.
+	  if (spec.hasOwnProperty(MIXINS_KEY)) {
+	    RESERVED_SPEC_KEYS.mixins(Constructor, spec.mixins);
+	  }
+
 	  for (var name in spec) {
-	    var property = spec[name];
 	    if (!spec.hasOwnProperty(name)) {
 	      continue;
 	    }
 
+	    if (name === MIXINS_KEY) {
+	      // We have already handled mixins in a special case above
+	      continue;
+	    }
+
+	    var property = spec[name];
 	    validateMethodOverride(proto, name);
 
 	    if (RESERVED_SPEC_KEYS.hasOwnProperty(name)) {
@@ -14935,23 +7965,25 @@
 	      continue;
 	    }
 
+	    var isReserved = name in RESERVED_SPEC_KEYS;
+	    ("production" !== process.env.NODE_ENV ? invariant(
+	      !isReserved,
+	      'ReactCompositeComponent: You are attempting to define a reserved ' +
+	      'property, `%s`, that shouldn\'t be on the "statics" key. Define it ' +
+	      'as an instance property instead; it will still be accessible on the ' +
+	      'constructor.',
+	      name
+	    ) : invariant(!isReserved));
+
 	    var isInherited = name in Constructor;
-	    var result = property;
-	    if (isInherited) {
-	      var existingProperty = Constructor[name];
-	      var existingType = typeof existingProperty;
-	      var propertyType = typeof property;
-	      ("production" !== process.env.NODE_ENV ? invariant(
-	        existingType === 'function' && propertyType === 'function',
-	        'ReactCompositeComponent: You are attempting to define ' +
-	        '`%s` on your component more than once, but that is only supported ' +
-	        'for functions, which are chained together. This conflict may be ' +
-	        'due to a mixin.',
-	        name
-	      ) : invariant(existingType === 'function' && propertyType === 'function'));
-	      result = createChainedFunction(existingProperty, property);
-	    }
-	    Constructor[name] = result;
+	    ("production" !== process.env.NODE_ENV ? invariant(
+	      !isInherited,
+	      'ReactCompositeComponent: You are attempting to define ' +
+	      '`%s` on your component more than once. This conflict may be ' +
+	      'due to a mixin.',
+	      name
+	    ) : invariant(!isInherited));
+	    Constructor[name] = property;
 	  }
 	}
 
@@ -14972,7 +8004,10 @@
 	    ("production" !== process.env.NODE_ENV ? invariant(
 	      one[key] === undefined,
 	      'mergeObjectsWithNoDuplicateKeys(): ' +
-	      'Tried to merge two objects with the same key: %s',
+	      'Tried to merge two objects with the same key: `%s`. This conflict ' +
+	      'may be due to a mixin; in particular, this may be caused by two ' +
+	      'getInitialState() or getDefaultProps() methods returning objects ' +
+	      'with clashing keys.',
 	      key
 	    ) : invariant(one[key] === undefined));
 	    one[key] = value;
@@ -15028,19 +8063,19 @@
 	 * Top Row: ReactComponent.ComponentLifeCycle
 	 * Low Row: ReactComponent.CompositeLifeCycle
 	 *
-	 * +-------+------------------------------------------------------+--------+
-	 * |  UN   |                    MOUNTED                           |   UN   |
-	 * |MOUNTED|                                                      | MOUNTED|
-	 * +-------+------------------------------------------------------+--------+
-	 * |       ^--------+   +------+   +------+   +------+   +--------^        |
-	 * |       |        |   |      |   |      |   |      |   |        |        |
-	 * |    0--|MOUNTING|-0-|RECEIV|-0-|RECEIV|-0-|RECEIV|-0-|   UN   |--->0   |
-	 * |       |        |   |PROPS |   | PROPS|   | STATE|   |MOUNTING|        |
-	 * |       |        |   |      |   |      |   |      |   |        |        |
-	 * |       |        |   |      |   |      |   |      |   |        |        |
-	 * |       +--------+   +------+   +------+   +------+   +--------+        |
-	 * |       |                                                      |        |
-	 * +-------+------------------------------------------------------+--------+
+	 * +-------+---------------------------------+--------+
+	 * |  UN   |             MOUNTED             |   UN   |
+	 * |MOUNTED|                                 | MOUNTED|
+	 * +-------+---------------------------------+--------+
+	 * |       ^--------+   +-------+   +--------^        |
+	 * |       |        |   |       |   |        |        |
+	 * |    0--|MOUNTING|-0-|RECEIVE|-0-|   UN   |--->0   |
+	 * |       |        |   |PROPS  |   |MOUNTING|        |
+	 * |       |        |   |       |   |        |        |
+	 * |       |        |   |       |   |        |        |
+	 * |       +--------+   +-------+   +--------+        |
+	 * |       |                                 |        |
+	 * +-------+---------------------------------+--------+
 	 */
 	var CompositeLifeCycle = keyMirror({
 	  /**
@@ -15057,12 +8092,7 @@
 	   * Components that are mounted and receiving new props respond to state
 	   * changes differently.
 	   */
-	  RECEIVING_PROPS: null,
-	  /**
-	   * Components that are mounted and receiving new state are guarded against
-	   * additional state changes.
-	   */
-	  RECEIVING_STATE: null
+	  RECEIVING_PROPS: null
 	});
 
 	/**
@@ -15073,11 +8103,11 @@
 	  /**
 	   * Base constructor for all composite component.
 	   *
-	   * @param {ReactDescriptor} descriptor
+	   * @param {ReactElement} element
 	   * @final
 	   * @internal
 	   */
-	  construct: function(descriptor) {
+	  construct: function(element) {
 	    // Children can be either an array or more than one argument
 	    ReactComponent.Mixin.construct.apply(this, arguments);
 	    ReactOwner.Mixin.construct.apply(this, arguments);
@@ -15086,7 +8116,7 @@
 	    this._pendingState = null;
 
 	    // This is the public post-processed context. The real context and pending
-	    // context lives on the descriptor.
+	    // context lives on the element.
 	    this.context = null;
 
 	    this._compositeLifeCycleState = null;
@@ -15129,7 +8159,7 @@
 	        this._bindAutoBindMethods();
 	      }
 
-	      this.context = this._processContext(this._descriptor._context);
+	      this.context = this._processContext(this._currentElement._context);
 	      this.props = this._processProps(this.props);
 
 	      this.state = this.getInitialState ? this.getInitialState() : null;
@@ -15153,7 +8183,8 @@
 	      }
 
 	      this._renderedComponent = instantiateReactComponent(
-	        this._renderValidatedComponent()
+	        this._renderValidatedComponent(),
+	        this._currentElement.type // The wrapping type
 	      );
 
 	      // Done with mounting, `setState` will now trigger UI changes.
@@ -15225,7 +8256,7 @@
 	    }
 	    // Merge with `_pendingState` if it exists, otherwise with existing state.
 	    this.replaceState(
-	      merge(this._pendingState || this.state, partialState),
+	      assign({}, this._pendingState || this.state, partialState),
 	      callback
 	    );
 	  },
@@ -15313,7 +8344,7 @@
 	          name
 	        ) : invariant(name in this.constructor.childContextTypes));
 	      }
-	      return merge(currentContext, childContext);
+	      return assign({}, currentContext, childContext);
 	    }
 	    return currentContext;
 	  },
@@ -15328,25 +8359,13 @@
 	   * @private
 	   */
 	  _processProps: function(newProps) {
-	    var defaultProps = this.constructor.defaultProps;
-	    var props;
-	    if (defaultProps) {
-	      props = merge(newProps);
-	      for (var propName in defaultProps) {
-	        if (typeof props[propName] === 'undefined') {
-	          props[propName] = defaultProps[propName];
-	        }
-	      }
-	    } else {
-	      props = newProps;
-	    }
 	    if ("production" !== process.env.NODE_ENV) {
 	      var propTypes = this.constructor.propTypes;
 	      if (propTypes) {
-	        this._checkPropTypes(propTypes, props, ReactPropTypeLocations.prop);
+	        this._checkPropTypes(propTypes, newProps, ReactPropTypeLocations.prop);
 	      }
 	    }
-	    return props;
+	    return newProps;
 	  },
 
 	  /**
@@ -15358,7 +8377,7 @@
 	   * @private
 	   */
 	  _checkPropTypes: function(propTypes, props, location) {
-	    // TODO: Stop validating prop types here and only use the descriptor
+	    // TODO: Stop validating prop types here and only use the element
 	    // validation.
 	    var componentName = this.constructor.displayName;
 	    for (var propName in propTypes) {
@@ -15377,7 +8396,7 @@
 	  },
 
 	  /**
-	   * If any of `_pendingDescriptor`, `_pendingState`, or `_pendingForceUpdate`
+	   * If any of `_pendingElement`, `_pendingState`, or `_pendingForceUpdate`
 	   * is set, update the component.
 	   *
 	   * @param {ReactReconcileTransaction} transaction
@@ -15392,7 +8411,7 @@
 	      return;
 	    }
 
-	    if (this._pendingDescriptor == null &&
+	    if (this._pendingElement == null &&
 	        this._pendingState == null &&
 	        !this._pendingForceUpdate) {
 	      return;
@@ -15400,12 +8419,12 @@
 
 	    var nextContext = this.context;
 	    var nextProps = this.props;
-	    var nextDescriptor = this._descriptor;
-	    if (this._pendingDescriptor != null) {
-	      nextDescriptor = this._pendingDescriptor;
-	      nextContext = this._processContext(nextDescriptor._context);
-	      nextProps = this._processProps(nextDescriptor.props);
-	      this._pendingDescriptor = null;
+	    var nextElement = this._currentElement;
+	    if (this._pendingElement != null) {
+	      nextElement = this._pendingElement;
+	      nextContext = this._processContext(nextElement._context);
+	      nextProps = this._processProps(nextElement.props);
+	      this._pendingElement = null;
 
 	      this._compositeLifeCycleState = CompositeLifeCycle.RECEIVING_PROPS;
 	      if (this.componentWillReceiveProps) {
@@ -15413,51 +8432,47 @@
 	      }
 	    }
 
-	    this._compositeLifeCycleState = CompositeLifeCycle.RECEIVING_STATE;
+	    this._compositeLifeCycleState = null;
 
 	    var nextState = this._pendingState || this.state;
 	    this._pendingState = null;
 
-	    try {
-	      var shouldUpdate =
-	        this._pendingForceUpdate ||
-	        !this.shouldComponentUpdate ||
-	        this.shouldComponentUpdate(nextProps, nextState, nextContext);
+	    var shouldUpdate =
+	      this._pendingForceUpdate ||
+	      !this.shouldComponentUpdate ||
+	      this.shouldComponentUpdate(nextProps, nextState, nextContext);
 
-	      if ("production" !== process.env.NODE_ENV) {
-	        if (typeof shouldUpdate === "undefined") {
-	          console.warn(
-	            (this.constructor.displayName || 'ReactCompositeComponent') +
-	            '.shouldComponentUpdate(): Returned undefined instead of a ' +
-	            'boolean value. Make sure to return true or false.'
-	          );
-	        }
-	      }
-
-	      if (shouldUpdate) {
-	        this._pendingForceUpdate = false;
-	        // Will set `this.props`, `this.state` and `this.context`.
-	        this._performComponentUpdate(
-	          nextDescriptor,
-	          nextProps,
-	          nextState,
-	          nextContext,
-	          transaction
+	    if ("production" !== process.env.NODE_ENV) {
+	      if (typeof shouldUpdate === "undefined") {
+	        console.warn(
+	          (this.constructor.displayName || 'ReactCompositeComponent') +
+	          '.shouldComponentUpdate(): Returned undefined instead of a ' +
+	          'boolean value. Make sure to return true or false.'
 	        );
-	      } else {
-	        // If it's determined that a component should not update, we still want
-	        // to set props and state.
-	        this._descriptor = nextDescriptor;
-	        this.props = nextProps;
-	        this.state = nextState;
-	        this.context = nextContext;
-
-	        // Owner cannot change because shouldUpdateReactComponent doesn't allow
-	        // it. TODO: Remove this._owner completely.
-	        this._owner = nextDescriptor._owner;
 	      }
-	    } finally {
-	      this._compositeLifeCycleState = null;
+	    }
+
+	    if (shouldUpdate) {
+	      this._pendingForceUpdate = false;
+	      // Will set `this.props`, `this.state` and `this.context`.
+	      this._performComponentUpdate(
+	        nextElement,
+	        nextProps,
+	        nextState,
+	        nextContext,
+	        transaction
+	      );
+	    } else {
+	      // If it's determined that a component should not update, we still want
+	      // to set props and state.
+	      this._currentElement = nextElement;
+	      this.props = nextProps;
+	      this.state = nextState;
+	      this.context = nextContext;
+
+	      // Owner cannot change because shouldUpdateReactComponent doesn't allow
+	      // it. TODO: Remove this._owner completely.
+	      this._owner = nextElement._owner;
 	    }
 	  },
 
@@ -15465,7 +8480,7 @@
 	   * Merges new props and state, notifies delegate methods of update and
 	   * performs update.
 	   *
-	   * @param {ReactDescriptor} nextDescriptor Next descriptor
+	   * @param {ReactElement} nextElement Next element
 	   * @param {object} nextProps Next public object to set as properties.
 	   * @param {?object} nextState Next object to set as state.
 	   * @param {?object} nextContext Next public object to set as context.
@@ -15473,13 +8488,13 @@
 	   * @private
 	   */
 	  _performComponentUpdate: function(
-	    nextDescriptor,
+	    nextElement,
 	    nextProps,
 	    nextState,
 	    nextContext,
 	    transaction
 	  ) {
-	    var prevDescriptor = this._descriptor;
+	    var prevElement = this._currentElement;
 	    var prevProps = this.props;
 	    var prevState = this.state;
 	    var prevContext = this.context;
@@ -15488,18 +8503,18 @@
 	      this.componentWillUpdate(nextProps, nextState, nextContext);
 	    }
 
-	    this._descriptor = nextDescriptor;
+	    this._currentElement = nextElement;
 	    this.props = nextProps;
 	    this.state = nextState;
 	    this.context = nextContext;
 
 	    // Owner cannot change because shouldUpdateReactComponent doesn't allow
 	    // it. TODO: Remove this._owner completely.
-	    this._owner = nextDescriptor._owner;
+	    this._owner = nextElement._owner;
 
 	    this.updateComponent(
 	      transaction,
-	      prevDescriptor
+	      prevElement
 	    );
 
 	    if (this.componentDidUpdate) {
@@ -15510,22 +8525,22 @@
 	    }
 	  },
 
-	  receiveComponent: function(nextDescriptor, transaction) {
-	    if (nextDescriptor === this._descriptor &&
-	        nextDescriptor._owner != null) {
-	      // Since descriptors are immutable after the owner is rendered,
+	  receiveComponent: function(nextElement, transaction) {
+	    if (nextElement === this._currentElement &&
+	        nextElement._owner != null) {
+	      // Since elements are immutable after the owner is rendered,
 	      // we can do a cheap identity compare here to determine if this is a
 	      // superfluous reconcile. It's possible for state to be mutable but such
 	      // change should trigger an update of the owner which would recreate
-	      // the descriptor. We explicitly check for the existence of an owner since
-	      // it's possible for a descriptor created outside a composite to be
+	      // the element. We explicitly check for the existence of an owner since
+	      // it's possible for a element created outside a composite to be
 	      // deeply mutated and reused.
 	      return;
 	    }
 
 	    ReactComponent.Mixin.receiveComponent.call(
 	      this,
-	      nextDescriptor,
+	      nextElement,
 	      transaction
 	    );
 	  },
@@ -15537,31 +8552,34 @@
 	   * Sophisticated clients may wish to override this.
 	   *
 	   * @param {ReactReconcileTransaction} transaction
-	   * @param {ReactDescriptor} prevDescriptor
+	   * @param {ReactElement} prevElement
 	   * @internal
 	   * @overridable
 	   */
 	  updateComponent: ReactPerf.measure(
 	    'ReactCompositeComponent',
 	    'updateComponent',
-	    function(transaction, prevParentDescriptor) {
+	    function(transaction, prevParentElement) {
 	      ReactComponent.Mixin.updateComponent.call(
 	        this,
 	        transaction,
-	        prevParentDescriptor
+	        prevParentElement
 	      );
 
 	      var prevComponentInstance = this._renderedComponent;
-	      var prevDescriptor = prevComponentInstance._descriptor;
-	      var nextDescriptor = this._renderValidatedComponent();
-	      if (shouldUpdateReactComponent(prevDescriptor, nextDescriptor)) {
-	        prevComponentInstance.receiveComponent(nextDescriptor, transaction);
+	      var prevElement = prevComponentInstance._currentElement;
+	      var nextElement = this._renderValidatedComponent();
+	      if (shouldUpdateReactComponent(prevElement, nextElement)) {
+	        prevComponentInstance.receiveComponent(nextElement, transaction);
 	      } else {
 	        // These two IDs are actually the same! But nothing should rely on that.
 	        var thisID = this._rootNodeID;
 	        var prevComponentID = prevComponentInstance._rootNodeID;
 	        prevComponentInstance.unmountComponent();
-	        this._renderedComponent = instantiateReactComponent(nextDescriptor);
+	        this._renderedComponent = instantiateReactComponent(
+	          nextElement,
+	          this._currentElement.type
+	        );
 	        var nextMarkup = this._renderedComponent.mountComponent(
 	          thisID,
 	          transaction,
@@ -15599,12 +8617,12 @@
 	    ) : invariant(this.isMounted() ||
 	      compositeLifeCycleState === CompositeLifeCycle.MOUNTING));
 	    ("production" !== process.env.NODE_ENV ? invariant(
-	      compositeLifeCycleState !== CompositeLifeCycle.RECEIVING_STATE &&
-	      compositeLifeCycleState !== CompositeLifeCycle.UNMOUNTING,
+	      compositeLifeCycleState !== CompositeLifeCycle.UNMOUNTING &&
+	      ReactCurrentOwner.current == null,
 	      'forceUpdate(...): Cannot force an update while unmounting component ' +
-	      'or during an existing state transition (such as within `render`).'
-	    ) : invariant(compositeLifeCycleState !== CompositeLifeCycle.RECEIVING_STATE &&
-	    compositeLifeCycleState !== CompositeLifeCycle.UNMOUNTING));
+	      'or within a `render` function.'
+	    ) : invariant(compositeLifeCycleState !== CompositeLifeCycle.UNMOUNTING &&
+	    ReactCurrentOwner.current == null));
 	    this._pendingForceUpdate = true;
 	    ReactUpdates.enqueueUpdate(this, callback);
 	  },
@@ -15619,7 +8637,7 @@
 	      var renderedComponent;
 	      var previousContext = ReactContext.current;
 	      ReactContext.current = this._processChildContext(
-	        this._descriptor._context
+	        this._currentElement._context
 	      );
 	      ReactCurrentOwner.current = this;
 	      try {
@@ -15635,11 +8653,11 @@
 	        ReactCurrentOwner.current = null;
 	      }
 	      ("production" !== process.env.NODE_ENV ? invariant(
-	        ReactDescriptor.isValidDescriptor(renderedComponent),
+	        ReactElement.isValidElement(renderedComponent),
 	        '%s.render(): A valid ReactComponent must be returned. You may have ' +
 	          'returned undefined, an array or some other invalid object.',
 	        this.constructor.displayName || 'ReactCompositeComponent'
-	      ) : invariant(ReactDescriptor.isValidDescriptor(renderedComponent)));
+	      ) : invariant(ReactElement.isValidElement(renderedComponent)));
 	      return renderedComponent;
 	    }
 	  ),
@@ -15668,16 +8686,14 @@
 	   */
 	  _bindAutoBindMethod: function(method) {
 	    var component = this;
-	    var boundMethod = function() {
-	      return method.apply(component, arguments);
-	    };
+	    var boundMethod = method.bind(component);
 	    if ("production" !== process.env.NODE_ENV) {
 	      boundMethod.__reactBoundContext = component;
 	      boundMethod.__reactBoundMethod = method;
 	      boundMethod.__reactBoundArguments = null;
 	      var componentName = component.constructor.displayName;
 	      var _bind = boundMethod.bind;
-	      boundMethod.bind = function(newThis ) {var args=Array.prototype.slice.call(arguments,1);
+	      boundMethod.bind = function(newThis ) {for (var args=[],$__0=1,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
 	        // User is trying to bind() an autobound method; we effectively will
 	        // ignore the value of "this" that the user is trying to use, so
 	        // let's warn.
@@ -15708,10 +8724,13 @@
 	};
 
 	var ReactCompositeComponentBase = function() {};
-	mixInto(ReactCompositeComponentBase, ReactComponent.Mixin);
-	mixInto(ReactCompositeComponentBase, ReactOwner.Mixin);
-	mixInto(ReactCompositeComponentBase, ReactPropTransferer.Mixin);
-	mixInto(ReactCompositeComponentBase, ReactCompositeComponentMixin);
+	assign(
+	  ReactCompositeComponentBase.prototype,
+	  ReactComponent.Mixin,
+	  ReactOwner.Mixin,
+	  ReactPropTransferer.Mixin,
+	  ReactCompositeComponentMixin
+	);
 
 	/**
 	 * Module for creating composite components.
@@ -15735,8 +8754,10 @@
 	   * @public
 	   */
 	  createClass: function(spec) {
-	    var Constructor = function(props, owner) {
-	      this.construct(props, owner);
+	    var Constructor = function(props) {
+	      // This constructor is overridden by mocks. The argument is used
+	      // by mocks to assert on what gets mounted. This will later be used
+	      // by the stand-alone class implementation.
 	    };
 	    Constructor.prototype = new ReactCompositeComponentBase();
 	    Constructor.prototype.constructor = Constructor;
@@ -15779,17 +8800,14 @@
 	      }
 	    }
 
-	    var descriptorFactory = ReactDescriptor.createFactory(Constructor);
-
 	    if ("production" !== process.env.NODE_ENV) {
-	      return ReactDescriptorValidator.createFactory(
-	        descriptorFactory,
-	        Constructor.propTypes,
-	        Constructor.contextTypes
+	      return ReactLegacyElement.wrapFactory(
+	        ReactElementValidator.createFactory(Constructor)
 	      );
 	    }
-
-	    return descriptorFactory;
+	    return ReactLegacyElement.wrapFactory(
+	      ReactElement.createFactory(Constructor)
+	    );
 	  },
 
 	  injection: {
@@ -15801,33 +8819,26 @@
 
 	module.exports = ReactCompositeComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactContext
 	 */
 
 	"use strict";
 
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
 
 	/**
 	 * Keeps track of the current context.
@@ -15849,7 +8860,7 @@
 	   * A typical use case might look like
 	   *
 	   *  render: function() {
-	   *    var children = ReactContext.withContext({foo: 'foo'} () => (
+	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
 	   *
 	   *    ));
 	   *    return <div>{children}</div>;
@@ -15862,7 +8873,7 @@
 	  withContext: function(newContext, scopedCallback) {
 	    var result;
 	    var previousContext = ReactContext.current;
-	    ReactContext.current = merge(previousContext, newContext);
+	    ReactContext.current = assign({}, previousContext, newContext);
 	    try {
 	      result = scopedCallback();
 	    } finally {
@@ -15877,23 +8888,16 @@
 
 
 /***/ },
-/* 25 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactCurrentOwner
 	 */
@@ -15922,34 +8926,31 @@
 
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule ReactDescriptor
+	 * @providesModule ReactElement
 	 */
 
 	"use strict";
 
-	var ReactContext = __webpack_require__(24);
-	var ReactCurrentOwner = __webpack_require__(25);
+	var ReactContext = __webpack_require__(26);
+	var ReactCurrentOwner = __webpack_require__(27);
 
-	var merge = __webpack_require__(52);
-	var warning = __webpack_require__(38);
+	var warning = __webpack_require__(50);
+
+	var RESERVED_PROPS = {
+	  key: true,
+	  ref: true
+	};
 
 	/**
 	 * Warn for mutations.
@@ -15992,7 +8993,7 @@
 	 * Warn for mutations.
 	 *
 	 * @internal
-	 * @param {object} descriptor
+	 * @param {object} element
 	 */
 	function defineMutationMembrane(prototype) {
 	  try {
@@ -16009,161 +9010,145 @@
 	}
 
 	/**
-	 * Transfer static properties from the source to the target. Functions are
-	 * rebound to have this reflect the original source.
-	 */
-	function proxyStaticMethods(target, source) {
-	  if (typeof source !== 'function') {
-	    return;
-	  }
-	  for (var key in source) {
-	    if (source.hasOwnProperty(key)) {
-	      var value = source[key];
-	      if (typeof value === 'function') {
-	        var bound = value.bind(source);
-	        // Copy any properties defined on the function, such as `isRequired` on
-	        // a PropTypes validator. (mergeInto refuses to work on functions.)
-	        for (var k in value) {
-	          if (value.hasOwnProperty(k)) {
-	            bound[k] = value[k];
-	          }
-	        }
-	        target[key] = bound;
-	      } else {
-	        target[key] = value;
-	      }
-	    }
-	  }
-	}
-
-	/**
-	 * Base constructor for all React descriptors. This is only used to make this
+	 * Base constructor for all React elements. This is only used to make this
 	 * work with a dynamic instanceof check. Nothing should live on this prototype.
 	 *
 	 * @param {*} type
+	 * @param {string|object} ref
+	 * @param {*} key
+	 * @param {*} props
 	 * @internal
 	 */
-	var ReactDescriptor = function() {};
+	var ReactElement = function(type, key, ref, owner, context, props) {
+	  // Built-in properties that belong on the element
+	  this.type = type;
+	  this.key = key;
+	  this.ref = ref;
 
-	if ("production" !== process.env.NODE_ENV) {
-	  defineMutationMembrane(ReactDescriptor.prototype);
-	}
+	  // Record the component responsible for creating this element.
+	  this._owner = owner;
 
-	ReactDescriptor.createFactory = function(type) {
-
-	  var descriptorPrototype = Object.create(ReactDescriptor.prototype);
-
-	  var factory = function(props, children) {
-	    // For consistency we currently allocate a new object for every descriptor.
-	    // This protects the descriptor from being mutated by the original props
-	    // object being mutated. It also protects the original props object from
-	    // being mutated by children arguments and default props. This behavior
-	    // comes with a performance cost and could be deprecated in the future.
-	    // It could also be optimized with a smarter JSX transform.
-	    if (props == null) {
-	      props = {};
-	    } else if (typeof props === 'object') {
-	      props = merge(props);
-	    }
-
-	    // Children can be more than one argument, and those are transferred onto
-	    // the newly allocated props object.
-	    var childrenLength = arguments.length - 1;
-	    if (childrenLength === 1) {
-	      props.children = children;
-	    } else if (childrenLength > 1) {
-	      var childArray = Array(childrenLength);
-	      for (var i = 0; i < childrenLength; i++) {
-	        childArray[i] = arguments[i + 1];
-	      }
-	      props.children = childArray;
-	    }
-
-	    // Initialize the descriptor object
-	    var descriptor = Object.create(descriptorPrototype);
-
-	    // Record the component responsible for creating this descriptor.
-	    descriptor._owner = ReactCurrentOwner.current;
-
-	    // TODO: Deprecate withContext, and then the context becomes accessible
-	    // through the owner.
-	    descriptor._context = ReactContext.current;
-
-	    if ("production" !== process.env.NODE_ENV) {
-	      // The validation flag and props are currently mutative. We put them on
-	      // an external backing store so that we can freeze the whole object.
-	      // This can be replaced with a WeakMap once they are implemented in
-	      // commonly used development environments.
-	      descriptor._store = { validated: false, props: props };
-
-	      // We're not allowed to set props directly on the object so we early
-	      // return and rely on the prototype membrane to forward to the backing
-	      // store.
-	      if (useMutationMembrane) {
-	        Object.freeze(descriptor);
-	        return descriptor;
-	      }
-	    }
-
-	    descriptor.props = props;
-	    return descriptor;
-	  };
-
-	  // Currently we expose the prototype of the descriptor so that
-	  // <Foo /> instanceof Foo works. This is controversial pattern.
-	  factory.prototype = descriptorPrototype;
-
-	  // Expose the type on the factory and the prototype so that it can be
-	  // easily accessed on descriptors. E.g. <Foo />.type === Foo.type and for
-	  // static methods like <Foo />.type.staticMethod();
-	  // This should not be named constructor since this may not be the function
-	  // that created the descriptor, and it may not even be a constructor.
-	  factory.type = type;
-	  descriptorPrototype.type = type;
-
-	  proxyStaticMethods(factory, type);
-
-	  // Expose a unique constructor on the prototype is that this works with type
-	  // systems that compare constructor properties: <Foo />.constructor === Foo
-	  // This may be controversial since it requires a known factory function.
-	  descriptorPrototype.constructor = factory;
-
-	  return factory;
-
-	};
-
-	ReactDescriptor.cloneAndReplaceProps = function(oldDescriptor, newProps) {
-	  var newDescriptor = Object.create(oldDescriptor.constructor.prototype);
-	  // It's important that this property order matches the hidden class of the
-	  // original descriptor to maintain perf.
-	  newDescriptor._owner = oldDescriptor._owner;
-	  newDescriptor._context = oldDescriptor._context;
+	  // TODO: Deprecate withContext, and then the context becomes accessible
+	  // through the owner.
+	  this._context = context;
 
 	  if ("production" !== process.env.NODE_ENV) {
-	    newDescriptor._store = {
-	      validated: oldDescriptor._store.validated,
-	      props: newProps
-	    };
+	    // The validation flag and props are currently mutative. We put them on
+	    // an external backing store so that we can freeze the whole object.
+	    // This can be replaced with a WeakMap once they are implemented in
+	    // commonly used development environments.
+	    this._store = { validated: false, props: props };
+
+	    // We're not allowed to set props directly on the object so we early
+	    // return and rely on the prototype membrane to forward to the backing
+	    // store.
 	    if (useMutationMembrane) {
-	      Object.freeze(newDescriptor);
-	      return newDescriptor;
+	      Object.freeze(this);
+	      return;
 	    }
 	  }
 
-	  newDescriptor.props = newProps;
-	  return newDescriptor;
+	  this.props = props;
 	};
 
-	/**
-	 * Checks if a value is a valid descriptor constructor.
-	 *
-	 * @param {*}
-	 * @return {boolean}
-	 * @public
-	 */
-	ReactDescriptor.isValidFactory = function(factory) {
-	  return typeof factory === 'function' &&
-	         factory.prototype instanceof ReactDescriptor;
+	// We intentionally don't expose the function on the constructor property.
+	// ReactElement should be indistinguishable from a plain object.
+	ReactElement.prototype = {
+	  _isReactElement: true
+	};
+
+	if ("production" !== process.env.NODE_ENV) {
+	  defineMutationMembrane(ReactElement.prototype);
+	}
+
+	ReactElement.createElement = function(type, config, children) {
+	  var propName;
+
+	  // Reserved names are extracted
+	  var props = {};
+
+	  var key = null;
+	  var ref = null;
+
+	  if (config != null) {
+	    ref = config.ref === undefined ? null : config.ref;
+	    if ("production" !== process.env.NODE_ENV) {
+	      ("production" !== process.env.NODE_ENV ? warning(
+	        config.key !== null,
+	        'createElement(...): Encountered component with a `key` of null. In ' +
+	        'a future version, this will be treated as equivalent to the string ' +
+	        '\'null\'; instead, provide an explicit key or use undefined.'
+	      ) : null);
+	    }
+	    // TODO: Change this back to `config.key === undefined`
+	    key = config.key == null ? null : '' + config.key;
+	    // Remaining properties are added to a new props object
+	    for (propName in config) {
+	      if (config.hasOwnProperty(propName) &&
+	          !RESERVED_PROPS.hasOwnProperty(propName)) {
+	        props[propName] = config[propName];
+	      }
+	    }
+	  }
+
+	  // Children can be more than one argument, and those are transferred onto
+	  // the newly allocated props object.
+	  var childrenLength = arguments.length - 2;
+	  if (childrenLength === 1) {
+	    props.children = children;
+	  } else if (childrenLength > 1) {
+	    var childArray = Array(childrenLength);
+	    for (var i = 0; i < childrenLength; i++) {
+	      childArray[i] = arguments[i + 2];
+	    }
+	    props.children = childArray;
+	  }
+
+	  // Resolve default props
+	  if (type && type.defaultProps) {
+	    var defaultProps = type.defaultProps;
+	    for (propName in defaultProps) {
+	      if (typeof props[propName] === 'undefined') {
+	        props[propName] = defaultProps[propName];
+	      }
+	    }
+	  }
+
+	  return new ReactElement(
+	    type,
+	    key,
+	    ref,
+	    ReactCurrentOwner.current,
+	    ReactContext.current,
+	    props
+	  );
+	};
+
+	ReactElement.createFactory = function(type) {
+	  var factory = ReactElement.createElement.bind(null, type);
+	  // Expose the type on the factory and the prototype so that it can be
+	  // easily accessed on elements. E.g. <Foo />.type === Foo.type.
+	  // This should not be named `constructor` since this may not be the function
+	  // that created the element, and it may not even be a constructor.
+	  factory.type = type;
+	  return factory;
+	};
+
+	ReactElement.cloneAndReplaceProps = function(oldElement, newProps) {
+	  var newElement = new ReactElement(
+	    oldElement.type,
+	    oldElement.key,
+	    oldElement.ref,
+	    oldElement._owner,
+	    oldElement._context,
+	    newProps
+	  );
+
+	  if ("production" !== process.env.NODE_ENV) {
+	    // If the key on the original is valid, then the clone is valid
+	    newElement._store.validated = oldElement._store.validated;
+	  }
+	  return newElement;
 	};
 
 	/**
@@ -16171,32 +9156,320 @@
 	 * @return {boolean} True if `object` is a valid component.
 	 * @final
 	 */
-	ReactDescriptor.isValidDescriptor = function(object) {
-	  return object instanceof ReactDescriptor;
+	ReactElement.isValidElement = function(object) {
+	  // ReactTestUtils is often used outside of beforeEach where as React is
+	  // within it. This leads to two different instances of React on the same
+	  // page. To identify a element from a different React instance we use
+	  // a flag instead of an instanceof check.
+	  var isElement = !!(object && object._isReactElement);
+	  // if (isElement && !(object instanceof ReactElement)) {
+	  // This is an indicator that you're using multiple versions of React at the
+	  // same time. This will screw with ownership and stuff. Fix it, please.
+	  // TODO: We could possibly warn here.
+	  // }
+	  return isElement;
 	};
 
-	module.exports = ReactDescriptor;
+	module.exports = ReactElement;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 27 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule ReactElementValidator
+	 */
+
+	/**
+	 * ReactElementValidator provides a wrapper around a element factory
+	 * which validates the props passed to the element. This is intended to be
+	 * used only in DEV and could be replaced by a static type checker for languages
+	 * that support it.
+	 */
+
+	"use strict";
+
+	var ReactElement = __webpack_require__(28);
+	var ReactPropTypeLocations = __webpack_require__(61);
+	var ReactCurrentOwner = __webpack_require__(27);
+
+	var monitorCodeUse = __webpack_require__(65);
+	var warning = __webpack_require__(50);
+
+	/**
+	 * Warn if there's no key explicitly set on dynamic arrays of children or
+	 * object keys are not valid. This allows us to keep track of children between
+	 * updates.
+	 */
+	var ownerHasKeyUseWarning = {
+	  'react_key_warning': {},
+	  'react_numeric_key_warning': {}
+	};
+	var ownerHasMonitoredObjectMap = {};
+
+	var loggedTypeFailures = {};
+
+	var NUMERIC_PROPERTY_REGEX = /^\d+$/;
+
+	/**
+	 * Gets the current owner's displayName for use in warnings.
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * @internal
+	 * @return {?string} Display name or undefined
+	 */
+	function getCurrentOwnerDisplayName() {
+	  var current = ReactCurrentOwner.current;
+	  return current && current.constructor.displayName || undefined;
+	}
+
+	/**
+	 * Warn if the component doesn't have an explicit key assigned to it.
+	 * This component is in an array. The array could grow and shrink or be
+	 * reordered. All children that haven't already been validated are required to
+	 * have a "key" property assigned to it.
+	 *
+	 * @internal
+	 * @param {ReactComponent} component Component that requires a key.
+	 * @param {*} parentType component's parent's type.
+	 */
+	function validateExplicitKey(component, parentType) {
+	  if (component._store.validated || component.key != null) {
+	    return;
+	  }
+	  component._store.validated = true;
+
+	  warnAndMonitorForKeyUse(
+	    'react_key_warning',
+	    'Each child in an array should have a unique "key" prop.',
+	    component,
+	    parentType
+	  );
+	}
+
+	/**
+	 * Warn if the key is being defined as an object property but has an incorrect
+	 * value.
+	 *
+	 * @internal
+	 * @param {string} name Property name of the key.
+	 * @param {ReactComponent} component Component that requires a key.
+	 * @param {*} parentType component's parent's type.
+	 */
+	function validatePropertyKey(name, component, parentType) {
+	  if (!NUMERIC_PROPERTY_REGEX.test(name)) {
+	    return;
+	  }
+	  warnAndMonitorForKeyUse(
+	    'react_numeric_key_warning',
+	    'Child objects should have non-numeric keys so ordering is preserved.',
+	    component,
+	    parentType
+	  );
+	}
+
+	/**
+	 * Shared warning and monitoring code for the key warnings.
+	 *
+	 * @internal
+	 * @param {string} warningID The id used when logging.
+	 * @param {string} message The base warning that gets output.
+	 * @param {ReactComponent} component Component that requires a key.
+	 * @param {*} parentType component's parent's type.
+	 */
+	function warnAndMonitorForKeyUse(warningID, message, component, parentType) {
+	  var ownerName = getCurrentOwnerDisplayName();
+	  var parentName = parentType.displayName;
+
+	  var useName = ownerName || parentName;
+	  var memoizer = ownerHasKeyUseWarning[warningID];
+	  if (memoizer.hasOwnProperty(useName)) {
+	    return;
+	  }
+	  memoizer[useName] = true;
+
+	  message += ownerName ?
+	    (" Check the render method of " + ownerName + ".") :
+	    (" Check the renderComponent call using <" + parentName + ">.");
+
+	  // Usually the current owner is the offender, but if it accepts children as a
+	  // property, it may be the creator of the child that's responsible for
+	  // assigning it a key.
+	  var childOwnerName = null;
+	  if (component._owner && component._owner !== ReactCurrentOwner.current) {
+	    // Name of the component that originally created this child.
+	    childOwnerName = component._owner.constructor.displayName;
+
+	    message += (" It was passed a child from " + childOwnerName + ".");
+	  }
+
+	  message += ' See http://fb.me/react-warning-keys for more information.';
+	  monitorCodeUse(warningID, {
+	    component: useName,
+	    componentOwner: childOwnerName
+	  });
+	  console.warn(message);
+	}
+
+	/**
+	 * Log that we're using an object map. We're considering deprecating this
+	 * feature and replace it with proper Map and ImmutableMap data structures.
+	 *
+	 * @internal
+	 */
+	function monitorUseOfObjectMap() {
+	  var currentName = getCurrentOwnerDisplayName() || '';
+	  if (ownerHasMonitoredObjectMap.hasOwnProperty(currentName)) {
+	    return;
+	  }
+	  ownerHasMonitoredObjectMap[currentName] = true;
+	  monitorCodeUse('react_object_map_children');
+	}
+
+	/**
+	 * Ensure that every component either is passed in a static location, in an
+	 * array with an explicit keys property defined, or in an object literal
+	 * with valid key property.
+	 *
+	 * @internal
+	 * @param {*} component Statically passed child of any type.
+	 * @param {*} parentType component's parent's type.
+	 * @return {boolean}
+	 */
+	function validateChildKeys(component, parentType) {
+	  if (Array.isArray(component)) {
+	    for (var i = 0; i < component.length; i++) {
+	      var child = component[i];
+	      if (ReactElement.isValidElement(child)) {
+	        validateExplicitKey(child, parentType);
+	      }
+	    }
+	  } else if (ReactElement.isValidElement(component)) {
+	    // This component was passed in a valid location.
+	    component._store.validated = true;
+	  } else if (component && typeof component === 'object') {
+	    monitorUseOfObjectMap();
+	    for (var name in component) {
+	      validatePropertyKey(name, component[name], parentType);
+	    }
+	  }
+	}
+
+	/**
+	 * Assert that the props are valid
+	 *
+	 * @param {string} componentName Name of the component for error messages.
+	 * @param {object} propTypes Map of prop name to a ReactPropType
+	 * @param {object} props
+	 * @param {string} location e.g. "prop", "context", "child context"
+	 * @private
+	 */
+	function checkPropTypes(componentName, propTypes, props, location) {
+	  for (var propName in propTypes) {
+	    if (propTypes.hasOwnProperty(propName)) {
+	      var error;
+	      // Prop type validation may throw. In case they do, we don't want to
+	      // fail the render phase where it didn't fail before. So we log it.
+	      // After these have been cleaned up, we'll let them throw.
+	      try {
+	        error = propTypes[propName](props, propName, componentName, location);
+	      } catch (ex) {
+	        error = ex;
+	      }
+	      if (error instanceof Error && !(error.message in loggedTypeFailures)) {
+	        // Only monitor this failure once because there tends to be a lot of the
+	        // same error.
+	        loggedTypeFailures[error.message] = true;
+	        // This will soon use the warning module
+	        monitorCodeUse(
+	          'react_failed_descriptor_type_check',
+	          { message: error.message }
+	        );
+	      }
+	    }
+	  }
+	}
+
+	var ReactElementValidator = {
+
+	  createElement: function(type, props, children) {
+	    // We warn in this case but don't throw. We expect the element creation to
+	    // succeed and there will likely be errors in render.
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      type != null,
+	      'React.createElement: type should not be null or undefined. It should ' +
+	        'be a string (for DOM elements) or a ReactClass (for composite ' +
+	        'components).'
+	    ) : null);
+
+	    var element = ReactElement.createElement.apply(this, arguments);
+
+	    // The result can be nullish if a mock or a custom function is used.
+	    // TODO: Drop this when these are no longer allowed as the type argument.
+	    if (element == null) {
+	      return element;
+	    }
+
+	    for (var i = 2; i < arguments.length; i++) {
+	      validateChildKeys(arguments[i], type);
+	    }
+
+	    if (type) {
+	      var name = type.displayName;
+	      if (type.propTypes) {
+	        checkPropTypes(
+	          name,
+	          type.propTypes,
+	          element.props,
+	          ReactPropTypeLocations.prop
+	        );
+	      }
+	      if (type.contextTypes) {
+	        checkPropTypes(
+	          name,
+	          type.contextTypes,
+	          element._context,
+	          ReactPropTypeLocations.context
+	        );
+	      }
+	    }
+	    return element;
+	  },
+
+	  createFactory: function(type) {
+	    var validatedFactory = ReactElementValidator.createElement.bind(
+	      null,
+	      type
+	    );
+	    validatedFactory.type = type;
+	    return validatedFactory;
+	  }
+
+	};
+
+	module.exports = ReactElementValidator;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOM
 	 * @typechecks static-only
@@ -16204,45 +9477,27 @@
 
 	"use strict";
 
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactDescriptorValidator = __webpack_require__(53);
-	var ReactDOMComponent = __webpack_require__(28);
+	var ReactElement = __webpack_require__(28);
+	var ReactElementValidator = __webpack_require__(29);
+	var ReactLegacyElement = __webpack_require__(34);
 
-	var mergeInto = __webpack_require__(64);
-	var mapObject = __webpack_require__(62);
+	var mapObject = __webpack_require__(66);
 
 	/**
-	 * Creates a new React class that is idempotent and capable of containing other
-	 * React components. It accepts event listeners and DOM properties that are
-	 * valid according to `DOMProperty`.
+	 * Create a factory that creates HTML tag elements.
 	 *
-	 *  - Event listeners: `onClick`, `onMouseDown`, etc.
-	 *  - DOM properties: `className`, `name`, `title`, etc.
-	 *
-	 * The `style` property functions differently from the DOM API. It accepts an
-	 * object mapping of style properties to values.
-	 *
-	 * @param {boolean} omitClose True if the close tag should be omitted.
 	 * @param {string} tag Tag name (e.g. `div`).
 	 * @private
 	 */
-	function createDOMComponentClass(omitClose, tag) {
-	  var Constructor = function(descriptor) {
-	    this.construct(descriptor);
-	  };
-	  Constructor.prototype = new ReactDOMComponent(tag, omitClose);
-	  Constructor.prototype.constructor = Constructor;
-	  Constructor.displayName = tag;
-
-	  var ConvenienceConstructor = ReactDescriptor.createFactory(Constructor);
-
+	function createDOMFactory(tag) {
 	  if ("production" !== process.env.NODE_ENV) {
-	    return ReactDescriptorValidator.createFactory(
-	      ConvenienceConstructor
+	    return ReactLegacyElement.markNonLegacyFactory(
+	      ReactElementValidator.createFactory(tag)
 	    );
 	  }
-
-	  return ConvenienceConstructor;
+	  return ReactLegacyElement.markNonLegacyFactory(
+	    ReactElement.createFactory(tag)
+	  );
 	}
 
 	/**
@@ -16252,169 +9507,155 @@
 	 * @public
 	 */
 	var ReactDOM = mapObject({
-	  a: false,
-	  abbr: false,
-	  address: false,
-	  area: true,
-	  article: false,
-	  aside: false,
-	  audio: false,
-	  b: false,
-	  base: true,
-	  bdi: false,
-	  bdo: false,
-	  big: false,
-	  blockquote: false,
-	  body: false,
-	  br: true,
-	  button: false,
-	  canvas: false,
-	  caption: false,
-	  cite: false,
-	  code: false,
-	  col: true,
-	  colgroup: false,
-	  data: false,
-	  datalist: false,
-	  dd: false,
-	  del: false,
-	  details: false,
-	  dfn: false,
-	  dialog: false,
-	  div: false,
-	  dl: false,
-	  dt: false,
-	  em: false,
-	  embed: true,
-	  fieldset: false,
-	  figcaption: false,
-	  figure: false,
-	  footer: false,
-	  form: false, // NOTE: Injected, see `ReactDOMForm`.
-	  h1: false,
-	  h2: false,
-	  h3: false,
-	  h4: false,
-	  h5: false,
-	  h6: false,
-	  head: false,
-	  header: false,
-	  hr: true,
-	  html: false,
-	  i: false,
-	  iframe: false,
-	  img: true,
-	  input: true,
-	  ins: false,
-	  kbd: false,
-	  keygen: true,
-	  label: false,
-	  legend: false,
-	  li: false,
-	  link: true,
-	  main: false,
-	  map: false,
-	  mark: false,
-	  menu: false,
-	  menuitem: false, // NOTE: Close tag should be omitted, but causes problems.
-	  meta: true,
-	  meter: false,
-	  nav: false,
-	  noscript: false,
-	  object: false,
-	  ol: false,
-	  optgroup: false,
-	  option: false,
-	  output: false,
-	  p: false,
-	  param: true,
-	  picture: false,
-	  pre: false,
-	  progress: false,
-	  q: false,
-	  rp: false,
-	  rt: false,
-	  ruby: false,
-	  s: false,
-	  samp: false,
-	  script: false,
-	  section: false,
-	  select: false,
-	  small: false,
-	  source: true,
-	  span: false,
-	  strong: false,
-	  style: false,
-	  sub: false,
-	  summary: false,
-	  sup: false,
-	  table: false,
-	  tbody: false,
-	  td: false,
-	  textarea: false, // NOTE: Injected, see `ReactDOMTextarea`.
-	  tfoot: false,
-	  th: false,
-	  thead: false,
-	  time: false,
-	  title: false,
-	  tr: false,
-	  track: true,
-	  u: false,
-	  ul: false,
-	  'var': false,
-	  video: false,
-	  wbr: true,
+	  a: 'a',
+	  abbr: 'abbr',
+	  address: 'address',
+	  area: 'area',
+	  article: 'article',
+	  aside: 'aside',
+	  audio: 'audio',
+	  b: 'b',
+	  base: 'base',
+	  bdi: 'bdi',
+	  bdo: 'bdo',
+	  big: 'big',
+	  blockquote: 'blockquote',
+	  body: 'body',
+	  br: 'br',
+	  button: 'button',
+	  canvas: 'canvas',
+	  caption: 'caption',
+	  cite: 'cite',
+	  code: 'code',
+	  col: 'col',
+	  colgroup: 'colgroup',
+	  data: 'data',
+	  datalist: 'datalist',
+	  dd: 'dd',
+	  del: 'del',
+	  details: 'details',
+	  dfn: 'dfn',
+	  dialog: 'dialog',
+	  div: 'div',
+	  dl: 'dl',
+	  dt: 'dt',
+	  em: 'em',
+	  embed: 'embed',
+	  fieldset: 'fieldset',
+	  figcaption: 'figcaption',
+	  figure: 'figure',
+	  footer: 'footer',
+	  form: 'form',
+	  h1: 'h1',
+	  h2: 'h2',
+	  h3: 'h3',
+	  h4: 'h4',
+	  h5: 'h5',
+	  h6: 'h6',
+	  head: 'head',
+	  header: 'header',
+	  hr: 'hr',
+	  html: 'html',
+	  i: 'i',
+	  iframe: 'iframe',
+	  img: 'img',
+	  input: 'input',
+	  ins: 'ins',
+	  kbd: 'kbd',
+	  keygen: 'keygen',
+	  label: 'label',
+	  legend: 'legend',
+	  li: 'li',
+	  link: 'link',
+	  main: 'main',
+	  map: 'map',
+	  mark: 'mark',
+	  menu: 'menu',
+	  menuitem: 'menuitem',
+	  meta: 'meta',
+	  meter: 'meter',
+	  nav: 'nav',
+	  noscript: 'noscript',
+	  object: 'object',
+	  ol: 'ol',
+	  optgroup: 'optgroup',
+	  option: 'option',
+	  output: 'output',
+	  p: 'p',
+	  param: 'param',
+	  picture: 'picture',
+	  pre: 'pre',
+	  progress: 'progress',
+	  q: 'q',
+	  rp: 'rp',
+	  rt: 'rt',
+	  ruby: 'ruby',
+	  s: 's',
+	  samp: 'samp',
+	  script: 'script',
+	  section: 'section',
+	  select: 'select',
+	  small: 'small',
+	  source: 'source',
+	  span: 'span',
+	  strong: 'strong',
+	  style: 'style',
+	  sub: 'sub',
+	  summary: 'summary',
+	  sup: 'sup',
+	  table: 'table',
+	  tbody: 'tbody',
+	  td: 'td',
+	  textarea: 'textarea',
+	  tfoot: 'tfoot',
+	  th: 'th',
+	  thead: 'thead',
+	  time: 'time',
+	  title: 'title',
+	  tr: 'tr',
+	  track: 'track',
+	  u: 'u',
+	  ul: 'ul',
+	  'var': 'var',
+	  video: 'video',
+	  wbr: 'wbr',
 
 	  // SVG
-	  circle: false,
-	  defs: false,
-	  ellipse: false,
-	  g: false,
-	  line: false,
-	  linearGradient: false,
-	  mask: false,
-	  path: false,
-	  pattern: false,
-	  polygon: false,
-	  polyline: false,
-	  radialGradient: false,
-	  rect: false,
-	  stop: false,
-	  svg: false,
-	  text: false,
-	  tspan: false
-	}, createDOMComponentClass);
+	  circle: 'circle',
+	  defs: 'defs',
+	  ellipse: 'ellipse',
+	  g: 'g',
+	  line: 'line',
+	  linearGradient: 'linearGradient',
+	  mask: 'mask',
+	  path: 'path',
+	  pattern: 'pattern',
+	  polygon: 'polygon',
+	  polyline: 'polyline',
+	  radialGradient: 'radialGradient',
+	  rect: 'rect',
+	  stop: 'stop',
+	  svg: 'svg',
+	  text: 'text',
+	  tspan: 'tspan'
 
-	var injection = {
-	  injectComponentClasses: function(componentClasses) {
-	    mergeInto(ReactDOM, componentClasses);
-	  }
-	};
-
-	ReactDOM.injection = injection;
+	}, createDOMFactory);
 
 	module.exports = ReactDOM;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 28 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMComponent
 	 * @typechecks static-only
@@ -16422,21 +9663,22 @@
 
 	"use strict";
 
-	var CSSPropertyOperations = __webpack_require__(65);
-	var DOMProperty = __webpack_require__(42);
-	var DOMPropertyOperations = __webpack_require__(19);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactComponent = __webpack_require__(22);
-	var ReactBrowserEventEmitter = __webpack_require__(67);
-	var ReactMount = __webpack_require__(31);
-	var ReactMultiChild = __webpack_require__(32);
-	var ReactPerf = __webpack_require__(33);
+	var CSSPropertyOperations = __webpack_require__(68);
+	var DOMProperty = __webpack_require__(47);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactComponent = __webpack_require__(24);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
+	var ReactMount = __webpack_require__(35);
+	var ReactMultiChild = __webpack_require__(36);
+	var ReactPerf = __webpack_require__(37);
 
-	var escapeTextForBrowser = __webpack_require__(43);
-	var invariant = __webpack_require__(46);
-	var keyOf = __webpack_require__(68);
-	var merge = __webpack_require__(52);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var escapeTextForBrowser = __webpack_require__(48);
+	var invariant = __webpack_require__(52);
+	var isEventSupported = __webpack_require__(71);
+	var keyOf = __webpack_require__(64);
+	var monitorCodeUse = __webpack_require__(65);
 
 	var deleteListener = ReactBrowserEventEmitter.deleteListener;
 	var listenTo = ReactBrowserEventEmitter.listenTo;
@@ -16461,6 +9703,16 @@
 	    props.children == null || props.dangerouslySetInnerHTML == null,
 	    'Can only set one of `children` or `props.dangerouslySetInnerHTML`.'
 	  ) : invariant(props.children == null || props.dangerouslySetInnerHTML == null));
+	  if ("production" !== process.env.NODE_ENV) {
+	    if (props.contentEditable && props.children != null) {
+	      console.warn(
+	        'A component is `contentEditable` and contains `children` managed by ' +
+	        'React. It is now your responsibility to guarantee that none of those '+
+	        'nodes are unexpectedly modified or duplicated. This is probably not ' +
+	        'intentional.'
+	      );
+	    }
+	  }
 	  ("production" !== process.env.NODE_ENV ? invariant(
 	    props.style == null || typeof props.style === 'object',
 	    'The `style` prop expects a mapping from style properties to values, ' +
@@ -16469,6 +9721,15 @@
 	}
 
 	function putListener(id, registrationName, listener, transaction) {
+	  if ("production" !== process.env.NODE_ENV) {
+	    // IE8 has no API for event capturing and the `onScroll` event doesn't
+	    // bubble.
+	    if (registrationName === 'onScroll' &&
+	        !isEventSupported('scroll', true)) {
+	      monitorCodeUse('react_no_scroll_event');
+	      console.warn('This browser doesn\'t support the `onScroll` event');
+	    }
+	  }
 	  var container = ReactMount.findReactContainerForID(id);
 	  if (container) {
 	    var doc = container.nodeType === ELEMENT_NODE_TYPE ?
@@ -16483,17 +9744,65 @@
 	  );
 	}
 
+	// For HTML, certain tags should omit their close tag. We keep a whitelist for
+	// those special cased tags.
+
+	var omittedCloseTags = {
+	  'area': true,
+	  'base': true,
+	  'br': true,
+	  'col': true,
+	  'embed': true,
+	  'hr': true,
+	  'img': true,
+	  'input': true,
+	  'keygen': true,
+	  'link': true,
+	  'meta': true,
+	  'param': true,
+	  'source': true,
+	  'track': true,
+	  'wbr': true
+	  // NOTE: menuitem's close tag should be omitted, but that causes problems.
+	};
+
+	// We accept any tag to be rendered but since this gets injected into abitrary
+	// HTML, we want to make sure that it's a safe tag.
+	// http://www.w3.org/TR/REC-xml/#NT-Name
+
+	var VALID_TAG_REGEX = /^[a-zA-Z][a-zA-Z:_\.\-\d]*$/; // Simplified subset
+	var validatedTagCache = {};
+	var hasOwnProperty = {}.hasOwnProperty;
+
+	function validateDangerousTag(tag) {
+	  if (!hasOwnProperty.call(validatedTagCache, tag)) {
+	    ("production" !== process.env.NODE_ENV ? invariant(VALID_TAG_REGEX.test(tag), 'Invalid tag: %s', tag) : invariant(VALID_TAG_REGEX.test(tag)));
+	    validatedTagCache[tag] = true;
+	  }
+	}
 
 	/**
+	 * Creates a new React class that is idempotent and capable of containing other
+	 * React components. It accepts event listeners and DOM properties that are
+	 * valid according to `DOMProperty`.
+	 *
+	 *  - Event listeners: `onClick`, `onMouseDown`, etc.
+	 *  - DOM properties: `className`, `name`, `title`, etc.
+	 *
+	 * The `style` property functions differently from the DOM API. It accepts an
+	 * object mapping of style properties to values.
+	 *
 	 * @constructor ReactDOMComponent
 	 * @extends ReactComponent
 	 * @extends ReactMultiChild
 	 */
-	function ReactDOMComponent(tag, omitClose) {
-	  this._tagOpen = '<' + tag;
-	  this._tagClose = omitClose ? '' : '</' + tag + '>';
+	function ReactDOMComponent(tag) {
+	  validateDangerousTag(tag);
+	  this._tag = tag;
 	  this.tagName = tag.toUpperCase();
 	}
+
+	ReactDOMComponent.displayName = 'ReactDOMComponent';
 
 	ReactDOMComponent.Mixin = {
 
@@ -16518,10 +9827,11 @@
 	        mountDepth
 	      );
 	      assertValidProps(this.props);
+	      var closeTag = omittedCloseTags[this._tag] ? '' : '</' + this._tag + '>';
 	      return (
 	        this._createOpenTagMarkupAndPutListeners(transaction) +
 	        this._createContentMarkup(transaction) +
-	        this._tagClose
+	        closeTag
 	      );
 	    }
 	  ),
@@ -16540,7 +9850,7 @@
 	   */
 	  _createOpenTagMarkupAndPutListeners: function(transaction) {
 	    var props = this.props;
-	    var ret = this._tagOpen;
+	    var ret = '<' + this._tag;
 
 	    for (var propKey in props) {
 	      if (!props.hasOwnProperty(propKey)) {
@@ -16555,7 +9865,7 @@
 	      } else {
 	        if (propKey === STYLE) {
 	          if (propValue) {
-	            propValue = props.style = merge(props.style);
+	            propValue = props.style = assign({}, props.style);
 	          }
 	          propValue = CSSPropertyOperations.createMarkupForStyles(propValue);
 	        }
@@ -16608,22 +9918,22 @@
 	    return '';
 	  },
 
-	  receiveComponent: function(nextDescriptor, transaction) {
-	    if (nextDescriptor === this._descriptor &&
-	        nextDescriptor._owner != null) {
-	      // Since descriptors are immutable after the owner is rendered,
+	  receiveComponent: function(nextElement, transaction) {
+	    if (nextElement === this._currentElement &&
+	        nextElement._owner != null) {
+	      // Since elements are immutable after the owner is rendered,
 	      // we can do a cheap identity compare here to determine if this is a
 	      // superfluous reconcile. It's possible for state to be mutable but such
 	      // change should trigger an update of the owner which would recreate
-	      // the descriptor. We explicitly check for the existence of an owner since
-	      // it's possible for a descriptor created outside a composite to be
+	      // the element. We explicitly check for the existence of an owner since
+	      // it's possible for a element created outside a composite to be
 	      // deeply mutated and reused.
 	      return;
 	    }
 
 	    ReactComponent.Mixin.receiveComponent.call(
 	      this,
-	      nextDescriptor,
+	      nextElement,
 	      transaction
 	    );
 	  },
@@ -16633,22 +9943,22 @@
 	   * attached to the DOM. Reconciles the root DOM node, then recurses.
 	   *
 	   * @param {ReactReconcileTransaction} transaction
-	   * @param {ReactDescriptor} prevDescriptor
+	   * @param {ReactElement} prevElement
 	   * @internal
 	   * @overridable
 	   */
 	  updateComponent: ReactPerf.measure(
 	    'ReactDOMComponent',
 	    'updateComponent',
-	    function(transaction, prevDescriptor) {
-	      assertValidProps(this._descriptor.props);
+	    function(transaction, prevElement) {
+	      assertValidProps(this._currentElement.props);
 	      ReactComponent.Mixin.updateComponent.call(
 	        this,
 	        transaction,
-	        prevDescriptor
+	        prevElement
 	      );
-	      this._updateDOMProperties(prevDescriptor.props, transaction);
-	      this._updateDOMChildren(prevDescriptor.props, transaction);
+	      this._updateDOMProperties(prevElement.props, transaction);
+	      this._updateDOMChildren(prevElement.props, transaction);
 	    }
 	  ),
 
@@ -16704,7 +10014,7 @@
 	      }
 	      if (propKey === STYLE) {
 	        if (nextProp) {
-	          nextProp = nextProps.style = merge(nextProp);
+	          nextProp = nextProps.style = assign({}, nextProp);
 	        }
 	        if (lastProp) {
 	          // Unset styles on `lastProp` but not on `nextProp`.
@@ -16813,70 +10123,66 @@
 
 	};
 
-	mixInto(ReactDOMComponent, ReactComponent.Mixin);
-	mixInto(ReactDOMComponent, ReactDOMComponent.Mixin);
-	mixInto(ReactDOMComponent, ReactMultiChild.Mixin);
-	mixInto(ReactDOMComponent, ReactBrowserComponentMixin);
+	assign(
+	  ReactDOMComponent.prototype,
+	  ReactComponent.Mixin,
+	  ReactDOMComponent.Mixin,
+	  ReactMultiChild.Mixin,
+	  ReactBrowserComponentMixin
+	);
 
 	module.exports = ReactDOMComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 29 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDefaultInjection
 	 */
 
 	"use strict";
 
-	var BeforeInputEventPlugin = __webpack_require__(69);
-	var ChangeEventPlugin = __webpack_require__(70);
-	var ClientReactRootIndex = __webpack_require__(71);
-	var CompositionEventPlugin = __webpack_require__(72);
-	var DefaultEventPluginOrder = __webpack_require__(73);
-	var EnterLeaveEventPlugin = __webpack_require__(74);
-	var ExecutionEnvironment = __webpack_require__(39);
-	var HTMLDOMPropertyConfig = __webpack_require__(75);
-	var MobileSafariClickEventPlugin = __webpack_require__(76);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
+	var BeforeInputEventPlugin = __webpack_require__(72);
+	var ChangeEventPlugin = __webpack_require__(73);
+	var ClientReactRootIndex = __webpack_require__(74);
+	var CompositionEventPlugin = __webpack_require__(75);
+	var DefaultEventPluginOrder = __webpack_require__(76);
+	var EnterLeaveEventPlugin = __webpack_require__(77);
+	var ExecutionEnvironment = __webpack_require__(44);
+	var HTMLDOMPropertyConfig = __webpack_require__(78);
+	var MobileSafariClickEventPlugin = __webpack_require__(79);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
 	var ReactComponentBrowserEnvironment =
-	  __webpack_require__(77);
-	var ReactDefaultBatchingStrategy = __webpack_require__(78);
-	var ReactDOM = __webpack_require__(27);
-	var ReactDOMButton = __webpack_require__(79);
-	var ReactDOMForm = __webpack_require__(80);
-	var ReactDOMImg = __webpack_require__(81);
-	var ReactDOMInput = __webpack_require__(82);
-	var ReactDOMOption = __webpack_require__(83);
-	var ReactDOMSelect = __webpack_require__(84);
-	var ReactDOMTextarea = __webpack_require__(85);
-	var ReactEventListener = __webpack_require__(86);
-	var ReactInjection = __webpack_require__(87);
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactMount = __webpack_require__(31);
-	var SelectEventPlugin = __webpack_require__(88);
-	var ServerReactRootIndex = __webpack_require__(89);
-	var SimpleEventPlugin = __webpack_require__(90);
-	var SVGDOMPropertyConfig = __webpack_require__(91);
+	  __webpack_require__(80);
+	var ReactDefaultBatchingStrategy = __webpack_require__(81);
+	var ReactDOMComponent = __webpack_require__(31);
+	var ReactDOMButton = __webpack_require__(82);
+	var ReactDOMForm = __webpack_require__(83);
+	var ReactDOMImg = __webpack_require__(84);
+	var ReactDOMInput = __webpack_require__(85);
+	var ReactDOMOption = __webpack_require__(86);
+	var ReactDOMSelect = __webpack_require__(87);
+	var ReactDOMTextarea = __webpack_require__(88);
+	var ReactEventListener = __webpack_require__(89);
+	var ReactInjection = __webpack_require__(90);
+	var ReactInstanceHandles = __webpack_require__(33);
+	var ReactMount = __webpack_require__(35);
+	var SelectEventPlugin = __webpack_require__(91);
+	var ServerReactRootIndex = __webpack_require__(92);
+	var SimpleEventPlugin = __webpack_require__(93);
+	var SVGDOMPropertyConfig = __webpack_require__(94);
 
-	var createFullPageComponent = __webpack_require__(92);
+	var createFullPageComponent = __webpack_require__(95);
 
 	function inject() {
 	  ReactInjection.EventEmitter.injectReactEventListener(
@@ -16904,18 +10210,22 @@
 	    BeforeInputEventPlugin: BeforeInputEventPlugin
 	  });
 
-	  ReactInjection.DOM.injectComponentClasses({
-	    button: ReactDOMButton,
-	    form: ReactDOMForm,
-	    img: ReactDOMImg,
-	    input: ReactDOMInput,
-	    option: ReactDOMOption,
-	    select: ReactDOMSelect,
-	    textarea: ReactDOMTextarea,
+	  ReactInjection.NativeComponent.injectGenericComponentClass(
+	    ReactDOMComponent
+	  );
 
-	    html: createFullPageComponent(ReactDOM.html),
-	    head: createFullPageComponent(ReactDOM.head),
-	    body: createFullPageComponent(ReactDOM.body)
+	  ReactInjection.NativeComponent.injectComponentClasses({
+	    'button': ReactDOMButton,
+	    'form': ReactDOMForm,
+	    'img': ReactDOMImg,
+	    'input': ReactDOMInput,
+	    'option': ReactDOMOption,
+	    'select': ReactDOMSelect,
+	    'textarea': ReactDOMTextarea,
+
+	    'html': createFullPageComponent('html'),
+	    'head': createFullPageComponent('head'),
+	    'body': createFullPageComponent('body')
 	  });
 
 	  // This needs to happen after createFullPageComponent() otherwise the mixin
@@ -16925,7 +10235,7 @@
 	  ReactInjection.DOMProperty.injectDOMPropertyConfig(HTMLDOMPropertyConfig);
 	  ReactInjection.DOMProperty.injectDOMPropertyConfig(SVGDOMPropertyConfig);
 
-	  ReactInjection.EmptyComponent.injectEmptyComponent(ReactDOM.noscript);
+	  ReactInjection.EmptyComponent.injectEmptyComponent('noscript');
 
 	  ReactInjection.Updates.injectReconcileTransaction(
 	    ReactComponentBrowserEnvironment.ReactReconcileTransaction
@@ -16945,7 +10255,7 @@
 	  if ("production" !== process.env.NODE_ENV) {
 	    var url = (ExecutionEnvironment.canUseDOM && window.location.href) || '';
 	    if ((/[?&]react_perf\b/).test(url)) {
-	      var ReactDefaultPerf = __webpack_require__(93);
+	      var ReactDefaultPerf = __webpack_require__(96);
 	      ReactDefaultPerf.start();
 	    }
 	  }
@@ -16955,26 +10265,19 @@
 	  inject: inject
 	};
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 30 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactInstanceHandles
 	 * @typechecks static-only
@@ -16982,9 +10285,9 @@
 
 	"use strict";
 
-	var ReactRootIndex = __webpack_require__(94);
+	var ReactRootIndex = __webpack_require__(97);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	var SEPARATOR = '.';
 	var SEPARATOR_LENGTH = SEPARATOR.length;
@@ -17300,45 +10603,294 @@
 
 	module.exports = ReactInstanceHandles;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 31 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule ReactLegacyElement
+	 */
+
+	"use strict";
+
+	var ReactCurrentOwner = __webpack_require__(27);
+
+	var invariant = __webpack_require__(52);
+	var monitorCodeUse = __webpack_require__(65);
+	var warning = __webpack_require__(50);
+
+	var legacyFactoryLogs = {};
+	function warnForLegacyFactoryCall() {
+	  if (!ReactLegacyElementFactory._isLegacyCallWarningEnabled) {
+	    return;
+	  }
+	  var owner = ReactCurrentOwner.current;
+	  var name = owner && owner.constructor ? owner.constructor.displayName : '';
+	  if (!name) {
+	    name = 'Something';
+	  }
+	  if (legacyFactoryLogs.hasOwnProperty(name)) {
+	    return;
+	  }
+	  legacyFactoryLogs[name] = true;
+	  ("production" !== process.env.NODE_ENV ? warning(
+	    false,
+	    name + ' is calling a React component directly. ' +
+	    'Use a factory or JSX instead. See: http://fb.me/react-legacyfactory'
+	  ) : null);
+	  monitorCodeUse('react_legacy_factory_call', { version: 3, name: name });
+	}
+
+	function warnForPlainFunctionType(type) {
+	  var isReactClass =
+	    type.prototype &&
+	    typeof type.prototype.mountComponent === 'function' &&
+	    typeof type.prototype.receiveComponent === 'function';
+	  if (isReactClass) {
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      false,
+	      'Did not expect to get a React class here. Use `Component` instead ' +
+	      'of `Component.type` or `this.constructor`.'
+	    ) : null);
+	  } else {
+	    if (!type._reactWarnedForThisType) {
+	      try {
+	        type._reactWarnedForThisType = true;
+	      } catch (x) {
+	        // just incase this is a frozen object or some special object
+	      }
+	      monitorCodeUse(
+	        'react_non_component_in_jsx',
+	        { version: 3, name: type.name }
+	      );
+	    }
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      false,
+	      'This JSX uses a plain function. Only React components are ' +
+	      'valid in React\'s JSX transform.'
+	    ) : null);
+	  }
+	}
+
+	function warnForNonLegacyFactory(type) {
+	  ("production" !== process.env.NODE_ENV ? warning(
+	    false,
+	    'Do not pass React.DOM.' + type.type + ' to JSX or createFactory. ' +
+	    'Use the string "' + type.type + '" instead.'
+	  ) : null);
+	}
+
+	/**
+	 * Transfer static properties from the source to the target. Functions are
+	 * rebound to have this reflect the original source.
+	 */
+	function proxyStaticMethods(target, source) {
+	  if (typeof source !== 'function') {
+	    return;
+	  }
+	  for (var key in source) {
+	    if (source.hasOwnProperty(key)) {
+	      var value = source[key];
+	      if (typeof value === 'function') {
+	        var bound = value.bind(source);
+	        // Copy any properties defined on the function, such as `isRequired` on
+	        // a PropTypes validator.
+	        for (var k in value) {
+	          if (value.hasOwnProperty(k)) {
+	            bound[k] = value[k];
+	          }
+	        }
+	        target[key] = bound;
+	      } else {
+	        target[key] = value;
+	      }
+	    }
+	  }
+	}
+
+	// We use an object instead of a boolean because booleans are ignored by our
+	// mocking libraries when these factories gets mocked.
+	var LEGACY_MARKER = {};
+	var NON_LEGACY_MARKER = {};
+
+	var ReactLegacyElementFactory = {};
+
+	ReactLegacyElementFactory.wrapCreateFactory = function(createFactory) {
+	  var legacyCreateFactory = function(type) {
+	    if (typeof type !== 'function') {
+	      // Non-function types cannot be legacy factories
+	      return createFactory(type);
+	    }
+
+	    if (type.isReactNonLegacyFactory) {
+	      // This is probably a factory created by ReactDOM we unwrap it to get to
+	      // the underlying string type. It shouldn't have been passed here so we
+	      // warn.
+	      if ("production" !== process.env.NODE_ENV) {
+	        warnForNonLegacyFactory(type);
+	      }
+	      return createFactory(type.type);
+	    }
+
+	    if (type.isReactLegacyFactory) {
+	      // This is probably a legacy factory created by ReactCompositeComponent.
+	      // We unwrap it to get to the underlying class.
+	      return createFactory(type.type);
+	    }
+
+	    if ("production" !== process.env.NODE_ENV) {
+	      warnForPlainFunctionType(type);
+	    }
+
+	    // Unless it's a legacy factory, then this is probably a plain function,
+	    // that is expecting to be invoked by JSX. We can just return it as is.
+	    return type;
+	  };
+	  return legacyCreateFactory;
+	};
+
+	ReactLegacyElementFactory.wrapCreateElement = function(createElement) {
+	  var legacyCreateElement = function(type, props, children) {
+	    if (typeof type !== 'function') {
+	      // Non-function types cannot be legacy factories
+	      return createElement.apply(this, arguments);
+	    }
+
+	    var args;
+
+	    if (type.isReactNonLegacyFactory) {
+	      // This is probably a factory created by ReactDOM we unwrap it to get to
+	      // the underlying string type. It shouldn't have been passed here so we
+	      // warn.
+	      if ("production" !== process.env.NODE_ENV) {
+	        warnForNonLegacyFactory(type);
+	      }
+	      args = Array.prototype.slice.call(arguments, 0);
+	      args[0] = type.type;
+	      return createElement.apply(this, args);
+	    }
+
+	    if (type.isReactLegacyFactory) {
+	      // This is probably a legacy factory created by ReactCompositeComponent.
+	      // We unwrap it to get to the underlying class.
+	      if (type._isMockFunction) {
+	        // If this is a mock function, people will expect it to be called. We
+	        // will actually call the original mock factory function instead. This
+	        // future proofs unit testing that assume that these are classes.
+	        type.type._mockedReactClassConstructor = type;
+	      }
+	      args = Array.prototype.slice.call(arguments, 0);
+	      args[0] = type.type;
+	      return createElement.apply(this, args);
+	    }
+
+	    if ("production" !== process.env.NODE_ENV) {
+	      warnForPlainFunctionType(type);
+	    }
+
+	    // This is being called with a plain function we should invoke it
+	    // immediately as if this was used with legacy JSX.
+	    return type.apply(null, Array.prototype.slice.call(arguments, 1));
+	  };
+	  return legacyCreateElement;
+	};
+
+	ReactLegacyElementFactory.wrapFactory = function(factory) {
+	  ("production" !== process.env.NODE_ENV ? invariant(
+	    typeof factory === 'function',
+	    'This is suppose to accept a element factory'
+	  ) : invariant(typeof factory === 'function'));
+	  var legacyElementFactory = function(config, children) {
+	    // This factory should not be called when JSX is used. Use JSX instead.
+	    if ("production" !== process.env.NODE_ENV) {
+	      warnForLegacyFactoryCall();
+	    }
+	    return factory.apply(this, arguments);
+	  };
+	  proxyStaticMethods(legacyElementFactory, factory.type);
+	  legacyElementFactory.isReactLegacyFactory = LEGACY_MARKER;
+	  legacyElementFactory.type = factory.type;
+	  return legacyElementFactory;
+	};
+
+	// This is used to mark a factory that will remain. E.g. we're allowed to call
+	// it as a function. However, you're not suppose to pass it to createElement
+	// or createFactory, so it will warn you if you do.
+	ReactLegacyElementFactory.markNonLegacyFactory = function(factory) {
+	  factory.isReactNonLegacyFactory = NON_LEGACY_MARKER;
+	  return factory;
+	};
+
+	// Checks if a factory function is actually a legacy factory pretending to
+	// be a class.
+	ReactLegacyElementFactory.isValidFactory = function(factory) {
+	  // TODO: This will be removed and moved into a class validator or something.
+	  return typeof factory === 'function' &&
+	    factory.isReactLegacyFactory === LEGACY_MARKER;
+	};
+
+	ReactLegacyElementFactory.isValidClass = function(factory) {
+	  if ("production" !== process.env.NODE_ENV) {
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      false,
+	      'isValidClass is deprecated and will be removed in a future release. ' +
+	      'Use a more specific validator instead.'
+	    ) : null);
+	  }
+	  return ReactLegacyElementFactory.isValidFactory(factory);
+	};
+
+	ReactLegacyElementFactory._isLegacyCallWarningEnabled = true;
+
+	module.exports = ReactLegacyElementFactory;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactMount
 	 */
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
-	var ReactBrowserEventEmitter = __webpack_require__(67);
-	var ReactCurrentOwner = __webpack_require__(25);
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactPerf = __webpack_require__(33);
+	var DOMProperty = __webpack_require__(47);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
+	var ReactCurrentOwner = __webpack_require__(27);
+	var ReactElement = __webpack_require__(28);
+	var ReactLegacyElement = __webpack_require__(34);
+	var ReactInstanceHandles = __webpack_require__(33);
+	var ReactPerf = __webpack_require__(37);
 
-	var containsNode = __webpack_require__(95);
-	var getReactRootElementInContainer = __webpack_require__(96);
-	var instantiateReactComponent = __webpack_require__(59);
-	var invariant = __webpack_require__(46);
-	var shouldUpdateReactComponent = __webpack_require__(63);
-	var warning = __webpack_require__(38);
+	var containsNode = __webpack_require__(98);
+	var deprecated = __webpack_require__(42);
+	var getReactRootElementInContainer = __webpack_require__(99);
+	var instantiateReactComponent = __webpack_require__(63);
+	var invariant = __webpack_require__(52);
+	var shouldUpdateReactComponent = __webpack_require__(67);
+	var warning = __webpack_require__(50);
+
+	var createElement = ReactLegacyElement.wrapCreateElement(
+	  ReactElement.createElement
+	);
 
 	var SEPARATOR = ReactInstanceHandles.SEPARATOR;
 
@@ -17507,7 +11059,7 @@
 	 * representative DOM elements and inserting them into a supplied `container`.
 	 * Any prior content inside `container` is destroyed in the process.
 	 *
-	 *   ReactMount.renderComponent(
+	 *   ReactMount.render(
 	 *     component,
 	 *     document.getElementById('container')
 	 *   );
@@ -17613,7 +11165,7 @@
 	        'componentDidUpdate.'
 	      ) : null);
 
-	      var componentInstance = instantiateReactComponent(nextComponent);
+	      var componentInstance = instantiateReactComponent(nextComponent, null);
 	      var reactRootID = ReactMount._registerComponent(
 	        componentInstance,
 	        container
@@ -17641,35 +11193,38 @@
 	   * perform an update on it and only mutate the DOM as necessary to reflect the
 	   * latest React component.
 	   *
-	   * @param {ReactDescriptor} nextDescriptor Component descriptor to render.
+	   * @param {ReactElement} nextElement Component element to render.
 	   * @param {DOMElement} container DOM element to render into.
 	   * @param {?function} callback function triggered on completion
 	   * @return {ReactComponent} Component instance rendered in `container`.
 	   */
-	  renderComponent: function(nextDescriptor, container, callback) {
+	  render: function(nextElement, container, callback) {
 	    ("production" !== process.env.NODE_ENV ? invariant(
-	      ReactDescriptor.isValidDescriptor(nextDescriptor),
-	      'renderComponent(): Invalid component descriptor.%s',
+	      ReactElement.isValidElement(nextElement),
+	      'renderComponent(): Invalid component element.%s',
 	      (
-	        ReactDescriptor.isValidFactory(nextDescriptor) ?
+	        typeof nextElement === 'string' ?
+	          ' Instead of passing an element string, make sure to instantiate ' +
+	          'it by passing it to React.createElement.' :
+	        ReactLegacyElement.isValidFactory(nextElement) ?
 	          ' Instead of passing a component class, make sure to instantiate ' +
-	          'it first by calling it with props.' :
-	        // Check if it quacks like a descriptor
-	        typeof nextDescriptor.props !== "undefined" ?
+	          'it by passing it to React.createElement.' :
+	        // Check if it quacks like a element
+	        typeof nextElement.props !== "undefined" ?
 	          ' This may be caused by unintentionally loading two independent ' +
 	          'copies of React.' :
 	          ''
 	      )
-	    ) : invariant(ReactDescriptor.isValidDescriptor(nextDescriptor)));
+	    ) : invariant(ReactElement.isValidElement(nextElement)));
 
 	    var prevComponent = instancesByReactRootID[getReactRootID(container)];
 
 	    if (prevComponent) {
-	      var prevDescriptor = prevComponent._descriptor;
-	      if (shouldUpdateReactComponent(prevDescriptor, nextDescriptor)) {
+	      var prevElement = prevComponent._currentElement;
+	      if (shouldUpdateReactComponent(prevElement, nextElement)) {
 	        return ReactMount._updateRootComponent(
 	          prevComponent,
-	          nextDescriptor,
+	          nextElement,
 	          container,
 	          callback
 	        );
@@ -17685,7 +11240,7 @@
 	    var shouldReuseMarkup = containerHasReactMarkup && !prevComponent;
 
 	    var component = ReactMount._renderNewRootComponent(
-	      nextDescriptor,
+	      nextElement,
 	      container,
 	      shouldReuseMarkup
 	    );
@@ -17703,7 +11258,8 @@
 	   * @return {ReactComponent} Component instance rendered in `container`.
 	   */
 	  constructAndRenderComponent: function(constructor, props, container) {
-	    return ReactMount.renderComponent(constructor(props), container);
+	    var element = createElement(constructor, props);
+	    return ReactMount.render(element, container);
 	  },
 
 	  /**
@@ -17962,9 +11518,10 @@
 	      false,
 	      'findComponentRoot(..., %s): Unable to find element. This probably ' +
 	      'means the DOM was unexpectedly mutated (e.g., by the browser), ' +
-	      'usually due to forgetting a <tbody> when using tables, nesting <p> ' +
-	      'or <a> tags, or using non-SVG elements in an <svg> parent. Try ' +
-	      'inspecting the child nodes of the element with React ID `%s`.',
+	      'usually due to forgetting a <tbody> when using tables, nesting tags ' +
+	      'like <form>, <p>, or <a>, or using non-SVG elements in an <svg> ' +
+	      'parent. ' +
+	      'Try inspecting the child nodes of the element with React ID `%s`.',
 	      targetID,
 	      ReactMount.getID(ancestorNode)
 	    ) : invariant(false));
@@ -17986,28 +11543,30 @@
 	  purgeID: purgeID
 	};
 
+	// Deprecations (remove for 0.13)
+	ReactMount.renderComponent = deprecated(
+	  'ReactMount',
+	  'renderComponent',
+	  'render',
+	  this,
+	  ReactMount.render
+	);
+
 	module.exports = ReactMount;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 32 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactMultiChild
 	 * @typechecks static-only
@@ -18015,12 +11574,12 @@
 
 	"use strict";
 
-	var ReactComponent = __webpack_require__(22);
-	var ReactMultiChildUpdateTypes = __webpack_require__(97);
+	var ReactComponent = __webpack_require__(24);
+	var ReactMultiChildUpdateTypes = __webpack_require__(100);
 
-	var flattenChildren = __webpack_require__(98);
-	var instantiateReactComponent = __webpack_require__(59);
-	var shouldUpdateReactComponent = __webpack_require__(63);
+	var flattenChildren = __webpack_require__(101);
+	var instantiateReactComponent = __webpack_require__(63);
+	var shouldUpdateReactComponent = __webpack_require__(67);
 
 	/**
 	 * Updating children of a component may trigger recursive updates. The depth is
@@ -18191,7 +11750,7 @@
 	        if (children.hasOwnProperty(name)) {
 	          // The rendered children must be turned into instances as they're
 	          // mounted.
-	          var childInstance = instantiateReactComponent(child);
+	          var childInstance = instantiateReactComponent(child, null);
 	          children[name] = childInstance;
 	          // Inlined for performance, see `ReactInstanceHandles.createReactID`.
 	          var rootID = this._rootNodeID + name;
@@ -18282,12 +11841,12 @@
 	          continue;
 	        }
 	        var prevChild = prevChildren && prevChildren[name];
-	        var prevDescriptor = prevChild && prevChild._descriptor;
-	        var nextDescriptor = nextChildren[name];
-	        if (shouldUpdateReactComponent(prevDescriptor, nextDescriptor)) {
+	        var prevElement = prevChild && prevChild._currentElement;
+	        var nextElement = nextChildren[name];
+	        if (shouldUpdateReactComponent(prevElement, nextElement)) {
 	          this.moveChild(prevChild, nextIndex, lastIndex);
 	          lastIndex = Math.max(prevChild._mountIndex, lastIndex);
-	          prevChild.receiveComponent(nextDescriptor, transaction);
+	          prevChild.receiveComponent(nextElement, transaction);
 	          prevChild._mountIndex = nextIndex;
 	        } else {
 	          if (prevChild) {
@@ -18296,7 +11855,10 @@
 	            this._unmountChildByName(prevChild, name);
 	          }
 	          // The child must be instantiated before it's mounted.
-	          var nextChildInstance = instantiateReactComponent(nextDescriptor);
+	          var nextChildInstance = instantiateReactComponent(
+	            nextElement,
+	            null
+	          );
 	          this._mountChildByNameAtIndex(
 	            nextChildInstance, name, nextIndex, transaction
 	          );
@@ -18427,23 +11989,16 @@
 
 
 /***/ },
-/* 33 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPerf
 	 * @typechecks static-only
@@ -18479,7 +12034,7 @@
 	  measure: function(objName, fnName, func) {
 	    if ("production" !== process.env.NODE_ENV) {
 	      var measuredFunc = null;
-	      return function() {
+	      var wrapper = function() {
 	        if (ReactPerf.enableMeasure) {
 	          if (!measuredFunc) {
 	            measuredFunc = ReactPerf.storedMeasure(objName, fnName, func);
@@ -18488,6 +12043,8 @@
 	        }
 	        return func.apply(this, arguments);
 	      };
+	      wrapper.displayName = objName + '_' + fnName;
+	      return wrapper;
 	    }
 	    return func;
 	  },
@@ -18516,36 +12073,30 @@
 
 	module.exports = ReactPerf;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 34 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPropTypes
 	 */
 
 	"use strict";
 
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactPropTypeLocationNames = __webpack_require__(58);
+	var ReactElement = __webpack_require__(28);
+	var ReactPropTypeLocationNames = __webpack_require__(62);
 
-	var emptyFunction = __webpack_require__(99);
+	var deprecated = __webpack_require__(42);
+	var emptyFunction = __webpack_require__(104);
 
 	/**
 	 * Collection of methods that allow declaration and validation of props that are
@@ -18596,6 +12147,9 @@
 
 	var ANONYMOUS = '<<anonymous>>';
 
+	var elementTypeChecker = createElementTypeChecker();
+	var nodeTypeChecker = createNodeChecker();
+
 	var ReactPropTypes = {
 	  array: createPrimitiveTypeChecker('array'),
 	  bool: createPrimitiveTypeChecker('boolean'),
@@ -18606,13 +12160,28 @@
 
 	  any: createAnyTypeChecker(),
 	  arrayOf: createArrayOfTypeChecker,
-	  component: createComponentTypeChecker(),
+	  element: elementTypeChecker,
 	  instanceOf: createInstanceTypeChecker,
+	  node: nodeTypeChecker,
 	  objectOf: createObjectOfTypeChecker,
 	  oneOf: createEnumTypeChecker,
 	  oneOfType: createUnionTypeChecker,
-	  renderable: createRenderableTypeChecker(),
-	  shape: createShapeTypeChecker
+	  shape: createShapeTypeChecker,
+
+	  component: deprecated(
+	    'React.PropTypes',
+	    'component',
+	    'element',
+	    this,
+	    elementTypeChecker
+	  ),
+	  renderable: deprecated(
+	    'React.PropTypes',
+	    'renderable',
+	    'node',
+	    this,
+	    nodeTypeChecker
+	  )
 	};
 
 	function createChainableTypeChecker(validate) {
@@ -18682,13 +12251,13 @@
 	  return createChainableTypeChecker(validate);
 	}
 
-	function createComponentTypeChecker() {
+	function createElementTypeChecker() {
 	  function validate(props, propName, componentName, location) {
-	    if (!ReactDescriptor.isValidDescriptor(props[propName])) {
+	    if (!ReactElement.isValidElement(props[propName])) {
 	      var locationName = ReactPropTypeLocationNames[location];
 	      return new Error(
 	        ("Invalid " + locationName + " `" + propName + "` supplied to ") +
-	        ("`" + componentName + "`, expected a React component.")
+	        ("`" + componentName + "`, expected a ReactElement.")
 	      );
 	    }
 	  }
@@ -18769,13 +12338,13 @@
 	  return createChainableTypeChecker(validate);
 	}
 
-	function createRenderableTypeChecker() {
+	function createNodeChecker() {
 	  function validate(props, propName, componentName, location) {
-	    if (!isRenderable(props[propName])) {
+	    if (!isNode(props[propName])) {
 	      var locationName = ReactPropTypeLocationNames[location];
 	      return new Error(
 	        ("Invalid " + locationName + " `" + propName + "` supplied to ") +
-	        ("`" + componentName + "`, expected a renderable prop.")
+	        ("`" + componentName + "`, expected a ReactNode.")
 	      );
 	    }
 	  }
@@ -18807,11 +12376,8 @@
 	  return createChainableTypeChecker(validate, 'expected `object`');
 	}
 
-	function isRenderable(propValue) {
+	function isNode(propValue) {
 	  switch(typeof propValue) {
-	    // TODO: this was probably written with the assumption that we're not
-	    // returning `this.props.component` directly from `render`. This is
-	    // currently not supported but we should, to make it consistent.
 	    case 'number':
 	    case 'string':
 	      return true;
@@ -18819,13 +12385,13 @@
 	      return !propValue;
 	    case 'object':
 	      if (Array.isArray(propValue)) {
-	        return propValue.every(isRenderable);
+	        return propValue.every(isNode);
 	      }
-	      if (ReactDescriptor.isValidDescriptor(propValue)) {
+	      if (ReactElement.isValidElement(propValue)) {
 	        return true;
 	      }
 	      for (var k in propValue) {
-	        if (!isRenderable(propValue[k])) {
+	        if (!isNode(propValue[k])) {
 	          return false;
 	        }
 	      }
@@ -18868,53 +12434,40 @@
 
 
 /***/ },
-/* 35 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @typechecks static-only
 	 * @providesModule ReactServerRendering
 	 */
 	"use strict";
 
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactMarkupChecksum = __webpack_require__(100);
+	var ReactElement = __webpack_require__(28);
+	var ReactInstanceHandles = __webpack_require__(33);
+	var ReactMarkupChecksum = __webpack_require__(102);
 	var ReactServerRenderingTransaction =
-	  __webpack_require__(101);
+	  __webpack_require__(103);
 
-	var instantiateReactComponent = __webpack_require__(59);
-	var invariant = __webpack_require__(46);
+	var instantiateReactComponent = __webpack_require__(63);
+	var invariant = __webpack_require__(52);
 
 	/**
-	 * @param {ReactComponent} component
+	 * @param {ReactElement} element
 	 * @return {string} the HTML markup
 	 */
-	function renderComponentToString(component) {
+	function renderToString(element) {
 	  ("production" !== process.env.NODE_ENV ? invariant(
-	    ReactDescriptor.isValidDescriptor(component),
-	    'renderComponentToString(): You must pass a valid ReactComponent.'
-	  ) : invariant(ReactDescriptor.isValidDescriptor(component)));
-
-	  ("production" !== process.env.NODE_ENV ? invariant(
-	    !(arguments.length === 2 && typeof arguments[1] === 'function'),
-	    'renderComponentToString(): This function became synchronous and now ' +
-	    'returns the generated markup. Please remove the second parameter.'
-	  ) : invariant(!(arguments.length === 2 && typeof arguments[1] === 'function')));
+	    ReactElement.isValidElement(element),
+	    'renderToString(): You must pass a valid ReactElement.'
+	  ) : invariant(ReactElement.isValidElement(element)));
 
 	  var transaction;
 	  try {
@@ -18922,7 +12475,7 @@
 	    transaction = ReactServerRenderingTransaction.getPooled(false);
 
 	    return transaction.perform(function() {
-	      var componentInstance = instantiateReactComponent(component);
+	      var componentInstance = instantiateReactComponent(element, null);
 	      var markup = componentInstance.mountComponent(id, transaction, 0);
 	      return ReactMarkupChecksum.addChecksumToMarkup(markup);
 	    }, null);
@@ -18932,15 +12485,15 @@
 	}
 
 	/**
-	 * @param {ReactComponent} component
+	 * @param {ReactElement} element
 	 * @return {string} the HTML markup, without the extra React ID and checksum
-	* (for generating static pages)
+	 * (for generating static pages)
 	 */
-	function renderComponentToStaticMarkup(component) {
+	function renderToStaticMarkup(element) {
 	  ("production" !== process.env.NODE_ENV ? invariant(
-	    ReactDescriptor.isValidDescriptor(component),
-	    'renderComponentToStaticMarkup(): You must pass a valid ReactComponent.'
-	  ) : invariant(ReactDescriptor.isValidDescriptor(component)));
+	    ReactElement.isValidElement(element),
+	    'renderToStaticMarkup(): You must pass a valid ReactElement.'
+	  ) : invariant(ReactElement.isValidElement(element)));
 
 	  var transaction;
 	  try {
@@ -18948,7 +12501,7 @@
 	    transaction = ReactServerRenderingTransaction.getPooled(true);
 
 	    return transaction.perform(function() {
-	      var componentInstance = instantiateReactComponent(component);
+	      var componentInstance = instantiateReactComponent(element, null);
 	      return componentInstance.mountComponent(id, transaction, 0);
 	    }, null);
 	  } finally {
@@ -18957,30 +12510,23 @@
 	}
 
 	module.exports = {
-	  renderComponentToString: renderComponentToString,
-	  renderComponentToStaticMarkup: renderComponentToStaticMarkup
+	  renderToString: renderToString,
+	  renderToStaticMarkup: renderToStaticMarkup
 	};
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 36 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactTextComponent
 	 * @typechecks static-only
@@ -18988,13 +12534,12 @@
 
 	"use strict";
 
-	var DOMPropertyOperations = __webpack_require__(19);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactComponent = __webpack_require__(22);
-	var ReactDescriptor = __webpack_require__(26);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var ReactComponent = __webpack_require__(24);
+	var ReactElement = __webpack_require__(28);
 
-	var escapeTextForBrowser = __webpack_require__(43);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var escapeTextForBrowser = __webpack_require__(48);
 
 	/**
 	 * Text nodes violate a couple assumptions that React makes about components:
@@ -19011,13 +12556,11 @@
 	 * @extends ReactComponent
 	 * @internal
 	 */
-	var ReactTextComponent = function(descriptor) {
-	  this.construct(descriptor);
+	var ReactTextComponent = function(props) {
+	  // This constructor and it's argument is currently used by mocks.
 	};
 
-	mixInto(ReactTextComponent, ReactComponent.Mixin);
-	mixInto(ReactTextComponent, ReactBrowserComponentMixin);
-	mixInto(ReactTextComponent, {
+	assign(ReactTextComponent.prototype, ReactComponent.Mixin, {
 
 	  /**
 	   * Creates the markup for this text node. This node is not intended to have
@@ -19073,35 +12616,140 @@
 
 	});
 
-	module.exports = ReactDescriptor.createFactory(ReactTextComponent);
+	var ReactTextComponentFactory = function(text) {
+	  // Bypass validation and configuration
+	  return new ReactElement(ReactTextComponent, null, null, null, null, text);
+	};
+
+	ReactTextComponentFactory.type = ReactTextComponent;
+
+	module.exports = ReactTextComponentFactory;
 
 
 /***/ },
-/* 37 */
+/* 41 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule Object.assign
+	 */
+
+	// https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.assign
+
+	function assign(target, sources) {
+	  if (target == null) {
+	    throw new TypeError('Object.assign target cannot be null or undefined');
+	  }
+
+	  var to = Object(target);
+	  var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+	  for (var nextIndex = 1; nextIndex < arguments.length; nextIndex++) {
+	    var nextSource = arguments[nextIndex];
+	    if (nextSource == null) {
+	      continue;
+	    }
+
+	    var from = Object(nextSource);
+
+	    // We don't currently support accessors nor proxies. Therefore this
+	    // copy cannot throw. If we ever supported this then we must handle
+	    // exceptions and side-effects. We don't support symbols so they won't
+	    // be transferred.
+
+	    for (var key in from) {
+	      if (hasOwnProperty.call(from, key)) {
+	        to[key] = from[key];
+	      }
+	    }
+	  }
+
+	  return to;
+	};
+
+	module.exports = assign;
+
+
+/***/ },
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule deprecated
+	 */
+
+	var assign = __webpack_require__(41);
+	var warning = __webpack_require__(50);
+
+	/**
+	 * This will log a single deprecation notice per function and forward the call
+	 * on to the new API.
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * @param {string} namespace The namespace of the call, eg 'React'
+	 * @param {string} oldName The old function name, eg 'renderComponent'
+	 * @param {string} newName The new function name, eg 'render'
+	 * @param {*} ctx The context this forwarded call should run in
+	 * @param {function} fn The function to forward on to
+	 * @return {*} Will be the value as returned from `fn`
+	 */
+	function deprecated(namespace, oldName, newName, ctx, fn) {
+	  var warned = false;
+	  if ("production" !== process.env.NODE_ENV) {
+	    var newFn = function() {
+	      ("production" !== process.env.NODE_ENV ? warning(
+	        warned,
+	        (namespace + "." + oldName + " will be deprecated in a future version. ") +
+	        ("Use " + namespace + "." + newName + " instead.")
+	      ) : null);
+	      warned = true;
+	      return fn.apply(ctx, arguments);
+	    };
+	    newFn.displayName = (namespace + "_" + oldName);
+	    // We need to make sure all properties of the original fn are copied over.
+	    // In particular, this is needed to support PropTypes
+	    return assign(newFn, fn);
+	  }
+
+	  return fn;
+	}
+
+	module.exports = deprecated;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
+
+/***/ },
+/* 43 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule onlyChild
 	 */
 	"use strict";
 
-	var ReactDescriptor = __webpack_require__(26);
+	var ReactElement = __webpack_require__(28);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Returns the first child in a collection of children and verifies that there
@@ -19116,89 +12764,27 @@
 	 */
 	function onlyChild(children) {
 	  ("production" !== process.env.NODE_ENV ? invariant(
-	    ReactDescriptor.isValidDescriptor(children),
+	    ReactElement.isValidElement(children),
 	    'onlyChild must be passed a children with exactly one child.'
-	  ) : invariant(ReactDescriptor.isValidDescriptor(children)));
+	  ) : invariant(ReactElement.isValidElement(children)));
 	  return children;
 	}
 
 	module.exports = onlyChild;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 38 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule warning
-	 */
-
-	"use strict";
-
-	var emptyFunction = __webpack_require__(99);
-
-	/**
-	 * Similar to invariant but only logs a warning if the condition is not met.
-	 * This can be used to log issues in development environments in critical
-	 * paths. Removing the logging code for production environments will keep the
-	 * same logic and follow the same code paths.
-	 */
-
-	var warning = emptyFunction;
-
-	if ("production" !== process.env.NODE_ENV) {
-	  warning = function(condition, format ) {var args=Array.prototype.slice.call(arguments,2);
-	    if (format === undefined) {
-	      throw new Error(
-	        '`warning(condition, format, ...args)` requires a warning ' +
-	        'message argument'
-	      );
-	    }
-
-	    if (!condition) {
-	      var argIndex = 0;
-	      console.warn('Warning: ' + format.replace(/%s/g, function()  {return args[argIndex++];}));
-	    }
-	  };
-	}
-
-	module.exports = warning;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
-
-/***/ },
-/* 39 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ExecutionEnvironment
 	 */
@@ -19238,7 +12824,7 @@
 
 
 /***/ },
-/* 40 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -19297,7 +12883,7 @@
 
 
 /***/ },
-/* 41 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// shim for using process in browser
@@ -19366,23 +12952,16 @@
 
 
 /***/ },
-/* 42 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule DOMProperty
 	 * @typechecks static-only
@@ -19392,7 +12971,11 @@
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
+
+	function checkMask(value, bitmask) {
+	  return (value & bitmask) === bitmask;
+	}
 
 	var DOMPropertyInjection = {
 	  /**
@@ -19480,19 +13063,19 @@
 
 	      var propConfig = Properties[propName];
 	      DOMProperty.mustUseAttribute[propName] =
-	        propConfig & DOMPropertyInjection.MUST_USE_ATTRIBUTE;
+	        checkMask(propConfig, DOMPropertyInjection.MUST_USE_ATTRIBUTE);
 	      DOMProperty.mustUseProperty[propName] =
-	        propConfig & DOMPropertyInjection.MUST_USE_PROPERTY;
+	        checkMask(propConfig, DOMPropertyInjection.MUST_USE_PROPERTY);
 	      DOMProperty.hasSideEffects[propName] =
-	        propConfig & DOMPropertyInjection.HAS_SIDE_EFFECTS;
+	        checkMask(propConfig, DOMPropertyInjection.HAS_SIDE_EFFECTS);
 	      DOMProperty.hasBooleanValue[propName] =
-	        propConfig & DOMPropertyInjection.HAS_BOOLEAN_VALUE;
+	        checkMask(propConfig, DOMPropertyInjection.HAS_BOOLEAN_VALUE);
 	      DOMProperty.hasNumericValue[propName] =
-	        propConfig & DOMPropertyInjection.HAS_NUMERIC_VALUE;
+	        checkMask(propConfig, DOMPropertyInjection.HAS_NUMERIC_VALUE);
 	      DOMProperty.hasPositiveNumericValue[propName] =
-	        propConfig & DOMPropertyInjection.HAS_POSITIVE_NUMERIC_VALUE;
+	        checkMask(propConfig, DOMPropertyInjection.HAS_POSITIVE_NUMERIC_VALUE);
 	      DOMProperty.hasOverloadedBooleanValue[propName] =
-	        propConfig & DOMPropertyInjection.HAS_OVERLOADED_BOOLEAN_VALUE;
+	        checkMask(propConfig, DOMPropertyInjection.HAS_OVERLOADED_BOOLEAN_VALUE);
 
 	      ("production" !== process.env.NODE_ENV ? invariant(
 	        !DOMProperty.mustUseAttribute[propName] ||
@@ -19668,26 +13251,19 @@
 
 	module.exports = DOMProperty;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 43 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule escapeTextForBrowser
 	 * @typechecks static-only
@@ -19723,23 +13299,16 @@
 
 
 /***/ },
-/* 44 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule memoizeStringOnly
 	 * @typechecks static-only
@@ -19768,30 +13337,71 @@
 
 
 /***/ },
-/* 45 */
+/* 50 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule warning
+	 */
+
+	"use strict";
+
+	var emptyFunction = __webpack_require__(104);
+
+	/**
+	 * Similar to invariant but only logs a warning if the condition is not met.
+	 * This can be used to log issues in development environments in critical
+	 * paths. Removing the logging code for production environments will keep the
+	 * same logic and follow the same code paths.
+	 */
+
+	var warning = emptyFunction;
+
+	if ("production" !== process.env.NODE_ENV) {
+	  warning = function(condition, format ) {for (var args=[],$__0=2,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
+	    if (format === undefined) {
+	      throw new Error(
+	        '`warning(condition, format, ...args)` requires a warning ' +
+	        'message argument'
+	      );
+	    }
+
+	    if (!condition) {
+	      var argIndex = 0;
+	      console.warn('Warning: ' + format.replace(/%s/g, function()  {return args[argIndex++];}));
+	    }
+	  };
+	}
+
+	module.exports = warning;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
+
+/***/ },
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EventConstants
 	 */
 
 	"use strict";
 
-	var keyMirror = __webpack_require__(51);
+	var keyMirror = __webpack_require__(57);
 
 	var PropagationPhases = keyMirror({bubbled: null, captured: null});
 
@@ -19851,23 +13461,16 @@
 
 
 /***/ },
-/* 46 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule invariant
 	 */
@@ -19915,33 +13518,26 @@
 
 	module.exports = invariant;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 47 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule PooledClass
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Static poolers. Several custom versions for each potential number of
@@ -20041,36 +13637,29 @@
 
 	module.exports = PooledClass;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 48 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule traverseAllChildren
 	 */
 
 	"use strict";
 
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactTextComponent = __webpack_require__(36);
+	var ReactElement = __webpack_require__(28);
+	var ReactInstanceHandles = __webpack_require__(33);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	var SEPARATOR = ReactInstanceHandles.SEPARATOR;
 	var SUBSEPARATOR = ':';
@@ -20103,9 +13692,9 @@
 	 * @return {string}
 	 */
 	function getComponentKey(component, index) {
-	  if (component && component.props && component.props.key != null) {
+	  if (component && component.key != null) {
 	    // Explicit key
-	    return wrapUserProvidedKey(component.props.key);
+	    return wrapUserProvidedKey(component.key);
 	  }
 	  // Implicit key determined by the index in the set
 	  return index.toString(36);
@@ -20146,16 +13735,17 @@
 	 */
 	var traverseAllChildrenImpl =
 	  function(children, nameSoFar, indexSoFar, callback, traverseContext) {
+	    var nextName, nextIndex;
 	    var subtreeCount = 0;  // Count of children found in the current subtree.
 	    if (Array.isArray(children)) {
 	      for (var i = 0; i < children.length; i++) {
 	        var child = children[i];
-	        var nextName = (
+	        nextName = (
 	          nameSoFar +
 	          (nameSoFar ? SUBSEPARATOR : SEPARATOR) +
 	          getComponentKey(child, i)
 	        );
-	        var nextIndex = indexSoFar + subtreeCount;
+	        nextIndex = indexSoFar + subtreeCount;
 	        subtreeCount += traverseAllChildrenImpl(
 	          child,
 	          nextName,
@@ -20175,40 +13765,32 @@
 	        // All of the above are perceived as null.
 	        callback(traverseContext, null, storageName, indexSoFar);
 	        subtreeCount = 1;
-	      } else if (children.type && children.type.prototype &&
-	                 children.type.prototype.mountComponentIntoNode) {
+	      } else if (type === 'string' || type === 'number' ||
+	                 ReactElement.isValidElement(children)) {
 	        callback(traverseContext, children, storageName, indexSoFar);
 	        subtreeCount = 1;
-	      } else {
-	        if (type === 'object') {
-	          ("production" !== process.env.NODE_ENV ? invariant(
-	            !children || children.nodeType !== 1,
-	            'traverseAllChildren(...): Encountered an invalid child; DOM ' +
-	            'elements are not valid children of React components.'
-	          ) : invariant(!children || children.nodeType !== 1));
-	          for (var key in children) {
-	            if (children.hasOwnProperty(key)) {
-	              subtreeCount += traverseAllChildrenImpl(
-	                children[key],
-	                (
-	                  nameSoFar + (nameSoFar ? SUBSEPARATOR : SEPARATOR) +
-	                  wrapUserProvidedKey(key) + SUBSEPARATOR +
-	                  getComponentKey(children[key], 0)
-	                ),
-	                indexSoFar + subtreeCount,
-	                callback,
-	                traverseContext
-	              );
-	            }
+	      } else if (type === 'object') {
+	        ("production" !== process.env.NODE_ENV ? invariant(
+	          !children || children.nodeType !== 1,
+	          'traverseAllChildren(...): Encountered an invalid child; DOM ' +
+	          'elements are not valid children of React components.'
+	        ) : invariant(!children || children.nodeType !== 1));
+	        for (var key in children) {
+	          if (children.hasOwnProperty(key)) {
+	            nextName = (
+	              nameSoFar + (nameSoFar ? SUBSEPARATOR : SEPARATOR) +
+	              wrapUserProvidedKey(key) + SUBSEPARATOR +
+	              getComponentKey(children[key], 0)
+	            );
+	            nextIndex = indexSoFar + subtreeCount;
+	            subtreeCount += traverseAllChildrenImpl(
+	              children[key],
+	              nextName,
+	              nextIndex,
+	              callback,
+	              traverseContext
+	            );
 	          }
-	        } else if (type === 'string') {
-	          var normalizedText = ReactTextComponent(children);
-	          callback(traverseContext, normalizedText, storageName, indexSoFar);
-	          subtreeCount += 1;
-	        } else if (type === 'number') {
-	          var normalizedNumber = ReactTextComponent('' + children);
-	          callback(traverseContext, normalizedNumber, storageName, indexSoFar);
-	          subtreeCount += 1;
 	        }
 	      }
 	    }
@@ -20241,34 +13823,27 @@
 
 	module.exports = traverseAllChildren;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 49 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactOwner
 	 */
 
 	"use strict";
 
-	var emptyObject = __webpack_require__(103);
-	var invariant = __webpack_require__(46);
+	var emptyObject = __webpack_require__(106);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * ReactOwners are capable of storing references to owned components.
@@ -20407,43 +13982,38 @@
 
 	module.exports = ReactOwner;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 50 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactUpdates
 	 */
 
 	"use strict";
 
-	var CallbackQueue = __webpack_require__(104);
-	var PooledClass = __webpack_require__(47);
-	var ReactCurrentOwner = __webpack_require__(25);
-	var ReactPerf = __webpack_require__(33);
-	var Transaction = __webpack_require__(105);
+	var CallbackQueue = __webpack_require__(107);
+	var PooledClass = __webpack_require__(53);
+	var ReactCurrentOwner = __webpack_require__(27);
+	var ReactPerf = __webpack_require__(37);
+	var Transaction = __webpack_require__(108);
 
-	var invariant = __webpack_require__(46);
-	var mixInto = __webpack_require__(60);
-	var warning = __webpack_require__(38);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
+	var warning = __webpack_require__(50);
 
 	var dirtyComponents = [];
+	var asapCallbackQueue = CallbackQueue.getPooled();
+	var asapEnqueued = false;
 
 	var batchingStrategy = null;
 
@@ -20488,13 +14058,14 @@
 	function ReactUpdatesFlushTransaction() {
 	  this.reinitializeTransaction();
 	  this.dirtyComponentsLength = null;
-	  this.callbackQueue = CallbackQueue.getPooled(null);
+	  this.callbackQueue = CallbackQueue.getPooled();
 	  this.reconcileTransaction =
 	    ReactUpdates.ReactReconcileTransaction.getPooled();
 	}
 
-	mixInto(ReactUpdatesFlushTransaction, Transaction.Mixin);
-	mixInto(ReactUpdatesFlushTransaction, {
+	assign(
+	  ReactUpdatesFlushTransaction.prototype,
+	  Transaction.Mixin, {
 	  getTransactionWrappers: function() {
 	    return TRANSACTION_WRAPPERS;
 	  },
@@ -20585,11 +14156,21 @@
 	    // ReactUpdatesFlushTransaction's wrappers will clear the dirtyComponents
 	    // array and perform any updates enqueued by mount-ready handlers (i.e.,
 	    // componentDidUpdate) but we need to check here too in order to catch
-	    // updates enqueued by setState callbacks.
-	    while (dirtyComponents.length) {
-	      var transaction = ReactUpdatesFlushTransaction.getPooled();
-	      transaction.perform(runBatchedUpdates, null, transaction);
-	      ReactUpdatesFlushTransaction.release(transaction);
+	    // updates enqueued by setState callbacks and asap calls.
+	    while (dirtyComponents.length || asapEnqueued) {
+	      if (dirtyComponents.length) {
+	        var transaction = ReactUpdatesFlushTransaction.getPooled();
+	        transaction.perform(runBatchedUpdates, null, transaction);
+	        ReactUpdatesFlushTransaction.release(transaction);
+	      }
+
+	      if (asapEnqueued) {
+	        asapEnqueued = false;
+	        var queue = asapCallbackQueue;
+	        asapCallbackQueue = CallbackQueue.getPooled();
+	        queue.notifyAll();
+	        CallbackQueue.release(queue);
+	      }
 	    }
 	  }
 	);
@@ -20636,6 +14217,20 @@
 	  }
 	}
 
+	/**
+	 * Enqueue a callback to be run at the end of the current batching cycle. Throws
+	 * if no updates are currently being performed.
+	 */
+	function asap(callback, context) {
+	  ("production" !== process.env.NODE_ENV ? invariant(
+	    batchingStrategy.isBatchingUpdates,
+	    'ReactUpdates.asap: Can\'t enqueue an asap callback in a context where' +
+	    'updates are not being batched.'
+	  ) : invariant(batchingStrategy.isBatchingUpdates));
+	  asapCallbackQueue.enqueue(callback, context);
+	  asapEnqueued = true;
+	}
+
 	var ReactUpdatesInjection = {
 	  injectReconcileTransaction: function(ReconcileTransaction) {
 	    ("production" !== process.env.NODE_ENV ? invariant(
@@ -20674,31 +14269,25 @@
 	  batchedUpdates: batchedUpdates,
 	  enqueueUpdate: enqueueUpdate,
 	  flushBatchedUpdates: flushBatchedUpdates,
-	  injection: ReactUpdatesInjection
+	  injection: ReactUpdatesInjection,
+	  asap: asap
 	};
 
 	module.exports = ReactUpdates;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 51 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule keyMirror
 	 * @typechecks static-only
@@ -20706,7 +14295,7 @@
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Constructs an enumeration with keys equal to their value.
@@ -20744,365 +14333,28 @@
 
 	module.exports = keyMirror;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 52 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule merge
-	 */
-
-	"use strict";
-
-	var mergeInto = __webpack_require__(64);
-
-	/**
-	 * Shallow merges two structures into a return value, without mutating either.
-	 *
-	 * @param {?object} one Optional object with properties to merge from.
-	 * @param {?object} two Optional object with properties to merge from.
-	 * @return {object} The shallow extension of one by two.
-	 */
-	var merge = function(one, two) {
-	  var result = {};
-	  mergeInto(result, one);
-	  mergeInto(result, two);
-	  return result;
-	};
-
-	module.exports = merge;
-
-
-/***/ },
-/* 53 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule ReactDescriptorValidator
-	 */
-
-	/**
-	 * ReactDescriptorValidator provides a wrapper around a descriptor factory
-	 * which validates the props passed to the descriptor. This is intended to be
-	 * used only in DEV and could be replaced by a static type checker for languages
-	 * that support it.
-	 */
-
-	"use strict";
-
-	var ReactDescriptor = __webpack_require__(26);
-	var ReactPropTypeLocations = __webpack_require__(57);
-	var ReactCurrentOwner = __webpack_require__(25);
-
-	var monitorCodeUse = __webpack_require__(61);
-
-	/**
-	 * Warn if there's no key explicitly set on dynamic arrays of children or
-	 * object keys are not valid. This allows us to keep track of children between
-	 * updates.
-	 */
-	var ownerHasKeyUseWarning = {
-	  'react_key_warning': {},
-	  'react_numeric_key_warning': {}
-	};
-	var ownerHasMonitoredObjectMap = {};
-
-	var loggedTypeFailures = {};
-
-	var NUMERIC_PROPERTY_REGEX = /^\d+$/;
-
-	/**
-	 * Gets the current owner's displayName for use in warnings.
-	 *
-	 * @internal
-	 * @return {?string} Display name or undefined
-	 */
-	function getCurrentOwnerDisplayName() {
-	  var current = ReactCurrentOwner.current;
-	  return current && current.constructor.displayName || undefined;
-	}
-
-	/**
-	 * Warn if the component doesn't have an explicit key assigned to it.
-	 * This component is in an array. The array could grow and shrink or be
-	 * reordered. All children that haven't already been validated are required to
-	 * have a "key" property assigned to it.
-	 *
-	 * @internal
-	 * @param {ReactComponent} component Component that requires a key.
-	 * @param {*} parentType component's parent's type.
-	 */
-	function validateExplicitKey(component, parentType) {
-	  if (component._store.validated || component.props.key != null) {
-	    return;
-	  }
-	  component._store.validated = true;
-
-	  warnAndMonitorForKeyUse(
-	    'react_key_warning',
-	    'Each child in an array should have a unique "key" prop.',
-	    component,
-	    parentType
-	  );
-	}
-
-	/**
-	 * Warn if the key is being defined as an object property but has an incorrect
-	 * value.
-	 *
-	 * @internal
-	 * @param {string} name Property name of the key.
-	 * @param {ReactComponent} component Component that requires a key.
-	 * @param {*} parentType component's parent's type.
-	 */
-	function validatePropertyKey(name, component, parentType) {
-	  if (!NUMERIC_PROPERTY_REGEX.test(name)) {
-	    return;
-	  }
-	  warnAndMonitorForKeyUse(
-	    'react_numeric_key_warning',
-	    'Child objects should have non-numeric keys so ordering is preserved.',
-	    component,
-	    parentType
-	  );
-	}
-
-	/**
-	 * Shared warning and monitoring code for the key warnings.
-	 *
-	 * @internal
-	 * @param {string} warningID The id used when logging.
-	 * @param {string} message The base warning that gets output.
-	 * @param {ReactComponent} component Component that requires a key.
-	 * @param {*} parentType component's parent's type.
-	 */
-	function warnAndMonitorForKeyUse(warningID, message, component, parentType) {
-	  var ownerName = getCurrentOwnerDisplayName();
-	  var parentName = parentType.displayName;
-
-	  var useName = ownerName || parentName;
-	  var memoizer = ownerHasKeyUseWarning[warningID];
-	  if (memoizer.hasOwnProperty(useName)) {
-	    return;
-	  }
-	  memoizer[useName] = true;
-
-	  message += ownerName ?
-	    (" Check the render method of " + ownerName + ".") :
-	    (" Check the renderComponent call using <" + parentName + ">.");
-
-	  // Usually the current owner is the offender, but if it accepts children as a
-	  // property, it may be the creator of the child that's responsible for
-	  // assigning it a key.
-	  var childOwnerName = null;
-	  if (component._owner && component._owner !== ReactCurrentOwner.current) {
-	    // Name of the component that originally created this child.
-	    childOwnerName = component._owner.constructor.displayName;
-
-	    message += (" It was passed a child from " + childOwnerName + ".");
-	  }
-
-	  message += ' See http://fb.me/react-warning-keys for more information.';
-	  monitorCodeUse(warningID, {
-	    component: useName,
-	    componentOwner: childOwnerName
-	  });
-	  console.warn(message);
-	}
-
-	/**
-	 * Log that we're using an object map. We're considering deprecating this
-	 * feature and replace it with proper Map and ImmutableMap data structures.
-	 *
-	 * @internal
-	 */
-	function monitorUseOfObjectMap() {
-	  var currentName = getCurrentOwnerDisplayName() || '';
-	  if (ownerHasMonitoredObjectMap.hasOwnProperty(currentName)) {
-	    return;
-	  }
-	  ownerHasMonitoredObjectMap[currentName] = true;
-	  monitorCodeUse('react_object_map_children');
-	}
-
-	/**
-	 * Ensure that every component either is passed in a static location, in an
-	 * array with an explicit keys property defined, or in an object literal
-	 * with valid key property.
-	 *
-	 * @internal
-	 * @param {*} component Statically passed child of any type.
-	 * @param {*} parentType component's parent's type.
-	 * @return {boolean}
-	 */
-	function validateChildKeys(component, parentType) {
-	  if (Array.isArray(component)) {
-	    for (var i = 0; i < component.length; i++) {
-	      var child = component[i];
-	      if (ReactDescriptor.isValidDescriptor(child)) {
-	        validateExplicitKey(child, parentType);
-	      }
-	    }
-	  } else if (ReactDescriptor.isValidDescriptor(component)) {
-	    // This component was passed in a valid location.
-	    component._store.validated = true;
-	  } else if (component && typeof component === 'object') {
-	    monitorUseOfObjectMap();
-	    for (var name in component) {
-	      validatePropertyKey(name, component[name], parentType);
-	    }
-	  }
-	}
-
-	/**
-	 * Assert that the props are valid
-	 *
-	 * @param {string} componentName Name of the component for error messages.
-	 * @param {object} propTypes Map of prop name to a ReactPropType
-	 * @param {object} props
-	 * @param {string} location e.g. "prop", "context", "child context"
-	 * @private
-	 */
-	function checkPropTypes(componentName, propTypes, props, location) {
-	  for (var propName in propTypes) {
-	    if (propTypes.hasOwnProperty(propName)) {
-	      var error;
-	      // Prop type validation may throw. In case they do, we don't want to
-	      // fail the render phase where it didn't fail before. So we log it.
-	      // After these have been cleaned up, we'll let them throw.
-	      try {
-	        error = propTypes[propName](props, propName, componentName, location);
-	      } catch (ex) {
-	        error = ex;
-	      }
-	      if (error instanceof Error && !(error.message in loggedTypeFailures)) {
-	        // Only monitor this failure once because there tends to be a lot of the
-	        // same error.
-	        loggedTypeFailures[error.message] = true;
-	        // This will soon use the warning module
-	        monitorCodeUse(
-	          'react_failed_descriptor_type_check',
-	          { message: error.message }
-	        );
-	      }
-	    }
-	  }
-	}
-
-	var ReactDescriptorValidator = {
-
-	  /**
-	   * Wraps a descriptor factory function in another function which validates
-	   * the props and context of the descriptor and warns about any failed type
-	   * checks.
-	   *
-	   * @param {function} factory The original descriptor factory
-	   * @param {object?} propTypes A prop type definition set
-	   * @param {object?} contextTypes A context type definition set
-	   * @return {object} The component descriptor, which may be invalid.
-	   * @private
-	   */
-	  createFactory: function(factory, propTypes, contextTypes) {
-	    var validatedFactory = function(props, children) {
-	      var descriptor = factory.apply(this, arguments);
-
-	      for (var i = 1; i < arguments.length; i++) {
-	        validateChildKeys(arguments[i], descriptor.type);
-	      }
-
-	      var name = descriptor.type.displayName;
-	      if (propTypes) {
-	        checkPropTypes(
-	          name,
-	          propTypes,
-	          descriptor.props,
-	          ReactPropTypeLocations.prop
-	        );
-	      }
-	      if (contextTypes) {
-	        checkPropTypes(
-	          name,
-	          contextTypes,
-	          descriptor._context,
-	          ReactPropTypeLocations.context
-	        );
-	      }
-	      return descriptor;
-	    };
-
-	    validatedFactory.prototype = factory.prototype;
-	    validatedFactory.type = factory.type;
-
-	    // Copy static properties
-	    for (var key in factory) {
-	      if (factory.hasOwnProperty(key)) {
-	        validatedFactory[key] = factory[key];
-	      }
-	    }
-
-	    return validatedFactory;
-	  }
-
-	};
-
-	module.exports = ReactDescriptorValidator;
-
-
-/***/ },
-/* 54 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactEmptyComponent
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var ReactElement = __webpack_require__(28);
+
+	var invariant = __webpack_require__(52);
 
 	var component;
 	// This registry keeps track of the React IDs of the components that rendered to
@@ -21111,7 +14363,7 @@
 
 	var ReactEmptyComponentInjection = {
 	  injectEmptyComponent: function(emptyComponent) {
-	    component = emptyComponent;
+	    component = ReactElement.createFactory(emptyComponent);
 	  }
 	};
 
@@ -21161,26 +14413,19 @@
 
 	module.exports = ReactEmptyComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 55 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactErrorUtils
 	 * @typechecks
@@ -21207,33 +14452,29 @@
 
 
 /***/ },
-/* 56 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPropTransferer
 	 */
 
 	"use strict";
 
-	var emptyFunction = __webpack_require__(99);
-	var invariant = __webpack_require__(46);
-	var joinClasses = __webpack_require__(106);
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
+	var emptyFunction = __webpack_require__(104);
+	var invariant = __webpack_require__(52);
+	var joinClasses = __webpack_require__(109);
+	var warning = __webpack_require__(50);
+
+	var didWarn = false;
 
 	/**
 	 * Creates a transfer strategy that will merge prop values using the supplied
@@ -21256,7 +14497,7 @@
 	  // `merge` overrides the first object's (`props[key]` above) keys using the
 	  // second object's (`value`) keys. An object's style's existing `propA` would
 	  // get overridden. Flip the order here.
-	  return merge(b, a);
+	  return assign({}, b, a);
 	});
 
 	/**
@@ -21273,14 +14514,6 @@
 	   * Transfer the `className` prop by merging them.
 	   */
 	  className: createTransferStrategy(joinClasses),
-	  /**
-	   * Never transfer the `key` prop.
-	   */
-	  key: emptyFunction,
-	  /**
-	   * Never transfer the `ref` prop.
-	   */
-	  ref: emptyFunction,
 	  /**
 	   * Transfer the `style` prop (which is an object) by merging them.
 	   */
@@ -21330,7 +14563,7 @@
 	   * @return {object} a new object containing both sets of props merged.
 	   */
 	  mergeProps: function(oldProps, newProps) {
-	    return transferInto(merge(oldProps), newProps);
+	    return transferInto(assign({}, oldProps), newProps);
 	  },
 
 	  /**
@@ -21346,26 +14579,39 @@
 	     *
 	     * This is usually used to pass down props to a returned root component.
 	     *
-	     * @param {ReactDescriptor} descriptor Component receiving the properties.
-	     * @return {ReactDescriptor} The supplied `component`.
+	     * @param {ReactElement} element Component receiving the properties.
+	     * @return {ReactElement} The supplied `component`.
 	     * @final
 	     * @protected
 	     */
-	    transferPropsTo: function(descriptor) {
+	    transferPropsTo: function(element) {
 	      ("production" !== process.env.NODE_ENV ? invariant(
-	        descriptor._owner === this,
+	        element._owner === this,
 	        '%s: You can\'t call transferPropsTo() on a component that you ' +
 	        'don\'t own, %s. This usually means you are calling ' +
 	        'transferPropsTo() on a component passed in as props or children.',
 	        this.constructor.displayName,
-	        descriptor.type.displayName
-	      ) : invariant(descriptor._owner === this));
+	        typeof element.type === 'string' ?
+	        element.type :
+	        element.type.displayName
+	      ) : invariant(element._owner === this));
 
-	      // Because descriptors are immutable we have to merge into the existing
+	      if ("production" !== process.env.NODE_ENV) {
+	        if (!didWarn) {
+	          didWarn = true;
+	          ("production" !== process.env.NODE_ENV ? warning(
+	            false,
+	            'transferPropsTo is deprecated. ' +
+	            'See http://fb.me/react-transferpropsto for more information.'
+	          ) : null);
+	        }
+	      }
+
+	      // Because elements are immutable we have to merge into the existing
 	      // props object rather than clone it.
-	      transferInto(descriptor.props, this.props);
+	      transferInto(element.props, this.props);
 
-	      return descriptor;
+	      return element;
 	    }
 
 	  }
@@ -21373,33 +14619,26 @@
 
 	module.exports = ReactPropTransferer;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 57 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPropTypeLocations
 	 */
 
 	"use strict";
 
-	var keyMirror = __webpack_require__(51);
+	var keyMirror = __webpack_require__(57);
 
 	var ReactPropTypeLocations = keyMirror({
 	  prop: null,
@@ -21411,23 +14650,16 @@
 
 
 /***/ },
-/* 58 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPropTypeLocationNames
 	 */
@@ -21446,26 +14678,19 @@
 
 	module.exports = ReactPropTypeLocationNames;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 59 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule instantiateReactComponent
 	 * @typechecks static-only
@@ -21473,115 +14698,163 @@
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var warning = __webpack_require__(50);
+
+	var ReactElement = __webpack_require__(28);
+	var ReactLegacyElement = __webpack_require__(34);
+	var ReactNativeComponent = __webpack_require__(110);
+	var ReactEmptyComponent = __webpack_require__(58);
 
 	/**
-	 * Validate a `componentDescriptor`. This should be exposed publicly in a follow
-	 * up diff.
+	 * Given an `element` create an instance that will actually be mounted.
 	 *
-	 * @param {object} descriptor
-	 * @return {boolean} Returns true if this is a valid descriptor of a Component.
-	 */
-	function isValidComponentDescriptor(descriptor) {
-	  return (
-	    descriptor &&
-	    typeof descriptor.type === 'function' &&
-	    typeof descriptor.type.prototype.mountComponent === 'function' &&
-	    typeof descriptor.type.prototype.receiveComponent === 'function'
-	  );
-	}
-
-	/**
-	 * Given a `componentDescriptor` create an instance that will actually be
-	 * mounted. Currently it just extracts an existing clone from composite
-	 * components but this is an implementation detail which will change.
-	 *
-	 * @param {object} descriptor
-	 * @return {object} A new instance of componentDescriptor's constructor.
+	 * @param {object} element
+	 * @param {*} parentCompositeType The composite type that resolved this.
+	 * @return {object} A new instance of the element's constructor.
 	 * @protected
 	 */
-	function instantiateReactComponent(descriptor) {
+	function instantiateReactComponent(element, parentCompositeType) {
+	  var instance;
 
-	  // TODO: Make warning
-	  // if (__DEV__) {
-	    ("production" !== process.env.NODE_ENV ? invariant(
-	      isValidComponentDescriptor(descriptor),
-	      'Only React Components are valid for mounting.'
-	    ) : invariant(isValidComponentDescriptor(descriptor)));
-	  // }
+	  if ("production" !== process.env.NODE_ENV) {
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      element && (typeof element.type === 'function' ||
+	                     typeof element.type === 'string'),
+	      'Only functions or strings can be mounted as React components.'
+	    ) : null);
 
-	  return new descriptor.type(descriptor);
+	    // Resolve mock instances
+	    if (element.type._mockedReactClassConstructor) {
+	      // If this is a mocked class, we treat the legacy factory as if it was the
+	      // class constructor for future proofing unit tests. Because this might
+	      // be mocked as a legacy factory, we ignore any warnings triggerd by
+	      // this temporary hack.
+	      ReactLegacyElement._isLegacyCallWarningEnabled = false;
+	      try {
+	        instance = new element.type._mockedReactClassConstructor(
+	          element.props
+	        );
+	      } finally {
+	        ReactLegacyElement._isLegacyCallWarningEnabled = true;
+	      }
+
+	      // If the mock implementation was a legacy factory, then it returns a
+	      // element. We need to turn this into a real component instance.
+	      if (ReactElement.isValidElement(instance)) {
+	        instance = new instance.type(instance.props);
+	      }
+
+	      var render = instance.render;
+	      if (!render) {
+	        // For auto-mocked factories, the prototype isn't shimmed and therefore
+	        // there is no render function on the instance. We replace the whole
+	        // component with an empty component instance instead.
+	        element = ReactEmptyComponent.getEmptyComponent();
+	      } else {
+	        if (render._isMockFunction && !render._getMockImplementation()) {
+	          // Auto-mocked components may have a prototype with a mocked render
+	          // function. For those, we'll need to mock the result of the render
+	          // since we consider undefined to be invalid results from render.
+	          render.mockImplementation(
+	            ReactEmptyComponent.getEmptyComponent
+	          );
+	        }
+	        instance.construct(element);
+	        return instance;
+	      }
+	    }
+	  }
+
+	  // Special case string values
+	  if (typeof element.type === 'string') {
+	    instance = ReactNativeComponent.createInstanceForTag(
+	      element.type,
+	      element.props,
+	      parentCompositeType
+	    );
+	  } else {
+	    // Normal case for non-mocks and non-strings
+	    instance = new element.type(element.props);
+	  }
+
+	  if ("production" !== process.env.NODE_ENV) {
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      typeof instance.construct === 'function' &&
+	      typeof instance.mountComponent === 'function' &&
+	      typeof instance.receiveComponent === 'function',
+	      'Only React Components can be mounted.'
+	    ) : null);
+	  }
+
+	  // This actually sets up the internal instance. This will become decoupled
+	  // from the public instance in a future diff.
+	  instance.construct(element);
+
+	  return instance;
 	}
 
 	module.exports = instantiateReactComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 60 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule mixInto
+	 * @providesModule keyOf
 	 */
-
-	"use strict";
 
 	/**
-	 * Simply copies properties to the prototype.
+	 * Allows extraction of a minified key. Let's the build system minify keys
+	 * without loosing the ability to dynamically use key strings as values
+	 * themselves. Pass in an object with a single key/val pair and it will return
+	 * you the string key of that single record. Suppose you want to grab the
+	 * value for a key 'className' inside of an object. Key/val minification may
+	 * have aliased that key to be 'xa12'. keyOf({className: null}) will return
+	 * 'xa12' in that case. Resolve keys you want to use once at startup time, then
+	 * reuse those resolutions.
 	 */
-	var mixInto = function(constructor, methodBag) {
-	  var methodName;
-	  for (methodName in methodBag) {
-	    if (!methodBag.hasOwnProperty(methodName)) {
+	var keyOf = function(oneKeyObj) {
+	  var key;
+	  for (key in oneKeyObj) {
+	    if (!oneKeyObj.hasOwnProperty(key)) {
 	      continue;
 	    }
-	    constructor.prototype[methodName] = methodBag[methodName];
+	    return key;
 	  }
+	  return null;
 	};
 
-	module.exports = mixInto;
+
+	module.exports = keyOf;
 
 
 /***/ },
-/* 61 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule monitorCodeUse
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Provides open-source compatible instrumentation for monitoring certain API
@@ -21599,84 +14872,76 @@
 
 	module.exports = monitorCodeUse;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 62 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule mapObject
 	 */
 
-	"use strict";
+	'use strict';
+
+	var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 	/**
-	 * For each key/value pair, invokes callback func and constructs a resulting
-	 * object which contains, for every key in obj, values that are the result of
-	 * of invoking the function:
+	 * Executes the provided `callback` once for each enumerable own property in the
+	 * object and constructs a new object from the results. The `callback` is
+	 * invoked with three arguments:
 	 *
-	 *   func(value, key, iteration)
+	 *  - the property value
+	 *  - the property name
+	 *  - the object being traversed
 	 *
-	 * Grepable names:
+	 * Properties that are added after the call to `mapObject` will not be visited
+	 * by `callback`. If the values of existing properties are changed, the value
+	 * passed to `callback` will be the value at the time `mapObject` visits them.
+	 * Properties that are deleted before being visited are not visited.
 	 *
-	 *   function objectMap()
-	 *   function objMap()
+	 * @grep function objectMap()
+	 * @grep function objMap()
 	 *
-	 * @param {?object} obj Object to map keys over
-	 * @param {function} func Invoked for each key/val pair.
-	 * @param {?*} context
-	 * @return {?object} Result of mapping or null if obj is falsey
+	 * @param {?object} object
+	 * @param {function} callback
+	 * @param {*} context
+	 * @return {?object}
 	 */
-	function mapObject(obj, func, context) {
-	  if (!obj) {
+	function mapObject(object, callback, context) {
+	  if (!object) {
 	    return null;
 	  }
-	  var i = 0;
-	  var ret = {};
-	  for (var key in obj) {
-	    if (obj.hasOwnProperty(key)) {
-	      ret[key] = func.call(context, obj[key], key, i++);
+	  var result = {};
+	  for (var name in object) {
+	    if (hasOwnProperty.call(object, name)) {
+	      result[name] = callback.call(context, object[name], name, object);
 	    }
 	  }
-	  return ret;
+	  return result;
 	}
 
 	module.exports = mapObject;
 
 
 /***/ },
-/* 63 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule shouldUpdateReactComponent
 	 * @typechecks static-only
@@ -21685,22 +14950,21 @@
 	"use strict";
 
 	/**
-	 * Given a `prevDescriptor` and `nextDescriptor`, determines if the existing
+	 * Given a `prevElement` and `nextElement`, determines if the existing
 	 * instance should be updated as opposed to being destroyed or replaced by a new
-	 * instance. Both arguments are descriptors. This ensures that this logic can
+	 * instance. Both arguments are elements. This ensures that this logic can
 	 * operate on stateless trees without any backing instance.
 	 *
-	 * @param {?object} prevDescriptor
-	 * @param {?object} nextDescriptor
+	 * @param {?object} prevElement
+	 * @param {?object} nextElement
 	 * @return {boolean} True if the existing instance should be updated.
 	 * @protected
 	 */
-	function shouldUpdateReactComponent(prevDescriptor, nextDescriptor) {
-	  if (prevDescriptor && nextDescriptor &&
-	      prevDescriptor.type === nextDescriptor.type && (
-	        (prevDescriptor.props && prevDescriptor.props.key) ===
-	        (nextDescriptor.props && nextDescriptor.props.key)
-	      ) && prevDescriptor._owner === nextDescriptor._owner) {
+	function shouldUpdateReactComponent(prevElement, nextElement) {
+	  if (prevElement && nextElement &&
+	      prevElement.type === nextElement.type &&
+	      prevElement.key === nextElement.key &&
+	      prevElement._owner === nextElement._owner) {
 	    return true;
 	  }
 	  return false;
@@ -21710,75 +14974,16 @@
 
 
 /***/ },
-/* 64 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule mergeInto
-	 * @typechecks static-only
-	 */
-
-	"use strict";
-
-	var mergeHelpers = __webpack_require__(107);
-
-	var checkMergeObjectArg = mergeHelpers.checkMergeObjectArg;
-	var checkMergeIntoObjectArg = mergeHelpers.checkMergeIntoObjectArg;
-
-	/**
-	 * Shallow merges two structures by mutating the first parameter.
-	 *
-	 * @param {object|function} one Object to be merged into.
-	 * @param {?object} two Optional object with properties to merge from.
-	 */
-	function mergeInto(one, two) {
-	  checkMergeIntoObjectArg(one);
-	  if (two != null) {
-	    checkMergeObjectArg(two);
-	    for (var key in two) {
-	      if (!two.hasOwnProperty(key)) {
-	        continue;
-	      }
-	      one[key] = two[key];
-	    }
-	  }
-	}
-
-	module.exports = mergeInto;
-
-
-/***/ },
-/* 65 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule CSSPropertyOperations
 	 * @typechecks static-only
@@ -21786,15 +14991,43 @@
 
 	"use strict";
 
-	var CSSProperty = __webpack_require__(108);
+	var CSSProperty = __webpack_require__(111);
+	var ExecutionEnvironment = __webpack_require__(44);
 
-	var dangerousStyleValue = __webpack_require__(109);
-	var hyphenateStyleName = __webpack_require__(110);
-	var memoizeStringOnly = __webpack_require__(44);
+	var camelizeStyleName = __webpack_require__(112);
+	var dangerousStyleValue = __webpack_require__(113);
+	var hyphenateStyleName = __webpack_require__(114);
+	var memoizeStringOnly = __webpack_require__(49);
+	var warning = __webpack_require__(50);
 
 	var processStyleName = memoizeStringOnly(function(styleName) {
 	  return hyphenateStyleName(styleName);
 	});
+
+	var styleFloatAccessor = 'cssFloat';
+	if (ExecutionEnvironment.canUseDOM) {
+	  // IE8 only supports accessing cssFloat (standard) as styleFloat
+	  if (document.documentElement.style.cssFloat === undefined) {
+	    styleFloatAccessor = 'styleFloat';
+	  }
+	}
+
+	if ("production" !== process.env.NODE_ENV) {
+	  var warnedStyleNames = {};
+
+	  var warnHyphenatedStyleName = function(name) {
+	    if (warnedStyleNames.hasOwnProperty(name) && warnedStyleNames[name]) {
+	      return;
+	    }
+
+	    warnedStyleNames[name] = true;
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      false,
+	      'Unsupported style property ' + name + '. Did you mean ' +
+	      camelizeStyleName(name) + '?'
+	    ) : null);
+	  };
+	}
 
 	/**
 	 * Operations for dealing with CSS properties.
@@ -21819,6 +15052,11 @@
 	      if (!styles.hasOwnProperty(styleName)) {
 	        continue;
 	      }
+	      if ("production" !== process.env.NODE_ENV) {
+	        if (styleName.indexOf('-') > -1) {
+	          warnHyphenatedStyleName(styleName);
+	        }
+	      }
 	      var styleValue = styles[styleName];
 	      if (styleValue != null) {
 	        serialized += processStyleName(styleName) + ':';
@@ -21841,7 +15079,15 @@
 	      if (!styles.hasOwnProperty(styleName)) {
 	        continue;
 	      }
+	      if ("production" !== process.env.NODE_ENV) {
+	        if (styleName.indexOf('-') > -1) {
+	          warnHyphenatedStyleName(styleName);
+	        }
+	      }
 	      var styleValue = dangerousStyleValue(styleName, styles[styleName]);
+	      if (styleName === 'float') {
+	        styleName = styleFloatAccessor;
+	      }
 	      if (styleValue) {
 	        style[styleName] = styleValue;
 	      } else {
@@ -21862,36 +15108,30 @@
 	};
 
 	module.exports = CSSPropertyOperations;
-
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 66 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactBrowserComponentMixin
 	 */
 
 	"use strict";
 
-	var ReactEmptyComponent = __webpack_require__(54);
-	var ReactMount = __webpack_require__(31);
+	var ReactEmptyComponent = __webpack_require__(58);
+	var ReactMount = __webpack_require__(35);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	var ReactBrowserComponentMixin = {
 	  /**
@@ -21915,26 +15155,19 @@
 
 	module.exports = ReactBrowserComponentMixin;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 67 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactBrowserEventEmitter
 	 * @typechecks static-only
@@ -21942,14 +15175,14 @@
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPluginHub = __webpack_require__(111);
-	var EventPluginRegistry = __webpack_require__(112);
-	var ReactEventEmitterMixin = __webpack_require__(113);
-	var ViewportMetrics = __webpack_require__(114);
+	var EventConstants = __webpack_require__(51);
+	var EventPluginHub = __webpack_require__(115);
+	var EventPluginRegistry = __webpack_require__(116);
+	var ReactEventEmitterMixin = __webpack_require__(117);
+	var ViewportMetrics = __webpack_require__(118);
 
-	var isEventSupported = __webpack_require__(115);
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
+	var isEventSupported = __webpack_require__(71);
 
 	/**
 	 * Summary of `ReactBrowserEventEmitter` event handling:
@@ -22078,7 +15311,7 @@
 	 *
 	 * @internal
 	 */
-	var ReactBrowserEventEmitter = merge(ReactEventEmitterMixin, {
+	var ReactBrowserEventEmitter = assign({}, ReactEventEmitterMixin, {
 
 	  /**
 	   * Injectable event backend
@@ -22284,70 +15517,85 @@
 
 
 /***/ },
-/* 68 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule keyOf
+	 * @providesModule isEventSupported
 	 */
+
+	"use strict";
+
+	var ExecutionEnvironment = __webpack_require__(44);
+
+	var useHasFeature;
+	if (ExecutionEnvironment.canUseDOM) {
+	  useHasFeature =
+	    document.implementation &&
+	    document.implementation.hasFeature &&
+	    // always returns true in newer browsers as per the standard.
+	    // @see http://dom.spec.whatwg.org/#dom-domimplementation-hasfeature
+	    document.implementation.hasFeature('', '') !== true;
+	}
 
 	/**
-	 * Allows extraction of a minified key. Let's the build system minify keys
-	 * without loosing the ability to dynamically use key strings as values
-	 * themselves. Pass in an object with a single key/val pair and it will return
-	 * you the string key of that single record. Suppose you want to grab the
-	 * value for a key 'className' inside of an object. Key/val minification may
-	 * have aliased that key to be 'xa12'. keyOf({className: null}) will return
-	 * 'xa12' in that case. Resolve keys you want to use once at startup time, then
-	 * reuse those resolutions.
+	 * Checks if an event is supported in the current execution environment.
+	 *
+	 * NOTE: This will not work correctly for non-generic events such as `change`,
+	 * `reset`, `load`, `error`, and `select`.
+	 *
+	 * Borrows from Modernizr.
+	 *
+	 * @param {string} eventNameSuffix Event name, e.g. "click".
+	 * @param {?boolean} capture Check if the capture phase is supported.
+	 * @return {boolean} True if the event is supported.
+	 * @internal
+	 * @license Modernizr 3.0.0pre (Custom Build) | MIT
 	 */
-	var keyOf = function(oneKeyObj) {
-	  var key;
-	  for (key in oneKeyObj) {
-	    if (!oneKeyObj.hasOwnProperty(key)) {
-	      continue;
-	    }
-	    return key;
+	function isEventSupported(eventNameSuffix, capture) {
+	  if (!ExecutionEnvironment.canUseDOM ||
+	      capture && !('addEventListener' in document)) {
+	    return false;
 	  }
-	  return null;
-	};
 
+	  var eventName = 'on' + eventNameSuffix;
+	  var isSupported = eventName in document;
 
-	module.exports = keyOf;
+	  if (!isSupported) {
+	    var element = document.createElement('div');
+	    element.setAttribute(eventName, 'return;');
+	    isSupported = typeof element[eventName] === 'function';
+	  }
+
+	  if (!isSupported && useHasFeature && eventNameSuffix === 'wheel') {
+	    // This is the only way to test support for the `wheel` event in IE9+.
+	    isSupported = document.implementation.hasFeature('Events.wheel', '3.0');
+	  }
+
+	  return isSupported;
+	}
+
+	module.exports = isEventSupported;
 
 
 /***/ },
-/* 69 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Copyright 2013 Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule BeforeInputEventPlugin
 	 * @typechecks static-only
@@ -22355,12 +15603,12 @@
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPropagators = __webpack_require__(116);
-	var ExecutionEnvironment = __webpack_require__(39);
-	var SyntheticInputEvent = __webpack_require__(117);
+	var EventConstants = __webpack_require__(51);
+	var EventPropagators = __webpack_require__(119);
+	var ExecutionEnvironment = __webpack_require__(44);
+	var SyntheticInputEvent = __webpack_require__(120);
 
-	var keyOf = __webpack_require__(68);
+	var keyOf = __webpack_require__(64);
 
 	var canUseTextInputEvent = (
 	  ExecutionEnvironment.canUseDOM &&
@@ -22404,6 +15652,9 @@
 
 	// Track characters inserted via keypress and composition events.
 	var fallbackChars = null;
+
+	// Track whether we've ever handled a keypress on the space key.
+	var hasSpaceKeypress = false;
 
 	/**
 	 * Return whether a native keypress event is assumed to be a command.
@@ -22474,7 +15725,8 @@
 	            return;
 	          }
 
-	          chars = String.fromCharCode(which);
+	          hasSpaceKeypress = true;
+	          chars = SPACEBAR_CHAR;
 	          break;
 
 	        case topLevelTypes.topTextInput:
@@ -22482,8 +15734,9 @@
 	          chars = nativeEvent.data;
 
 	          // If it's a spacebar character, assume that we have already handled
-	          // it at the keypress level and bail immediately.
-	          if (chars === SPACEBAR_CHAR) {
+	          // it at the keypress level and bail immediately. Android Chrome
+	          // doesn't give us keycodes, so we need to blacklist it.
+	          if (chars === SPACEBAR_CHAR && hasSpaceKeypress) {
 	            return;
 	          }
 
@@ -22559,39 +15812,32 @@
 
 
 /***/ },
-/* 70 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ChangeEventPlugin
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPluginHub = __webpack_require__(111);
-	var EventPropagators = __webpack_require__(116);
-	var ExecutionEnvironment = __webpack_require__(39);
-	var ReactUpdates = __webpack_require__(50);
-	var SyntheticEvent = __webpack_require__(118);
+	var EventConstants = __webpack_require__(51);
+	var EventPluginHub = __webpack_require__(115);
+	var EventPropagators = __webpack_require__(119);
+	var ExecutionEnvironment = __webpack_require__(44);
+	var ReactUpdates = __webpack_require__(56);
+	var SyntheticEvent = __webpack_require__(121);
 
-	var isEventSupported = __webpack_require__(115);
-	var isTextInputElement = __webpack_require__(119);
-	var keyOf = __webpack_require__(68);
+	var isEventSupported = __webpack_require__(71);
+	var isTextInputElement = __webpack_require__(122);
+	var keyOf = __webpack_require__(64);
 
 	var topLevelTypes = EventConstants.topLevelTypes;
 
@@ -22952,23 +16198,16 @@
 
 
 /***/ },
-/* 71 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ClientReactRootIndex
 	 * @typechecks
@@ -22988,23 +16227,16 @@
 
 
 /***/ },
-/* 72 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule CompositionEventPlugin
 	 * @typechecks static-only
@@ -23012,14 +16244,14 @@
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPropagators = __webpack_require__(116);
-	var ExecutionEnvironment = __webpack_require__(39);
-	var ReactInputSelection = __webpack_require__(120);
-	var SyntheticCompositionEvent = __webpack_require__(121);
+	var EventConstants = __webpack_require__(51);
+	var EventPropagators = __webpack_require__(119);
+	var ExecutionEnvironment = __webpack_require__(44);
+	var ReactInputSelection = __webpack_require__(123);
+	var SyntheticCompositionEvent = __webpack_require__(124);
 
-	var getTextContentAccessor = __webpack_require__(122);
-	var keyOf = __webpack_require__(68);
+	var getTextContentAccessor = __webpack_require__(125);
+	var keyOf = __webpack_require__(64);
 
 	var END_KEYCODES = [9, 13, 27, 32]; // Tab, Return, Esc, Space
 	var START_KEYCODE = 229;
@@ -23258,30 +16490,23 @@
 
 
 /***/ },
-/* 73 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule DefaultEventPluginOrder
 	 */
 
 	"use strict";
 
-	 var keyOf = __webpack_require__(68);
+	 var keyOf = __webpack_require__(64);
 
 	/**
 	 * Module that is injectable into `EventPluginHub`, that specifies a
@@ -23309,23 +16534,16 @@
 
 
 /***/ },
-/* 74 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EnterLeaveEventPlugin
 	 * @typechecks static-only
@@ -23333,12 +16551,12 @@
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPropagators = __webpack_require__(116);
-	var SyntheticMouseEvent = __webpack_require__(123);
+	var EventConstants = __webpack_require__(51);
+	var EventPropagators = __webpack_require__(119);
+	var SyntheticMouseEvent = __webpack_require__(126);
 
-	var ReactMount = __webpack_require__(31);
-	var keyOf = __webpack_require__(68);
+	var ReactMount = __webpack_require__(35);
+	var keyOf = __webpack_require__(64);
 
 	var topLevelTypes = EventConstants.topLevelTypes;
 	var getFirstReactDOM = ReactMount.getFirstReactDOM;
@@ -23460,23 +16678,16 @@
 
 
 /***/ },
-/* 75 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule HTMLDOMPropertyConfig
 	 */
@@ -23485,8 +16696,8 @@
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
-	var ExecutionEnvironment = __webpack_require__(39);
+	var DOMProperty = __webpack_require__(47);
+	var ExecutionEnvironment = __webpack_require__(44);
 
 	var MUST_USE_ATTRIBUTE = DOMProperty.injection.MUST_USE_ATTRIBUTE;
 	var MUST_USE_PROPERTY = DOMProperty.injection.MUST_USE_PROPERTY;
@@ -23521,6 +16732,7 @@
 	     * Standard Properties
 	     */
 	    accept: null,
+	    acceptCharset: null,
 	    accessKey: null,
 	    action: null,
 	    allowFullScreen: MUST_USE_ATTRIBUTE | HAS_BOOLEAN_VALUE,
@@ -23535,6 +16747,7 @@
 	    cellSpacing: null,
 	    charSet: MUST_USE_ATTRIBUTE,
 	    checked: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
+	    classID: MUST_USE_ATTRIBUTE,
 	    // To set className on SVG elements, it's necessary to use .setAttribute;
 	    // this works on HTML elements too in all browsers except IE8. Conveniently,
 	    // IE8 doesn't support SVG and so we can simply use the attribute in
@@ -23558,7 +16771,11 @@
 	    draggable: null,
 	    encType: null,
 	    form: MUST_USE_ATTRIBUTE,
+	    formAction: MUST_USE_ATTRIBUTE,
+	    formEncType: MUST_USE_ATTRIBUTE,
+	    formMethod: MUST_USE_ATTRIBUTE,
 	    formNoValidate: HAS_BOOLEAN_VALUE,
+	    formTarget: MUST_USE_ATTRIBUTE,
 	    frameBorder: MUST_USE_ATTRIBUTE,
 	    height: MUST_USE_ATTRIBUTE,
 	    hidden: MUST_USE_ATTRIBUTE | HAS_BOOLEAN_VALUE,
@@ -23570,8 +16787,11 @@
 	    id: MUST_USE_PROPERTY,
 	    label: null,
 	    lang: null,
-	    list: null,
+	    list: MUST_USE_ATTRIBUTE,
 	    loop: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
+	    manifest: MUST_USE_ATTRIBUTE,
+	    marginHeight: null,
+	    marginWidth: null,
 	    max: null,
 	    maxLength: MUST_USE_ATTRIBUTE,
 	    media: MUST_USE_ATTRIBUTE,
@@ -23596,9 +16816,7 @@
 	    rowSpan: null,
 	    sandbox: null,
 	    scope: null,
-	    scrollLeft: MUST_USE_PROPERTY,
 	    scrolling: null,
-	    scrollTop: MUST_USE_PROPERTY,
 	    seamless: MUST_USE_ATTRIBUTE | HAS_BOOLEAN_VALUE,
 	    selected: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
 	    shape: null,
@@ -23632,6 +16850,7 @@
 	    property: null // Supports OG in meta tags
 	  },
 	  DOMAttributeNames: {
+	    acceptCharset: 'accept-charset',
 	    className: 'class',
 	    htmlFor: 'for',
 	    httpEquiv: 'http-equiv'
@@ -23655,23 +16874,16 @@
 
 
 /***/ },
-/* 76 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule MobileSafariClickEventPlugin
 	 * @typechecks static-only
@@ -23679,9 +16891,9 @@
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
+	var EventConstants = __webpack_require__(51);
 
-	var emptyFunction = __webpack_require__(99);
+	var emptyFunction = __webpack_require__(104);
 
 	var topLevelTypes = EventConstants.topLevelTypes;
 
@@ -23724,23 +16936,16 @@
 
 
 /***/ },
-/* 77 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactComponentBrowserEnvironment
 	 */
@@ -23749,15 +16954,15 @@
 
 	"use strict";
 
-	var ReactDOMIDOperations = __webpack_require__(124);
-	var ReactMarkupChecksum = __webpack_require__(100);
-	var ReactMount = __webpack_require__(31);
-	var ReactPerf = __webpack_require__(33);
-	var ReactReconcileTransaction = __webpack_require__(125);
+	var ReactDOMIDOperations = __webpack_require__(127);
+	var ReactMarkupChecksum = __webpack_require__(102);
+	var ReactMount = __webpack_require__(35);
+	var ReactPerf = __webpack_require__(37);
+	var ReactReconcileTransaction = __webpack_require__(128);
 
-	var getReactRootElementInContainer = __webpack_require__(96);
-	var invariant = __webpack_require__(46);
-	var setInnerHTML = __webpack_require__(126);
+	var getReactRootElementInContainer = __webpack_require__(99);
+	var invariant = __webpack_require__(52);
+	var setInnerHTML = __webpack_require__(129);
 
 
 	var ELEMENT_NODE_TYPE = 1;
@@ -23853,37 +17058,30 @@
 
 	module.exports = ReactComponentBrowserEnvironment;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 78 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDefaultBatchingStrategy
 	 */
 
 	"use strict";
 
-	var ReactUpdates = __webpack_require__(50);
-	var Transaction = __webpack_require__(105);
+	var ReactUpdates = __webpack_require__(56);
+	var Transaction = __webpack_require__(108);
 
-	var emptyFunction = __webpack_require__(99);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var emptyFunction = __webpack_require__(104);
 
 	var RESET_BATCHED_UPDATES = {
 	  initialize: emptyFunction,
@@ -23903,12 +17101,15 @@
 	  this.reinitializeTransaction();
 	}
 
-	mixInto(ReactDefaultBatchingStrategyTransaction, Transaction.Mixin);
-	mixInto(ReactDefaultBatchingStrategyTransaction, {
-	  getTransactionWrappers: function() {
-	    return TRANSACTION_WRAPPERS;
+	assign(
+	  ReactDefaultBatchingStrategyTransaction.prototype,
+	  Transaction.Mixin,
+	  {
+	    getTransactionWrappers: function() {
+	      return TRANSACTION_WRAPPERS;
+	    }
 	  }
-	});
+	);
 
 	var transaction = new ReactDefaultBatchingStrategyTransaction();
 
@@ -23937,38 +17138,32 @@
 
 
 /***/ },
-/* 79 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMButton
 	 */
 
 	"use strict";
 
-	var AutoFocusMixin = __webpack_require__(127);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var AutoFocusMixin = __webpack_require__(130);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
 
-	var keyMirror = __webpack_require__(51);
+	var keyMirror = __webpack_require__(57);
 
-	// Store a reference to the <button> `ReactDOMComponent`.
-	var button = ReactDOM.button;
+	// Store a reference to the <button> `ReactDOMComponent`. TODO: use string
+	var button = ReactElement.createFactory(ReactDOM.button.type);
 
 	var mouseListenerNames = keyMirror({
 	  onClick: true,
@@ -24012,37 +17207,31 @@
 
 
 /***/ },
-/* 80 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMForm
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var LocalEventTrapMixin = __webpack_require__(128);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var EventConstants = __webpack_require__(51);
+	var LocalEventTrapMixin = __webpack_require__(131);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
 
-	// Store a reference to the <form> `ReactDOMComponent`.
-	var form = ReactDOM.form;
+	// Store a reference to the <form> `ReactDOMComponent`. TODO: use string
+	var form = ReactElement.createFactory(ReactDOM.form.type);
 
 	/**
 	 * Since onSubmit doesn't bubble OR capture on the top level in IE8, we need
@@ -24059,7 +17248,7 @@
 	    // TODO: Instead of using `ReactDOM` directly, we should use JSX. However,
 	    // `jshint` fails to parse JSX so in order for linting to work in the open
 	    // source repo, we need to just use `ReactDOM.form`.
-	    return this.transferPropsTo(form(null, this.props.children));
+	    return form(this.props);
 	  },
 
 	  componentDidMount: function() {
@@ -24072,37 +17261,31 @@
 
 
 /***/ },
-/* 81 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMImg
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var LocalEventTrapMixin = __webpack_require__(128);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var EventConstants = __webpack_require__(51);
+	var LocalEventTrapMixin = __webpack_require__(131);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
 
-	// Store a reference to the <img> `ReactDOMComponent`.
-	var img = ReactDOM.img;
+	// Store a reference to the <img> `ReactDOMComponent`. TODO: use string
+	var img = ReactElement.createFactory(ReactDOM.img.type);
 
 	/**
 	 * Since onLoad doesn't bubble OR capture on the top level in IE8, we need to
@@ -24130,44 +17313,46 @@
 
 
 /***/ },
-/* 82 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMInput
 	 */
 
 	"use strict";
 
-	var AutoFocusMixin = __webpack_require__(127);
-	var DOMPropertyOperations = __webpack_require__(19);
-	var LinkedValueUtils = __webpack_require__(129);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
-	var ReactMount = __webpack_require__(31);
+	var AutoFocusMixin = __webpack_require__(130);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var LinkedValueUtils = __webpack_require__(132);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
+	var ReactMount = __webpack_require__(35);
+	var ReactUpdates = __webpack_require__(56);
 
-	var invariant = __webpack_require__(46);
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
 
-	// Store a reference to the <input> `ReactDOMComponent`.
-	var input = ReactDOM.input;
+	// Store a reference to the <input> `ReactDOMComponent`. TODO: use string
+	var input = ReactElement.createFactory(ReactDOM.input.type);
 
 	var instancesByReactID = {};
+
+	function forceUpdateIfMounted() {
+	  /*jshint validthis:true */
+	  if (this.isMounted()) {
+	    this.forceUpdate();
+	  }
+	}
 
 	/**
 	 * Implements an <input> native component that allows setting these optional
@@ -24193,28 +17378,23 @@
 	  getInitialState: function() {
 	    var defaultValue = this.props.defaultValue;
 	    return {
-	      checked: this.props.defaultChecked || false,
-	      value: defaultValue != null ? defaultValue : null
+	      initialChecked: this.props.defaultChecked || false,
+	      initialValue: defaultValue != null ? defaultValue : null
 	    };
-	  },
-
-	  shouldComponentUpdate: function() {
-	    // Defer any updates to this component during the `onChange` handler.
-	    return !this._isChanging;
 	  },
 
 	  render: function() {
 	    // Clone `this.props` so we don't mutate the input.
-	    var props = merge(this.props);
+	    var props = assign({}, this.props);
 
 	    props.defaultChecked = null;
 	    props.defaultValue = null;
 
 	    var value = LinkedValueUtils.getValue(this);
-	    props.value = value != null ? value : this.state.value;
+	    props.value = value != null ? value : this.state.initialValue;
 
 	    var checked = LinkedValueUtils.getChecked(this);
-	    props.checked = checked != null ? checked : this.state.checked;
+	    props.checked = checked != null ? checked : this.state.initialChecked;
 
 	    props.onChange = this._handleChange;
 
@@ -24254,14 +17434,12 @@
 	    var returnValue;
 	    var onChange = LinkedValueUtils.getOnChange(this);
 	    if (onChange) {
-	      this._isChanging = true;
 	      returnValue = onChange.call(this, event);
-	      this._isChanging = false;
 	    }
-	    this.setState({
-	      checked: event.target.checked,
-	      value: event.target.value
-	    });
+	    // Here we use asap to wait until all updates have propagated, which
+	    // is important when using controlled components within layers:
+	    // https://github.com/facebook/react/issues/1698
+	    ReactUpdates.asap(forceUpdateIfMounted, this);
 
 	    var name = this.props.name;
 	    if (this.props.type === 'radio' && name != null) {
@@ -24299,13 +17477,10 @@
 	          'ReactDOMInput: Unknown radio button ID %s.',
 	          otherID
 	        ) : invariant(otherInstance));
-	        // In some cases, this will actually change the `checked` state value.
-	        // In other cases, there's no change but this forces a reconcile upon
-	        // which componentDidUpdate will reset the DOM property to whatever it
-	        // should be.
-	        otherInstance.setState({
-	          checked: false
-	        });
+	        // If this is a controlled radio button group, forcing the input that
+	        // was previously checked to update will cause it to be come re-checked
+	        // as appropriate.
+	        ReactUpdates.asap(forceUpdateIfMounted, otherInstance);
 	      }
 	    }
 
@@ -24316,40 +17491,34 @@
 
 	module.exports = ReactDOMInput;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 83 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMOption
 	 */
 
 	"use strict";
 
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
 
-	var warning = __webpack_require__(38);
+	var warning = __webpack_require__(50);
 
-	// Store a reference to the <option> `ReactDOMComponent`.
-	var option = ReactDOM.option;
+	// Store a reference to the <option> `ReactDOMComponent`. TODO: use string
+	var option = ReactElement.createFactory(ReactDOM.option.type);
 
 	/**
 	 * Implements an <option> native component that warns when `selected` is set.
@@ -24378,42 +17547,45 @@
 
 	module.exports = ReactDOMOption;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 84 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMSelect
 	 */
 
 	"use strict";
 
-	var AutoFocusMixin = __webpack_require__(127);
-	var LinkedValueUtils = __webpack_require__(129);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var AutoFocusMixin = __webpack_require__(130);
+	var LinkedValueUtils = __webpack_require__(132);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
+	var ReactUpdates = __webpack_require__(56);
 
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
 
-	// Store a reference to the <select> `ReactDOMComponent`.
-	var select = ReactDOM.select;
+	// Store a reference to the <select> `ReactDOMComponent`. TODO: use string
+	var select = ReactElement.createFactory(ReactDOM.select.type);
+
+	function updateWithPendingValueIfMounted() {
+	  /*jshint validthis:true */
+	  if (this.isMounted()) {
+	    this.setState({value: this._pendingValue});
+	    this._pendingValue = 0;
+	  }
+	}
 
 	/**
 	 * Validation function for `value` and `defaultValue`.
@@ -24500,6 +17672,10 @@
 	    return {value: this.props.defaultValue || (this.props.multiple ? [] : '')};
 	  },
 
+	  componentWillMount: function() {
+	    this._pendingValue = null;
+	  },
+
 	  componentWillReceiveProps: function(nextProps) {
 	    if (!this.props.multiple && nextProps.multiple) {
 	      this.setState({value: [this.state.value]});
@@ -24508,14 +17684,9 @@
 	    }
 	  },
 
-	  shouldComponentUpdate: function() {
-	    // Defer any updates to this component during the `onChange` handler.
-	    return !this._isChanging;
-	  },
-
 	  render: function() {
 	    // Clone `this.props` so we don't mutate the input.
-	    var props = merge(this.props);
+	    var props = assign({}, this.props);
 
 	    props.onChange = this._handleChange;
 	    props.value = null;
@@ -24540,9 +17711,7 @@
 	    var returnValue;
 	    var onChange = LinkedValueUtils.getOnChange(this);
 	    if (onChange) {
-	      this._isChanging = true;
 	      returnValue = onChange.call(this, event);
-	      this._isChanging = false;
 	    }
 
 	    var selectedValue;
@@ -24558,7 +17727,8 @@
 	      selectedValue = event.target.value;
 	    }
 
-	    this.setState({value: selectedValue});
+	    this._pendingValue = selectedValue;
+	    ReactUpdates.asap(updateWithPendingValueIfMounted, this);
 	    return returnValue;
 	  }
 
@@ -24568,43 +17738,45 @@
 
 
 /***/ },
-/* 85 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMTextarea
 	 */
 
 	"use strict";
 
-	var AutoFocusMixin = __webpack_require__(127);
-	var DOMPropertyOperations = __webpack_require__(19);
-	var LinkedValueUtils = __webpack_require__(129);
-	var ReactBrowserComponentMixin = __webpack_require__(66);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
+	var AutoFocusMixin = __webpack_require__(130);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var LinkedValueUtils = __webpack_require__(132);
+	var ReactBrowserComponentMixin = __webpack_require__(69);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
+	var ReactDOM = __webpack_require__(30);
+	var ReactUpdates = __webpack_require__(56);
 
-	var invariant = __webpack_require__(46);
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
 
-	var warning = __webpack_require__(38);
+	var warning = __webpack_require__(50);
 
-	// Store a reference to the <textarea> `ReactDOMComponent`.
-	var textarea = ReactDOM.textarea;
+	// Store a reference to the <textarea> `ReactDOMComponent`. TODO: use string
+	var textarea = ReactElement.createFactory(ReactDOM.textarea.type);
+
+	function forceUpdateIfMounted() {
+	  /*jshint validthis:true */
+	  if (this.isMounted()) {
+	    this.forceUpdate();
+	  }
+	}
 
 	/**
 	 * Implements a <textarea> native component that allows setting `value`, and
@@ -24665,14 +17837,9 @@
 	    };
 	  },
 
-	  shouldComponentUpdate: function() {
-	    // Defer any updates to this component during the `onChange` handler.
-	    return !this._isChanging;
-	  },
-
 	  render: function() {
 	    // Clone `this.props` so we don't mutate the input.
-	    var props = merge(this.props);
+	    var props = assign({}, this.props);
 
 	    ("production" !== process.env.NODE_ENV ? invariant(
 	      props.dangerouslySetInnerHTML == null,
@@ -24702,11 +17869,9 @@
 	    var returnValue;
 	    var onChange = LinkedValueUtils.getOnChange(this);
 	    if (onChange) {
-	      this._isChanging = true;
 	      returnValue = onChange.call(this, event);
-	      this._isChanging = false;
 	    }
-	    this.setState({value: event.target.value});
+	    ReactUpdates.asap(forceUpdateIfMounted, this);
 	    return returnValue;
 	  }
 
@@ -24714,26 +17879,19 @@
 
 	module.exports = ReactDOMTextarea;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 86 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactEventListener
 	 * @typechecks static-only
@@ -24741,16 +17899,16 @@
 
 	"use strict";
 
-	var EventListener = __webpack_require__(130);
-	var ExecutionEnvironment = __webpack_require__(39);
-	var PooledClass = __webpack_require__(47);
-	var ReactInstanceHandles = __webpack_require__(30);
-	var ReactMount = __webpack_require__(31);
-	var ReactUpdates = __webpack_require__(50);
+	var EventListener = __webpack_require__(133);
+	var ExecutionEnvironment = __webpack_require__(44);
+	var PooledClass = __webpack_require__(53);
+	var ReactInstanceHandles = __webpack_require__(33);
+	var ReactMount = __webpack_require__(35);
+	var ReactUpdates = __webpack_require__(56);
 
-	var getEventTarget = __webpack_require__(131);
-	var getUnboundedScrollPosition = __webpack_require__(132);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var getEventTarget = __webpack_require__(134);
+	var getUnboundedScrollPosition = __webpack_require__(135);
 
 	/**
 	 * Finds the parent React component of `node`.
@@ -24776,7 +17934,7 @@
 	  this.nativeEvent = nativeEvent;
 	  this.ancestors = [];
 	}
-	mixInto(TopLevelCallbackBookKeeping, {
+	assign(TopLevelCallbackBookKeeping.prototype, {
 	  destructor: function() {
 	    this.topLevelType = null;
 	    this.nativeEvent = null;
@@ -24912,39 +18070,32 @@
 
 
 /***/ },
-/* 87 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactInjection
 	 */
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
-	var EventPluginHub = __webpack_require__(111);
-	var ReactComponent = __webpack_require__(22);
-	var ReactCompositeComponent = __webpack_require__(23);
-	var ReactDOM = __webpack_require__(27);
-	var ReactEmptyComponent = __webpack_require__(54);
-	var ReactBrowserEventEmitter = __webpack_require__(67);
-	var ReactPerf = __webpack_require__(33);
-	var ReactRootIndex = __webpack_require__(94);
-	var ReactUpdates = __webpack_require__(50);
+	var DOMProperty = __webpack_require__(47);
+	var EventPluginHub = __webpack_require__(115);
+	var ReactComponent = __webpack_require__(24);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactEmptyComponent = __webpack_require__(58);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
+	var ReactNativeComponent = __webpack_require__(110);
+	var ReactPerf = __webpack_require__(37);
+	var ReactRootIndex = __webpack_require__(97);
+	var ReactUpdates = __webpack_require__(56);
 
 	var ReactInjection = {
 	  Component: ReactComponent.injection,
@@ -24952,8 +18103,8 @@
 	  DOMProperty: DOMProperty.injection,
 	  EmptyComponent: ReactEmptyComponent.injection,
 	  EventPluginHub: EventPluginHub.injection,
-	  DOM: ReactDOM.injection,
 	  EventEmitter: ReactBrowserEventEmitter.injection,
+	  NativeComponent: ReactNativeComponent.injection,
 	  Perf: ReactPerf.injection,
 	  RootIndex: ReactRootIndex.injection,
 	  Updates: ReactUpdates.injection
@@ -24963,38 +18114,31 @@
 
 
 /***/ },
-/* 88 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SelectEventPlugin
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPropagators = __webpack_require__(116);
-	var ReactInputSelection = __webpack_require__(120);
-	var SyntheticEvent = __webpack_require__(118);
+	var EventConstants = __webpack_require__(51);
+	var EventPropagators = __webpack_require__(119);
+	var ReactInputSelection = __webpack_require__(123);
+	var SyntheticEvent = __webpack_require__(121);
 
-	var getActiveElement = __webpack_require__(133);
-	var isTextInputElement = __webpack_require__(119);
-	var keyOf = __webpack_require__(68);
-	var shallowEqual = __webpack_require__(134);
+	var getActiveElement = __webpack_require__(136);
+	var isTextInputElement = __webpack_require__(122);
+	var keyOf = __webpack_require__(64);
+	var shallowEqual = __webpack_require__(137);
 
 	var topLevelTypes = EventConstants.topLevelTypes;
 
@@ -25037,6 +18181,14 @@
 	      start: node.selectionStart,
 	      end: node.selectionEnd
 	    };
+	  } else if (window.getSelection) {
+	    var selection = window.getSelection();
+	    return {
+	      anchorNode: selection.anchorNode,
+	      anchorOffset: selection.anchorOffset,
+	      focusNode: selection.focusNode,
+	      focusOffset: selection.focusOffset
+	    };
 	  } else if (document.selection) {
 	    var range = document.selection.createRange();
 	    return {
@@ -25044,14 +18196,6 @@
 	      text: range.text,
 	      top: range.boundingTop,
 	      left: range.boundingLeft
-	    };
-	  } else {
-	    var selection = window.getSelection();
-	    return {
-	      anchorNode: selection.anchorNode,
-	      anchorOffset: selection.anchorOffset,
-	      focusNode: selection.focusNode,
-	      focusOffset: selection.focusOffset
 	    };
 	  }
 	}
@@ -25169,23 +18313,16 @@
 
 
 /***/ },
-/* 89 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ServerReactRootIndex
 	 * @typechecks
@@ -25211,44 +18348,40 @@
 
 
 /***/ },
-/* 90 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SimpleEventPlugin
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPluginUtils = __webpack_require__(20);
-	var EventPropagators = __webpack_require__(116);
-	var SyntheticClipboardEvent = __webpack_require__(135);
-	var SyntheticEvent = __webpack_require__(118);
-	var SyntheticFocusEvent = __webpack_require__(136);
-	var SyntheticKeyboardEvent = __webpack_require__(137);
-	var SyntheticMouseEvent = __webpack_require__(123);
-	var SyntheticDragEvent = __webpack_require__(138);
-	var SyntheticTouchEvent = __webpack_require__(139);
-	var SyntheticUIEvent = __webpack_require__(140);
-	var SyntheticWheelEvent = __webpack_require__(141);
+	var EventConstants = __webpack_require__(51);
+	var EventPluginUtils = __webpack_require__(22);
+	var EventPropagators = __webpack_require__(119);
+	var SyntheticClipboardEvent = __webpack_require__(138);
+	var SyntheticEvent = __webpack_require__(121);
+	var SyntheticFocusEvent = __webpack_require__(139);
+	var SyntheticKeyboardEvent = __webpack_require__(140);
+	var SyntheticMouseEvent = __webpack_require__(126);
+	var SyntheticDragEvent = __webpack_require__(141);
+	var SyntheticTouchEvent = __webpack_require__(142);
+	var SyntheticUIEvent = __webpack_require__(143);
+	var SyntheticWheelEvent = __webpack_require__(144);
 
-	var invariant = __webpack_require__(46);
-	var keyOf = __webpack_require__(68);
+	var getEventCharCode = __webpack_require__(145);
+
+	var invariant = __webpack_require__(52);
+	var keyOf = __webpack_require__(64);
+	var warning = __webpack_require__(50);
 
 	var topLevelTypes = EventConstants.topLevelTypes;
 
@@ -25515,7 +18648,7 @@
 
 	  /**
 	   * Same as the default implementation, except cancels the event when return
-	   * value is false.
+	   * value is false. This behavior will be disabled in a future release.
 	   *
 	   * @param {object} Event to be dispatched.
 	   * @param {function} Application-level callback.
@@ -25523,6 +18656,14 @@
 	   */
 	  executeDispatch: function(event, listener, domID) {
 	    var returnValue = EventPluginUtils.executeDispatch(event, listener, domID);
+
+	    ("production" !== process.env.NODE_ENV ? warning(
+	      typeof returnValue !== 'boolean',
+	      'Returning `false` from an event handler is deprecated and will be ' +
+	      'ignored in a future release. Instead, manually call ' +
+	      'e.stopPropagation() or e.preventDefault(), as appropriate.'
+	    ) : null);
+
 	    if (returnValue === false) {
 	      event.stopPropagation();
 	      event.preventDefault();
@@ -25559,8 +18700,9 @@
 	        break;
 	      case topLevelTypes.topKeyPress:
 	        // FireFox creates a keypress event for function keys too. This removes
-	        // the unwanted keypress events.
-	        if (nativeEvent.charCode === 0) {
+	        // the unwanted keypress events. Enter is however both printable and
+	        // non-printable. One would expect Tab to be as well (but it isn't).
+	        if (getEventCharCode(nativeEvent) === 0) {
 	          return null;
 	        }
 	        /* falls through */
@@ -25634,26 +18776,19 @@
 
 	module.exports = SimpleEventPlugin;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 91 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SVGDOMPropertyConfig
 	 */
@@ -25662,7 +18797,7 @@
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
+	var DOMProperty = __webpack_require__(47);
 
 	var MUST_USE_ATTRIBUTE = DOMProperty.injection.MUST_USE_ATTRIBUTE;
 
@@ -25740,23 +18875,16 @@
 
 
 /***/ },
-/* 92 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule createFullPageComponent
 	 * @typechecks
@@ -25765,9 +18893,10 @@
 	"use strict";
 
 	// Defeat circular references by requiring this directly.
-	var ReactCompositeComponent = __webpack_require__(23);
+	var ReactCompositeComponent = __webpack_require__(25);
+	var ReactElement = __webpack_require__(28);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Create a component that will throw an exception when unmounted.
@@ -25777,14 +18906,14 @@
 	 * take advantage of React's reconciliation for styling and <title>
 	 * management. So we just document it and throw in dangerous cases.
 	 *
-	 * @param {function} componentClass convenience constructor to wrap
+	 * @param {string} tag The tag to wrap
 	 * @return {function} convenience constructor of new component
 	 */
-	function createFullPageComponent(componentClass) {
+	function createFullPageComponent(tag) {
+	  var elementFactory = ReactElement.createFactory(tag);
+
 	  var FullPageComponent = ReactCompositeComponent.createClass({
-	    displayName: 'ReactFullPageComponent' + (
-	      componentClass.type.displayName || ''
-	    ),
+	    displayName: 'ReactFullPageComponent' + tag,
 
 	    componentWillUnmount: function() {
 	      ("production" !== process.env.NODE_ENV ? invariant(
@@ -25798,7 +18927,7 @@
 	    },
 
 	    render: function() {
-	      return this.transferPropsTo(componentClass(null, this.props.children));
+	      return elementFactory(this.props);
 	    }
 	  });
 
@@ -25807,26 +18936,19 @@
 
 	module.exports = createFullPageComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 93 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDefaultPerf
 	 * @typechecks static-only
@@ -25834,12 +18956,12 @@
 
 	"use strict";
 
-	var DOMProperty = __webpack_require__(42);
-	var ReactDefaultPerfAnalysis = __webpack_require__(142);
-	var ReactMount = __webpack_require__(31);
-	var ReactPerf = __webpack_require__(33);
+	var DOMProperty = __webpack_require__(47);
+	var ReactDefaultPerfAnalysis = __webpack_require__(146);
+	var ReactMount = __webpack_require__(35);
+	var ReactPerf = __webpack_require__(37);
 
-	var performanceNow = __webpack_require__(143);
+	var performanceNow = __webpack_require__(147);
 
 	function roundFloat(val) {
 	  return Math.floor(val * 100) / 100;
@@ -25905,19 +19027,23 @@
 	    );
 	  },
 
-	  printWasted: function(measurements) {
-	    measurements = measurements || ReactDefaultPerf._allMeasurements;
+	  getMeasurementsSummaryMap: function(measurements) {
 	    var summary = ReactDefaultPerfAnalysis.getInclusiveSummary(
 	      measurements,
 	      true
 	    );
-	    console.table(summary.map(function(item) {
+	    return summary.map(function(item) {
 	      return {
 	        'Owner > component': item.componentName,
 	        'Wasted time (ms)': item.time,
 	        'Instances': item.count
 	      };
-	    }));
+	    });
+	  },
+
+	  printWasted: function(measurements) {
+	    measurements = measurements || ReactDefaultPerf._allMeasurements;
+	    console.table(ReactDefaultPerf.getMeasurementsSummaryMap(measurements));
 	    console.log(
 	      'Total time:',
 	      ReactDefaultPerfAnalysis.getTotalTime(measurements).toFixed(2) + ' ms'
@@ -25955,7 +19081,7 @@
 	  },
 
 	  measure: function(moduleName, fnName, func) {
-	    return function() {var args=Array.prototype.slice.call(arguments,0);
+	    return function() {for (var args=[],$__0=0,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
 	      var totalTime;
 	      var rv;
 	      var start;
@@ -26077,23 +19203,16 @@
 
 
 /***/ },
-/* 94 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactRootIndex
 	 * @typechecks
@@ -26119,29 +19238,22 @@
 
 
 /***/ },
-/* 95 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule containsNode
 	 * @typechecks
 	 */
 
-	var isTextNode = __webpack_require__(144);
+	var isTextNode = __webpack_require__(148);
 
 	/*jslint bitwise:true */
 
@@ -26174,23 +19286,16 @@
 
 
 /***/ },
-/* 96 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getReactRootElementInContainer
 	 */
@@ -26220,30 +19325,23 @@
 
 
 /***/ },
-/* 97 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactMultiChildUpdateTypes
 	 */
 
 	"use strict";
 
-	var keyMirror = __webpack_require__(51);
+	var keyMirror = __webpack_require__(57);
 
 	/**
 	 * When a component's children are updated, a series of update configuration
@@ -26264,31 +19362,26 @@
 
 
 /***/ },
-/* 98 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule flattenChildren
 	 */
 
 	"use strict";
 
-	var traverseAllChildren = __webpack_require__(48);
-	var warning = __webpack_require__(38);
+	var ReactTextComponent = __webpack_require__(40);
+
+	var traverseAllChildren = __webpack_require__(54);
+	var warning = __webpack_require__(50);
 
 	/**
 	 * @param {function} traverseContext Context passed through traversal.
@@ -26307,7 +19400,18 @@
 	    name
 	  ) : null);
 	  if (keyUnique && child != null) {
-	    result[name] = child;
+	    var type = typeof child;
+	    var normalizedValue;
+
+	    if (type === 'string') {
+	      normalizedValue = ReactTextComponent(child);
+	    } else if (type === 'number') {
+	      normalizedValue = ReactTextComponent('' + child);
+	    } else {
+	      normalizedValue = child;
+	    }
+
+	    result[name] = normalizedValue;
 	  }
 	}
 
@@ -26327,82 +19431,26 @@
 
 	module.exports = flattenChildren;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 99 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule emptyFunction
-	 */
-
-	var copyProperties = __webpack_require__(145);
-
-	function makeEmptyFunction(arg) {
-	  return function() {
-	    return arg;
-	  };
-	}
-
-	/**
-	 * This function accepts and discards inputs; it has no side effects. This is
-	 * primarily useful idiomatically for overridable function endpoints which
-	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
-	 */
-	function emptyFunction() {}
-
-	copyProperties(emptyFunction, {
-	  thatReturns: makeEmptyFunction,
-	  thatReturnsFalse: makeEmptyFunction(false),
-	  thatReturnsTrue: makeEmptyFunction(true),
-	  thatReturnsNull: makeEmptyFunction(null),
-	  thatReturnsThis: function() { return this; },
-	  thatReturnsArgument: function(arg) { return arg; }
-	});
-
-	module.exports = emptyFunction;
-
-
-/***/ },
-/* 100 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactMarkupChecksum
 	 */
 
 	"use strict";
 
-	var adler32 = __webpack_require__(146);
+	var adler32 = __webpack_require__(149);
 
 	var ReactMarkupChecksum = {
 	  CHECKSUM_ATTR_NAME: 'data-react-checksum',
@@ -26438,23 +19486,16 @@
 
 
 /***/ },
-/* 101 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactServerRenderingTransaction
 	 * @typechecks
@@ -26462,13 +19503,13 @@
 
 	"use strict";
 
-	var PooledClass = __webpack_require__(47);
-	var CallbackQueue = __webpack_require__(104);
-	var ReactPutListenerQueue = __webpack_require__(147);
-	var Transaction = __webpack_require__(105);
+	var PooledClass = __webpack_require__(53);
+	var CallbackQueue = __webpack_require__(107);
+	var ReactPutListenerQueue = __webpack_require__(150);
+	var Transaction = __webpack_require__(108);
 
-	var emptyFunction = __webpack_require__(99);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var emptyFunction = __webpack_require__(104);
 
 	/**
 	 * Provides a `CallbackQueue` queue for collecting `onDOMReady` callbacks
@@ -26550,8 +19591,11 @@
 	};
 
 
-	mixInto(ReactServerRenderingTransaction, Transaction.Mixin);
-	mixInto(ReactServerRenderingTransaction, Mixin);
+	assign(
+	  ReactServerRenderingTransaction.prototype,
+	  Transaction.Mixin,
+	  Mixin
+	);
 
 	PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
@@ -26559,7 +19603,45 @@
 
 
 /***/ },
-/* 102 */
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule emptyFunction
+	 */
+
+	function makeEmptyFunction(arg) {
+	  return function() {
+	    return arg;
+	  };
+	}
+
+	/**
+	 * This function accepts and discards inputs; it has no side effects. This is
+	 * primarily useful idiomatically for overridable function endpoints which
+	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+	 */
+	function emptyFunction() {}
+
+	emptyFunction.thatReturns = makeEmptyFunction;
+	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+	emptyFunction.thatReturnsThis = function() { return this; };
+	emptyFunction.thatReturnsArgument = function(arg) { return arg; };
+
+	module.exports = emptyFunction;
+
+
+/***/ },
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -33720,26 +26802,19 @@
 	  }
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(158)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(162)(module), (function() { return this; }())))
 
 /***/ },
-/* 103 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule emptyObject
 	 */
@@ -33754,36 +26829,29 @@
 
 	module.exports = emptyObject;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 104 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule CallbackQueue
 	 */
 
 	"use strict";
 
-	var PooledClass = __webpack_require__(47);
+	var PooledClass = __webpack_require__(53);
 
-	var invariant = __webpack_require__(46);
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * A specialized pseudo-event module to help keep track of components waiting to
@@ -33801,7 +26869,7 @@
 	  this._contexts = null;
 	}
 
-	mixInto(CallbackQueue, {
+	assign(CallbackQueue.prototype, {
 
 	  /**
 	   * Enqueues a callback to be invoked when `notifyAll` is invoked.
@@ -33864,33 +26932,26 @@
 
 	module.exports = CallbackQueue;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 105 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule Transaction
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * `Transaction` creates a black box that is able to wrap any method such that
@@ -34115,26 +27176,19 @@
 
 	module.exports = Transaction;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 106 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule joinClasses
 	 * @typechecks static-only
@@ -34158,7 +27212,9 @@
 	  if (argLength > 1) {
 	    for (var ii = 1; ii < argLength; ii++) {
 	      nextClass = arguments[ii];
-	      nextClass && (className += ' ' + nextClass);
+	      if (nextClass) {
+	        className = (className ? className + ' ' : '') + nextClass;
+	      }
 	    }
 	  }
 	  return className;
@@ -34168,177 +27224,92 @@
 
 
 /***/ },
-/* 107 */
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule mergeHelpers
-	 *
-	 * requiresPolyfills: Array.isArray
+	 * @providesModule ReactNativeComponent
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
-	var keyMirror = __webpack_require__(51);
+	var assign = __webpack_require__(41);
+	var invariant = __webpack_require__(52);
 
-	/**
-	 * Maximum number of levels to traverse. Will catch circular structures.
-	 * @const
-	 */
-	var MAX_MERGE_DEPTH = 36;
+	var genericComponentClass = null;
+	// This registry keeps track of wrapper classes around native tags
+	var tagToComponentClass = {};
 
-	/**
-	 * We won't worry about edge cases like new String('x') or new Boolean(true).
-	 * Functions are considered terminals, and arrays are not.
-	 * @param {*} o The item/object/value to test.
-	 * @return {boolean} true iff the argument is a terminal.
-	 */
-	var isTerminal = function(o) {
-	  return typeof o !== 'object' || o === null;
+	var ReactNativeComponentInjection = {
+	  // This accepts a class that receives the tag string. This is a catch all
+	  // that can render any kind of tag.
+	  injectGenericComponentClass: function(componentClass) {
+	    genericComponentClass = componentClass;
+	  },
+	  // This accepts a keyed object with classes as values. Each key represents a
+	  // tag. That particular tag will use this class instead of the generic one.
+	  injectComponentClasses: function(componentClasses) {
+	    assign(tagToComponentClass, componentClasses);
+	  }
 	};
 
-	var mergeHelpers = {
-
-	  MAX_MERGE_DEPTH: MAX_MERGE_DEPTH,
-
-	  isTerminal: isTerminal,
-
-	  /**
-	   * Converts null/undefined values into empty object.
-	   *
-	   * @param {?Object=} arg Argument to be normalized (nullable optional)
-	   * @return {!Object}
-	   */
-	  normalizeMergeArg: function(arg) {
-	    return arg === undefined || arg === null ? {} : arg;
-	  },
-
-	  /**
-	   * If merging Arrays, a merge strategy *must* be supplied. If not, it is
-	   * likely the caller's fault. If this function is ever called with anything
-	   * but `one` and `two` being `Array`s, it is the fault of the merge utilities.
-	   *
-	   * @param {*} one Array to merge into.
-	   * @param {*} two Array to merge from.
-	   */
-	  checkMergeArrayArgs: function(one, two) {
+	/**
+	 * Create an internal class for a specific tag.
+	 *
+	 * @param {string} tag The tag for which to create an internal instance.
+	 * @param {any} props The props passed to the instance constructor.
+	 * @return {ReactComponent} component The injected empty component.
+	 */
+	function createInstanceForTag(tag, props, parentType) {
+	  var componentClass = tagToComponentClass[tag];
+	  if (componentClass == null) {
 	    ("production" !== process.env.NODE_ENV ? invariant(
-	      Array.isArray(one) && Array.isArray(two),
-	      'Tried to merge arrays, instead got %s and %s.',
-	      one,
-	      two
-	    ) : invariant(Array.isArray(one) && Array.isArray(two)));
-	  },
-
-	  /**
-	   * @param {*} one Object to merge into.
-	   * @param {*} two Object to merge from.
-	   */
-	  checkMergeObjectArgs: function(one, two) {
-	    mergeHelpers.checkMergeObjectArg(one);
-	    mergeHelpers.checkMergeObjectArg(two);
-	  },
-
-	  /**
-	   * @param {*} arg
-	   */
-	  checkMergeObjectArg: function(arg) {
+	      genericComponentClass,
+	      'There is no registered component for the tag %s',
+	      tag
+	    ) : invariant(genericComponentClass));
+	    return new genericComponentClass(tag, props);
+	  }
+	  if (parentType === tag) {
+	    // Avoid recursion
 	    ("production" !== process.env.NODE_ENV ? invariant(
-	      !isTerminal(arg) && !Array.isArray(arg),
-	      'Tried to merge an object, instead got %s.',
-	      arg
-	    ) : invariant(!isTerminal(arg) && !Array.isArray(arg)));
-	  },
+	      genericComponentClass,
+	      'There is no registered component for the tag %s',
+	      tag
+	    ) : invariant(genericComponentClass));
+	    return new genericComponentClass(tag, props);
+	  }
+	  // Unwrap legacy factories
+	  return new componentClass.type(props);
+	}
 
-	  /**
-	   * @param {*} arg
-	   */
-	  checkMergeIntoObjectArg: function(arg) {
-	    ("production" !== process.env.NODE_ENV ? invariant(
-	      (!isTerminal(arg) || typeof arg === 'function') && !Array.isArray(arg),
-	      'Tried to merge into an object, instead got %s.',
-	      arg
-	    ) : invariant((!isTerminal(arg) || typeof arg === 'function') && !Array.isArray(arg)));
-	  },
-
-	  /**
-	   * Checks that a merge was not given a circular object or an object that had
-	   * too great of depth.
-	   *
-	   * @param {number} Level of recursion to validate against maximum.
-	   */
-	  checkMergeLevel: function(level) {
-	    ("production" !== process.env.NODE_ENV ? invariant(
-	      level < MAX_MERGE_DEPTH,
-	      'Maximum deep merge depth exceeded. You may be attempting to merge ' +
-	      'circular structures in an unsupported way.'
-	    ) : invariant(level < MAX_MERGE_DEPTH));
-	  },
-
-	  /**
-	   * Checks that the supplied merge strategy is valid.
-	   *
-	   * @param {string} Array merge strategy.
-	   */
-	  checkArrayStrategy: function(strategy) {
-	    ("production" !== process.env.NODE_ENV ? invariant(
-	      strategy === undefined || strategy in mergeHelpers.ArrayStrategies,
-	      'You must provide an array strategy to deep merge functions to ' +
-	      'instruct the deep merge how to resolve merging two arrays.'
-	    ) : invariant(strategy === undefined || strategy in mergeHelpers.ArrayStrategies));
-	  },
-
-	  /**
-	   * Set of possible behaviors of merge algorithms when encountering two Arrays
-	   * that must be merged together.
-	   * - `clobber`: The left `Array` is ignored.
-	   * - `indexByIndex`: The result is achieved by recursively deep merging at
-	   *   each index. (not yet supported.)
-	   */
-	  ArrayStrategies: keyMirror({
-	    Clobber: true,
-	    IndexByIndex: true
-	  })
-
+	var ReactNativeComponent = {
+	  createInstanceForTag: createInstanceForTag,
+	  injection: ReactNativeComponentInjection
 	};
 
-	module.exports = mergeHelpers;
+	module.exports = ReactNativeComponent;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 108 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule CSSProperty
 	 */
@@ -34350,7 +27321,6 @@
 	 */
 	var isUnitlessNumber = {
 	  columnCount: true,
-	  fillOpacity: true,
 	  flex: true,
 	  flexGrow: true,
 	  flexShrink: true,
@@ -34362,7 +27332,11 @@
 	  orphans: true,
 	  widows: true,
 	  zIndex: true,
-	  zoom: true
+	  zoom: true,
+
+	  // SVG-related properties
+	  fillOpacity: true,
+	  strokeOpacity: true
 	};
 
 	/**
@@ -34449,23 +27423,62 @@
 
 
 /***/ },
-/* 109 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule camelizeStyleName
+	 * @typechecks
+	 */
+
+	"use strict";
+
+	var camelize = __webpack_require__(151);
+
+	var msPattern = /^-ms-/;
+
+	/**
+	 * Camelcases a hyphenated CSS property name, for example:
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 *   > camelizeStyleName('background-color')
+	 *   < "backgroundColor"
+	 *   > camelizeStyleName('-moz-transition')
+	 *   < "MozTransition"
+	 *   > camelizeStyleName('-ms-transition')
+	 *   < "msTransition"
+	 *
+	 * As Andi Smith suggests
+	 * (http://www.andismith.com/blog/2012/02/modernizr-prefixed/), an `-ms` prefix
+	 * is converted to lowercase `ms`.
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function camelizeStyleName(string) {
+	  return camelize(string.replace(msPattern, 'ms-'));
+	}
+
+	module.exports = camelizeStyleName;
+
+
+/***/ },
+/* 113 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule dangerousStyleValue
 	 * @typechecks static-only
@@ -34473,7 +27486,7 @@
 
 	"use strict";
 
-	var CSSProperty = __webpack_require__(108);
+	var CSSProperty = __webpack_require__(111);
 
 	var isUnitlessNumber = CSSProperty.isUnitlessNumber;
 
@@ -34518,23 +27531,16 @@
 
 
 /***/ },
-/* 110 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule hyphenateStyleName
 	 * @typechecks
@@ -34542,18 +27548,18 @@
 
 	"use strict";
 
-	var hyphenate = __webpack_require__(148);
+	var hyphenate = __webpack_require__(152);
 
 	var msPattern = /^ms-/;
 
 	/**
 	 * Hyphenates a camelcased CSS property name, for example:
 	 *
-	 *   > hyphenate('backgroundColor')
+	 *   > hyphenateStyleName('backgroundColor')
 	 *   < "background-color"
-	 *   > hyphenate('MozTransition')
+	 *   > hyphenateStyleName('MozTransition')
 	 *   < "-moz-transition"
-	 *   > hyphenate('msTransition')
+	 *   > hyphenateStyleName('msTransition')
 	 *   < "-ms-transition"
 	 *
 	 * As Modernizr suggests (http://modernizr.com/docs/#prefixed), an `ms` prefix
@@ -34570,37 +27576,28 @@
 
 
 /***/ },
-/* 111 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EventPluginHub
 	 */
 
 	"use strict";
 
-	var EventPluginRegistry = __webpack_require__(112);
-	var EventPluginUtils = __webpack_require__(20);
+	var EventPluginRegistry = __webpack_require__(116);
+	var EventPluginUtils = __webpack_require__(22);
 
-	var accumulate = __webpack_require__(149);
-	var forEachAccumulated = __webpack_require__(150);
-	var invariant = __webpack_require__(46);
-	var isEventSupported = __webpack_require__(115);
-	var monitorCodeUse = __webpack_require__(61);
+	var accumulateInto = __webpack_require__(153);
+	var forEachAccumulated = __webpack_require__(154);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Internal store for event listeners
@@ -34734,15 +27731,6 @@
 	      registrationName, typeof listener
 	    ) : invariant(!listener || typeof listener === 'function'));
 
-	    if ("production" !== process.env.NODE_ENV) {
-	      // IE8 has no API for event capturing and the `onScroll` event doesn't
-	      // bubble.
-	      if (registrationName === 'onScroll' &&
-	          !isEventSupported('scroll', true)) {
-	        monitorCodeUse('react_no_scroll_event');
-	        console.warn('This browser doesn\'t support the `onScroll` event');
-	      }
-	    }
 	    var bankForRegistrationName =
 	      listenerBank[registrationName] || (listenerBank[registrationName] = {});
 	    bankForRegistrationName[id] = listener;
@@ -34811,7 +27799,7 @@
 	          nativeEvent
 	        );
 	        if (extractedEvents) {
-	          events = accumulate(events, extractedEvents);
+	          events = accumulateInto(events, extractedEvents);
 	        }
 	      }
 	    }
@@ -34827,7 +27815,7 @@
 	   */
 	  enqueueEvents: function(events) {
 	    if (events) {
-	      eventQueue = accumulate(eventQueue, events);
+	      eventQueue = accumulateInto(eventQueue, events);
 	    }
 	  },
 
@@ -34864,26 +27852,19 @@
 
 	module.exports = EventPluginHub;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 112 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EventPluginRegistry
 	 * @typechecks static-only
@@ -34891,7 +27872,7 @@
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Injectable ordering of event plugins.
@@ -35154,33 +28135,26 @@
 
 	module.exports = EventPluginRegistry;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 113 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactEventEmitterMixin
 	 */
 
 	"use strict";
 
-	var EventPluginHub = __webpack_require__(111);
+	var EventPluginHub = __webpack_require__(115);
 
 	function runEventQueueInBatch(events) {
 	  EventPluginHub.enqueueEvents(events);
@@ -35218,30 +28192,23 @@
 
 
 /***/ },
-/* 114 */
+/* 118 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ViewportMetrics
 	 */
 
 	"use strict";
 
-	var getUnboundedScrollPosition = __webpack_require__(132);
+	var getUnboundedScrollPosition = __webpack_require__(135);
 
 	var ViewportMetrics = {
 
@@ -35261,110 +28228,27 @@
 
 
 /***/ },
-/* 115 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule isEventSupported
-	 */
-
-	"use strict";
-
-	var ExecutionEnvironment = __webpack_require__(39);
-
-	var useHasFeature;
-	if (ExecutionEnvironment.canUseDOM) {
-	  useHasFeature =
-	    document.implementation &&
-	    document.implementation.hasFeature &&
-	    // always returns true in newer browsers as per the standard.
-	    // @see http://dom.spec.whatwg.org/#dom-domimplementation-hasfeature
-	    document.implementation.hasFeature('', '') !== true;
-	}
-
-	/**
-	 * Checks if an event is supported in the current execution environment.
-	 *
-	 * NOTE: This will not work correctly for non-generic events such as `change`,
-	 * `reset`, `load`, `error`, and `select`.
-	 *
-	 * Borrows from Modernizr.
-	 *
-	 * @param {string} eventNameSuffix Event name, e.g. "click".
-	 * @param {?boolean} capture Check if the capture phase is supported.
-	 * @return {boolean} True if the event is supported.
-	 * @internal
-	 * @license Modernizr 3.0.0pre (Custom Build) | MIT
-	 */
-	function isEventSupported(eventNameSuffix, capture) {
-	  if (!ExecutionEnvironment.canUseDOM ||
-	      capture && !('addEventListener' in document)) {
-	    return false;
-	  }
-
-	  var eventName = 'on' + eventNameSuffix;
-	  var isSupported = eventName in document;
-
-	  if (!isSupported) {
-	    var element = document.createElement('div');
-	    element.setAttribute(eventName, 'return;');
-	    isSupported = typeof element[eventName] === 'function';
-	  }
-
-	  if (!isSupported && useHasFeature && eventNameSuffix === 'wheel') {
-	    // This is the only way to test support for the `wheel` event in IE9+.
-	    isSupported = document.implementation.hasFeature('Events.wheel', '3.0');
-	  }
-
-	  return isSupported;
-	}
-
-	module.exports = isEventSupported;
-
-
-/***/ },
-/* 116 */
+/* 119 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule EventPropagators
 	 */
 
 	"use strict";
 
-	var EventConstants = __webpack_require__(45);
-	var EventPluginHub = __webpack_require__(111);
+	var EventConstants = __webpack_require__(51);
+	var EventPluginHub = __webpack_require__(115);
 
-	var accumulate = __webpack_require__(149);
-	var forEachAccumulated = __webpack_require__(150);
+	var accumulateInto = __webpack_require__(153);
+	var forEachAccumulated = __webpack_require__(154);
 
 	var PropagationPhases = EventConstants.PropagationPhases;
 	var getListener = EventPluginHub.getListener;
@@ -35394,8 +28278,9 @@
 	  var phase = upwards ? PropagationPhases.bubbled : PropagationPhases.captured;
 	  var listener = listenerAtPhase(domID, event, phase);
 	  if (listener) {
-	    event._dispatchListeners = accumulate(event._dispatchListeners, listener);
-	    event._dispatchIDs = accumulate(event._dispatchIDs, domID);
+	    event._dispatchListeners =
+	      accumulateInto(event._dispatchListeners, listener);
+	    event._dispatchIDs = accumulateInto(event._dispatchIDs, domID);
 	  }
 	}
 
@@ -35427,8 +28312,9 @@
 	    var registrationName = event.dispatchConfig.registrationName;
 	    var listener = getListener(id, registrationName);
 	    if (listener) {
-	      event._dispatchListeners = accumulate(event._dispatchListeners, listener);
-	      event._dispatchIDs = accumulate(event._dispatchIDs, id);
+	      event._dispatchListeners =
+	        accumulateInto(event._dispatchListeners, listener);
+	      event._dispatchIDs = accumulateInto(event._dispatchIDs, id);
 	    }
 	  }
 	}
@@ -35484,26 +28370,19 @@
 
 	module.exports = EventPropagators;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 117 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Copyright 2013 Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticInputEvent
 	 * @typechecks static-only
@@ -35511,7 +28390,7 @@
 
 	"use strict";
 
-	var SyntheticEvent = __webpack_require__(118);
+	var SyntheticEvent = __webpack_require__(121);
 
 	/**
 	 * @interface Event
@@ -35545,23 +28424,16 @@
 
 
 /***/ },
-/* 118 */
+/* 121 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticEvent
 	 * @typechecks static-only
@@ -35569,12 +28441,11 @@
 
 	"use strict";
 
-	var PooledClass = __webpack_require__(47);
+	var PooledClass = __webpack_require__(53);
 
-	var emptyFunction = __webpack_require__(99);
-	var getEventTarget = __webpack_require__(131);
-	var merge = __webpack_require__(52);
-	var mergeInto = __webpack_require__(64);
+	var assign = __webpack_require__(41);
+	var emptyFunction = __webpack_require__(104);
+	var getEventTarget = __webpack_require__(134);
 
 	/**
 	 * @interface Event
@@ -35641,7 +28512,7 @@
 	  this.isPropagationStopped = emptyFunction.thatReturnsFalse;
 	}
 
-	mergeInto(SyntheticEvent.prototype, {
+	assign(SyntheticEvent.prototype, {
 
 	  preventDefault: function() {
 	    this.defaultPrevented = true;
@@ -35699,11 +28570,11 @@
 	  var Super = this;
 
 	  var prototype = Object.create(Super.prototype);
-	  mergeInto(prototype, Class.prototype);
+	  assign(prototype, Class.prototype);
 	  Class.prototype = prototype;
 	  Class.prototype.constructor = Class;
 
-	  Class.Interface = merge(Super.Interface, Interface);
+	  Class.Interface = assign({}, Super.Interface, Interface);
 	  Class.augmentClass = Super.augmentClass;
 
 	  PooledClass.addPoolingTo(Class, PooledClass.threeArgumentPooler);
@@ -35715,23 +28586,16 @@
 
 
 /***/ },
-/* 119 */
+/* 122 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule isTextInputElement
 	 */
@@ -35770,34 +28634,27 @@
 
 
 /***/ },
-/* 120 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactInputSelection
 	 */
 
 	"use strict";
 
-	var ReactDOMSelection = __webpack_require__(151);
+	var ReactDOMSelection = __webpack_require__(155);
 
-	var containsNode = __webpack_require__(95);
-	var focusNode = __webpack_require__(152);
-	var getActiveElement = __webpack_require__(133);
+	var containsNode = __webpack_require__(98);
+	var focusNode = __webpack_require__(156);
+	var getActiveElement = __webpack_require__(136);
 
 	function isInDocument(node) {
 	  return containsNode(document.documentElement, node);
@@ -35917,23 +28774,16 @@
 
 
 /***/ },
-/* 121 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticCompositionEvent
 	 * @typechecks static-only
@@ -35941,7 +28791,7 @@
 
 	"use strict";
 
-	var SyntheticEvent = __webpack_require__(118);
+	var SyntheticEvent = __webpack_require__(121);
 
 	/**
 	 * @interface Event
@@ -35974,30 +28824,23 @@
 
 
 /***/ },
-/* 122 */
+/* 125 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getTextContentAccessor
 	 */
 
 	"use strict";
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
 
 	var contentKey = null;
 
@@ -36022,23 +28865,16 @@
 
 
 /***/ },
-/* 123 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticMouseEvent
 	 * @typechecks static-only
@@ -36046,10 +28882,10 @@
 
 	"use strict";
 
-	var SyntheticUIEvent = __webpack_require__(140);
-	var ViewportMetrics = __webpack_require__(114);
+	var SyntheticUIEvent = __webpack_require__(143);
+	var ViewportMetrics = __webpack_require__(118);
 
-	var getEventModifierState = __webpack_require__(153);
+	var getEventModifierState = __webpack_require__(157);
 
 	/**
 	 * @interface MouseEvent
@@ -36116,23 +28952,16 @@
 
 
 /***/ },
-/* 124 */
+/* 127 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMIDOperations
 	 * @typechecks static-only
@@ -36142,14 +28971,14 @@
 
 	"use strict";
 
-	var CSSPropertyOperations = __webpack_require__(65);
-	var DOMChildrenOperations = __webpack_require__(154);
-	var DOMPropertyOperations = __webpack_require__(19);
-	var ReactMount = __webpack_require__(31);
-	var ReactPerf = __webpack_require__(33);
+	var CSSPropertyOperations = __webpack_require__(68);
+	var DOMChildrenOperations = __webpack_require__(158);
+	var DOMPropertyOperations = __webpack_require__(21);
+	var ReactMount = __webpack_require__(35);
+	var ReactPerf = __webpack_require__(37);
 
-	var invariant = __webpack_require__(46);
-	var setInnerHTML = __webpack_require__(126);
+	var invariant = __webpack_require__(52);
+	var setInnerHTML = __webpack_require__(129);
 
 	/**
 	 * Errors for properties that should not be updated with `updatePropertyById()`.
@@ -36309,26 +29138,19 @@
 
 	module.exports = ReactDOMIDOperations;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 125 */
+/* 128 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactReconcileTransaction
 	 * @typechecks static-only
@@ -36336,14 +29158,14 @@
 
 	"use strict";
 
-	var CallbackQueue = __webpack_require__(104);
-	var PooledClass = __webpack_require__(47);
-	var ReactBrowserEventEmitter = __webpack_require__(67);
-	var ReactInputSelection = __webpack_require__(120);
-	var ReactPutListenerQueue = __webpack_require__(147);
-	var Transaction = __webpack_require__(105);
+	var CallbackQueue = __webpack_require__(107);
+	var PooledClass = __webpack_require__(53);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
+	var ReactInputSelection = __webpack_require__(123);
+	var ReactPutListenerQueue = __webpack_require__(150);
+	var Transaction = __webpack_require__(108);
 
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
 
 	/**
 	 * Ensures that, when possible, the selection range (currently selected text
@@ -36491,8 +29313,7 @@
 	};
 
 
-	mixInto(ReactReconcileTransaction, Transaction.Mixin);
-	mixInto(ReactReconcileTransaction, Mixin);
+	assign(ReactReconcileTransaction.prototype, Transaction.Mixin, Mixin);
 
 	PooledClass.addPoolingTo(ReactReconcileTransaction);
 
@@ -36500,30 +29321,26 @@
 
 
 /***/ },
-/* 126 */
+/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule setInnerHTML
 	 */
 
 	"use strict";
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
+
+	var WHITESPACE_TEST = /^[ \r\n\t\f]/;
+	var NONVISIBLE_TEST = /<(!--|link|noscript|meta|script|style)[ \r\n\t\f\/>]/;
 
 	/**
 	 * Set the innerHTML property of a node, ensuring that whitespace is preserved
@@ -36561,13 +29378,8 @@
 	      // thin air on IE8, this only happens if there is no visible text
 	      // in-front of the non-visible tags. Piggyback on the whitespace fix
 	      // and simply check if any non-visible tags appear in the source.
-	      if (html.match(/^[ \r\n\t\f]/) ||
-	          html[0] === '<' && (
-	            html.indexOf('<noscript') !== -1 ||
-	            html.indexOf('<script') !== -1 ||
-	            html.indexOf('<style') !== -1 ||
-	            html.indexOf('<meta') !== -1 ||
-	            html.indexOf('<link') !== -1)) {
+	      if (WHITESPACE_TEST.test(html) ||
+	          html[0] === '<' && NONVISIBLE_TEST.test(html)) {
 	        // Recover leading whitespace by temporarily prepending any character.
 	        // \uFEFF has the potential advantage of being zero-width/invisible.
 	        node.innerHTML = '\uFEFF' + html;
@@ -36591,23 +29403,16 @@
 
 
 /***/ },
-/* 127 */
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule AutoFocusMixin
 	 * @typechecks static-only
@@ -36615,7 +29420,7 @@
 
 	"use strict";
 
-	var focusNode = __webpack_require__(152);
+	var focusNode = __webpack_require__(156);
 
 	var AutoFocusMixin = {
 	  componentDidMount: function() {
@@ -36629,34 +29434,27 @@
 
 
 /***/ },
-/* 128 */
+/* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule LocalEventTrapMixin
 	 */
 
 	"use strict";
 
-	var ReactBrowserEventEmitter = __webpack_require__(67);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
 
-	var accumulate = __webpack_require__(149);
-	var forEachAccumulated = __webpack_require__(150);
-	var invariant = __webpack_require__(46);
+	var accumulateInto = __webpack_require__(153);
+	var forEachAccumulated = __webpack_require__(154);
+	var invariant = __webpack_require__(52);
 
 	function remove(event) {
 	  event.remove();
@@ -36670,7 +29468,8 @@
 	      handlerBaseName,
 	      this.getDOMNode()
 	    );
-	    this._localEventListeners = accumulate(this._localEventListeners, listener);
+	    this._localEventListeners =
+	      accumulateInto(this._localEventListeners, listener);
 	  },
 
 	  // trapCapturedEvent would look nearly identical. We don't implement that
@@ -36685,26 +29484,19 @@
 
 	module.exports = LocalEventTrapMixin;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 129 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule LinkedValueUtils
 	 * @typechecks static-only
@@ -36712,9 +29504,9 @@
 
 	"use strict";
 
-	var ReactPropTypes = __webpack_require__(34);
+	var ReactPropTypes = __webpack_require__(38);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	var hasReadOnlyValue = {
 	  'button': true,
@@ -36851,18 +29643,32 @@
 
 	module.exports = LinkedValueUtils;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 130 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014 Facebook, Inc.
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 *
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS,
+	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 * See the License for the specific language governing permissions and
+	 * limitations under the License.
+	 *
 	 * @providesModule EventListener
 	 * @typechecks
 	 */
 
-	var emptyFunction = __webpack_require__(99);
+	var emptyFunction = __webpack_require__(104);
 
 	/**
 	 * Upstream version of event listener. Does not take into account specific
@@ -36930,26 +29736,19 @@
 
 	module.exports = EventListener;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 131 */
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getEventTarget
 	 * @typechecks static-only
@@ -36975,23 +29774,16 @@
 
 
 /***/ },
-/* 132 */
+/* 135 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getUnboundedScrollPosition
 	 * @typechecks
@@ -37026,23 +29818,16 @@
 
 
 /***/ },
-/* 133 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getActiveElement
 	 * @typechecks
@@ -37066,23 +29851,16 @@
 
 
 /***/ },
-/* 134 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule shallowEqual
 	 */
@@ -37108,7 +29886,7 @@
 	      return false;
 	    }
 	  }
-	  // Test for B'a keys missing from A.
+	  // Test for B's keys missing from A.
 	  for (key in objB) {
 	    if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
 	      return false;
@@ -37121,23 +29899,16 @@
 
 
 /***/ },
-/* 135 */
+/* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticClipboardEvent
 	 * @typechecks static-only
@@ -37145,7 +29916,7 @@
 
 	"use strict";
 
-	var SyntheticEvent = __webpack_require__(118);
+	var SyntheticEvent = __webpack_require__(121);
 
 	/**
 	 * @interface Event
@@ -37178,23 +29949,16 @@
 
 
 /***/ },
-/* 136 */
+/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticFocusEvent
 	 * @typechecks static-only
@@ -37202,7 +29966,7 @@
 
 	"use strict";
 
-	var SyntheticUIEvent = __webpack_require__(140);
+	var SyntheticUIEvent = __webpack_require__(143);
 
 	/**
 	 * @interface FocusEvent
@@ -37228,23 +29992,16 @@
 
 
 /***/ },
-/* 137 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticKeyboardEvent
 	 * @typechecks static-only
@@ -37252,10 +30009,11 @@
 
 	"use strict";
 
-	var SyntheticUIEvent = __webpack_require__(140);
+	var SyntheticUIEvent = __webpack_require__(143);
 
-	var getEventKey = __webpack_require__(155);
-	var getEventModifierState = __webpack_require__(153);
+	var getEventCharCode = __webpack_require__(145);
+	var getEventKey = __webpack_require__(159);
+	var getEventModifierState = __webpack_require__(157);
 
 	/**
 	 * @interface KeyboardEvent
@@ -37276,11 +30034,10 @@
 	    // `charCode` is the result of a KeyPress event and represents the value of
 	    // the actual printable character.
 
-	    // KeyPress is deprecated but its replacement is not yet final and not
-	    // implemented in any major browser.
+	    // KeyPress is deprecated, but its replacement is not yet final and not
+	    // implemented in any major browser. Only KeyPress has charCode.
 	    if (event.type === 'keypress') {
-	      // IE8 does not implement "charCode", but "keyCode" has the correct value.
-	      return 'charCode' in event ? event.charCode : event.keyCode;
+	      return getEventCharCode(event);
 	    }
 	    return 0;
 	  },
@@ -37299,9 +30056,14 @@
 	  },
 	  which: function(event) {
 	    // `which` is an alias for either `keyCode` or `charCode` depending on the
-	    // type of the event. There is no need to determine the type of the event
-	    // as `keyCode` and `charCode` are either aliased or default to zero.
-	    return event.keyCode || event.charCode;
+	    // type of the event.
+	    if (event.type === 'keypress') {
+	      return getEventCharCode(event);
+	    }
+	    if (event.type === 'keydown' || event.type === 'keyup') {
+	      return event.keyCode;
+	    }
+	    return 0;
 	  }
 	};
 
@@ -37321,23 +30083,16 @@
 
 
 /***/ },
-/* 138 */
+/* 141 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticDragEvent
 	 * @typechecks static-only
@@ -37345,7 +30100,7 @@
 
 	"use strict";
 
-	var SyntheticMouseEvent = __webpack_require__(123);
+	var SyntheticMouseEvent = __webpack_require__(126);
 
 	/**
 	 * @interface DragEvent
@@ -37371,23 +30126,16 @@
 
 
 /***/ },
-/* 139 */
+/* 142 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticTouchEvent
 	 * @typechecks static-only
@@ -37395,9 +30143,9 @@
 
 	"use strict";
 
-	var SyntheticUIEvent = __webpack_require__(140);
+	var SyntheticUIEvent = __webpack_require__(143);
 
-	var getEventModifierState = __webpack_require__(153);
+	var getEventModifierState = __webpack_require__(157);
 
 	/**
 	 * @interface TouchEvent
@@ -37430,23 +30178,16 @@
 
 
 /***/ },
-/* 140 */
+/* 143 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticUIEvent
 	 * @typechecks static-only
@@ -37454,9 +30195,9 @@
 
 	"use strict";
 
-	var SyntheticEvent = __webpack_require__(118);
+	var SyntheticEvent = __webpack_require__(121);
 
-	var getEventTarget = __webpack_require__(131);
+	var getEventTarget = __webpack_require__(134);
 
 	/**
 	 * @interface UIEvent
@@ -37503,23 +30244,16 @@
 
 
 /***/ },
-/* 141 */
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule SyntheticWheelEvent
 	 * @typechecks static-only
@@ -37527,7 +30261,7 @@
 
 	"use strict";
 
-	var SyntheticMouseEvent = __webpack_require__(123);
+	var SyntheticMouseEvent = __webpack_require__(126);
 
 	/**
 	 * @interface WheelEvent
@@ -37575,28 +30309,77 @@
 
 
 /***/ },
-/* 142 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule getEventCharCode
+	 * @typechecks static-only
+	 */
+
+	"use strict";
+
+	/**
+	 * `charCode` represents the actual "character code" and is safe to use with
+	 * `String.fromCharCode`. As such, only keys that correspond to printable
+	 * characters produce a valid `charCode`, the only exception to this is Enter.
+	 * The Tab-key is considered non-printable and does not have a `charCode`,
+	 * presumably because it does not produce a tab-character in browsers.
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * @param {object} nativeEvent Native browser event.
+	 * @return {string} Normalized `charCode` property.
+	 */
+	function getEventCharCode(nativeEvent) {
+	  var charCode;
+	  var keyCode = nativeEvent.keyCode;
+
+	  if ('charCode' in nativeEvent) {
+	    charCode = nativeEvent.charCode;
+
+	    // FF does not set `charCode` for the Enter-key, check against `keyCode`.
+	    if (charCode === 0 && keyCode === 13) {
+	      charCode = 13;
+	    }
+	  } else {
+	    // IE8 does not implement `charCode`, but `keyCode` has the correct value.
+	    charCode = keyCode;
+	  }
+
+	  // Some non-printable keys are reported in `charCode`/`keyCode`, discard them.
+	  // Must not discard the (non-)printable Enter-key.
+	  if (charCode >= 32 || charCode === 13) {
+	    return charCode;
+	  }
+
+	  return 0;
+	}
+
+	module.exports = getEventCharCode;
+
+
+/***/ },
+/* 146 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDefaultPerfAnalysis
 	 */
 
-	var merge = __webpack_require__(52);
+	var assign = __webpack_require__(41);
 
 	// Don't try to save users less than 1.2ms (a number I made up)
 	var DONT_CARE_THRESHOLD = 1.2;
@@ -37651,7 +30434,11 @@
 
 	  for (var i = 0; i < measurements.length; i++) {
 	    var measurement = measurements[i];
-	    var allIDs = merge(measurement.exclusive, measurement.inclusive);
+	    var allIDs = assign(
+	      {},
+	      measurement.exclusive,
+	      measurement.inclusive
+	    );
 
 	    for (var id in allIDs) {
 	      displayName = measurement.displayNames[id].current;
@@ -37699,7 +30486,11 @@
 
 	  for (var i = 0; i < measurements.length; i++) {
 	    var measurement = measurements[i];
-	    var allIDs = merge(measurement.exclusive, measurement.inclusive);
+	    var allIDs = assign(
+	      {},
+	      measurement.exclusive,
+	      measurement.inclusive
+	    );
 	    var cleanComponents;
 
 	    if (onlyClean) {
@@ -37754,11 +30545,11 @@
 	  // the amount of time it took to render the entire subtree.
 	  var cleanComponents = {};
 	  var dirtyLeafIDs = Object.keys(measurement.writes);
-	  var allIDs = merge(measurement.exclusive, measurement.inclusive);
+	  var allIDs = assign({}, measurement.exclusive, measurement.inclusive);
 
 	  for (var id in allIDs) {
 	    var isDirty = false;
-	    // For each component that rendered, see if a component that triggerd
+	    // For each component that rendered, see if a component that triggered
 	    // a DOM op is in its subtree.
 	    for (var i = 0; i < dirtyLeafIDs.length; i++) {
 	      if (dirtyLeafIDs[i].indexOf(id) === 0) {
@@ -37784,29 +30575,22 @@
 
 
 /***/ },
-/* 143 */
+/* 147 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule performanceNow
 	 * @typechecks
 	 */
 
-	var performance = __webpack_require__(156);
+	var performance = __webpack_require__(161);
 
 	/**
 	 * Detect if we can use `window.performance.now()` and gracefully fallback to
@@ -37823,29 +30607,22 @@
 
 
 /***/ },
-/* 144 */
+/* 148 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule isTextNode
 	 * @typechecks
 	 */
 
-	var isNode = __webpack_require__(157);
+	var isNode = __webpack_require__(160);
 
 	/**
 	 * @param {*} object The object to check.
@@ -37859,84 +30636,16 @@
 
 
 /***/ },
-/* 145 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule copyProperties
-	 */
-
-	/**
-	 * Copy properties from one or more objects (up to 5) into the first object.
-	 * This is a shallow copy. It mutates the first object and also returns it.
-	 *
-	 * NOTE: `arguments` has a very significant performance penalty, which is why
-	 * we don't support unlimited arguments.
-	 */
-	function copyProperties(obj, a, b, c, d, e, f) {
-	  obj = obj || {};
-
-	  if ("production" !== process.env.NODE_ENV) {
-	    if (f) {
-	      throw new Error('Too many arguments passed to copyProperties');
-	    }
-	  }
-
-	  var args = [a, b, c, d, e];
-	  var ii = 0, v;
-	  while (args[ii]) {
-	    v = args[ii++];
-	    for (var k in v) {
-	      obj[k] = v[k];
-	    }
-
-	    // IE ignores toString in object iteration.. See:
-	    // webreflection.blogspot.com/2007/07/quick-fix-internet-explorer-and.html
-	    if (v.hasOwnProperty && v.hasOwnProperty('toString') &&
-	        (typeof v.toString != 'undefined') && (obj.toString !== v.toString)) {
-	      obj.toString = v.toString;
-	    }
-	  }
-
-	  return obj;
-	}
-
-	module.exports = copyProperties;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
-
-/***/ },
-/* 146 */
+/* 149 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule adler32
 	 */
@@ -37949,7 +30658,7 @@
 
 	// This is a clean-room implementation of adler32 designed for detecting
 	// if markup is not what we expect it to be. It does not need to be
-	// cryptographically strong, only reasonable good at detecting if markup
+	// cryptographically strong, only reasonably good at detecting if markup
 	// generated on the server is different than that on the client.
 	function adler32(data) {
 	  var a = 1;
@@ -37965,39 +30674,32 @@
 
 
 /***/ },
-/* 147 */
+/* 150 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactPutListenerQueue
 	 */
 
 	"use strict";
 
-	var PooledClass = __webpack_require__(47);
-	var ReactBrowserEventEmitter = __webpack_require__(67);
+	var PooledClass = __webpack_require__(53);
+	var ReactBrowserEventEmitter = __webpack_require__(70);
 
-	var mixInto = __webpack_require__(60);
+	var assign = __webpack_require__(41);
 
 	function ReactPutListenerQueue() {
 	  this.listenersToPut = [];
 	}
 
-	mixInto(ReactPutListenerQueue, {
+	assign(ReactPutListenerQueue.prototype, {
 	  enqueuePutListener: function(rootNodeID, propKey, propValue) {
 	    this.listenersToPut.push({
 	      rootNodeID: rootNodeID,
@@ -38032,23 +30734,52 @@
 
 
 /***/ },
-/* 148 */
+/* 151 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * @providesModule camelize
+	 * @typechecks
+	 */
+
+	var _hyphenPattern = /-(.)/g;
+
+	/**
+	 * Camelcases a hyphenated string, for example:
 	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 *   > camelize('background-color')
+	 *   < "backgroundColor"
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function camelize(string) {
+	  return string.replace(_hyphenPattern, function(_, character) {
+	    return character.toUpperCase();
+	  });
+	}
+
+	module.exports = camelize;
+
+
+/***/ },
+/* 152 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule hyphenate
 	 * @typechecks
@@ -38076,84 +30807,85 @@
 
 
 /***/ },
-/* 149 */
+/* 153 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule accumulate
+	 * @providesModule accumulateInto
 	 */
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
-	 * Accumulates items that must not be null or undefined.
 	 *
-	 * This is used to conserve memory by avoiding array allocations.
+	 * Accumulates items that must not be null or undefined into the first one. This
+	 * is used to conserve memory by avoiding array allocations, and thus sacrifices
+	 * API cleanness. Since `current` can be null before being passed in and not
+	 * null after this function, make sure to assign it back to `current`:
+	 *
+	 * `a = accumulateInto(a, b);`
+	 *
+	 * This API should be sparingly used. Try `accumulate` for something cleaner.
 	 *
 	 * @return {*|array<*>} An accumulation of items.
 	 */
-	function accumulate(current, next) {
+
+	function accumulateInto(current, next) {
 	  ("production" !== process.env.NODE_ENV ? invariant(
 	    next != null,
-	    'accumulate(...): Accumulated items must be not be null or undefined.'
+	    'accumulateInto(...): Accumulated items must not be null or undefined.'
 	  ) : invariant(next != null));
 	  if (current == null) {
 	    return next;
-	  } else {
-	    // Both are not empty. Warning: Never call x.concat(y) when you are not
-	    // certain that x is an Array (x could be a string with concat method).
-	    var currentIsArray = Array.isArray(current);
-	    var nextIsArray = Array.isArray(next);
-	    if (currentIsArray) {
-	      return current.concat(next);
-	    } else {
-	      if (nextIsArray) {
-	        return [current].concat(next);
-	      } else {
-	        return [current, next];
-	      }
-	    }
 	  }
+
+	  // Both are not empty. Warning: Never call x.concat(y) when you are not
+	  // certain that x is an Array (x could be a string with concat method).
+	  var currentIsArray = Array.isArray(current);
+	  var nextIsArray = Array.isArray(next);
+
+	  if (currentIsArray && nextIsArray) {
+	    current.push.apply(current, next);
+	    return current;
+	  }
+
+	  if (currentIsArray) {
+	    current.push(next);
+	    return current;
+	  }
+
+	  if (nextIsArray) {
+	    // A bit too dangerous to mutate `next`.
+	    return [current].concat(next);
+	  }
+
+	  return [current, next];
 	}
 
-	module.exports = accumulate;
+	module.exports = accumulateInto;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 150 */
+/* 154 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule forEachAccumulated
 	 */
@@ -38179,33 +30911,26 @@
 
 
 /***/ },
-/* 151 */
+/* 155 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule ReactDOMSelection
 	 */
 
 	"use strict";
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
 
-	var getNodeForCharacterOffset = __webpack_require__(159);
-	var getTextContentAccessor = __webpack_require__(122);
+	var getNodeForCharacterOffset = __webpack_require__(163);
+	var getTextContentAccessor = __webpack_require__(125);
 
 	/**
 	 * While `isCollapsed` is available on the Selection object and `collapsed`
@@ -38254,9 +30979,9 @@
 	 * @return {?object}
 	 */
 	function getModernOffsets(node) {
-	  var selection = window.getSelection();
+	  var selection = window.getSelection && window.getSelection();
 
-	  if (selection.rangeCount === 0) {
+	  if (!selection || selection.rangeCount === 0) {
 	    return null;
 	  }
 
@@ -38298,7 +31023,6 @@
 	  detectionRange.setStart(anchorNode, anchorOffset);
 	  detectionRange.setEnd(focusNode, focusOffset);
 	  var isBackward = detectionRange.collapsed;
-	  detectionRange.detach();
 
 	  return {
 	    start: isBackward ? end : start,
@@ -38345,8 +31069,11 @@
 	 * @param {object} offsets
 	 */
 	function setModernOffsets(node, offsets) {
-	  var selection = window.getSelection();
+	  if (!window.getSelection) {
+	    return;
+	  }
 
+	  var selection = window.getSelection();
 	  var length = node[getTextContentAccessor()].length;
 	  var start = Math.min(offsets.start, length);
 	  var end = typeof offsets.end === 'undefined' ?
@@ -38375,8 +31102,6 @@
 	      range.setEnd(endMarker.node, endMarker.offset);
 	      selection.addRange(range);
 	    }
-
-	    range.detach();
 	  }
 	}
 
@@ -38399,23 +31124,16 @@
 
 
 /***/ },
-/* 152 */
+/* 156 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule focusNode
 	 */
@@ -38423,14 +31141,15 @@
 	"use strict";
 
 	/**
-	 * IE8 throws if an input/textarea is disabled and we try to focus it.
-	 * Focus only when necessary.
-	 *
 	 * @param {DOMElement} node input/textarea to focus
 	 */
 	function focusNode(node) {
-	  if (!node.disabled) {
+	  // IE8 can throw "Can't move focus to the control because it is invisible,
+	  // not enabled, or of a type that does not accept the focus." for all kinds of
+	  // reasons that are too expensive and fragile to test.
+	  try {
 	    node.focus();
+	  } catch(e) {
 	  }
 	}
 
@@ -38438,23 +31157,16 @@
 
 
 /***/ },
-/* 153 */
+/* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Copyright 2013 Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getEventModifierState
 	 * @typechecks static-only
@@ -38496,23 +31208,16 @@
 
 
 /***/ },
-/* 154 */
+/* 158 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule DOMChildrenOperations
 	 * @typechecks static-only
@@ -38520,11 +31225,11 @@
 
 	"use strict";
 
-	var Danger = __webpack_require__(160);
-	var ReactMultiChildUpdateTypes = __webpack_require__(97);
+	var Danger = __webpack_require__(164);
+	var ReactMultiChildUpdateTypes = __webpack_require__(100);
 
-	var getTextContentAccessor = __webpack_require__(122);
-	var invariant = __webpack_require__(46);
+	var getTextContentAccessor = __webpack_require__(125);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * The DOM property to use when setting text content.
@@ -38620,9 +31325,9 @@
 	          'processUpdates(): Unable to find child %s of element. This ' +
 	          'probably means the DOM was unexpectedly mutated (e.g., by the ' +
 	          'browser), usually due to forgetting a <tbody> when using tables, ' +
-	          'nesting <p> or <a> tags, or using non-SVG elements in an <svg> '+
-	          'parent. Try inspecting the child nodes of the element with React ' +
-	          'ID `%s`.',
+	          'nesting tags like <form>, <p>, or <a>, or using non-SVG elements '+
+	          'in an <svg> parent. Try inspecting the child nodes of the element ' +
+	          'with React ID `%s`.',
 	          updatedIndex,
 	          parentID
 	        ) : invariant(updatedChild));
@@ -38678,26 +31383,19 @@
 
 	module.exports = DOMChildrenOperations;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 155 */
+/* 159 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getEventKey
 	 * @typechecks static-only
@@ -38705,7 +31403,7 @@
 
 	"use strict";
 
-	var invariant = __webpack_require__(46);
+	var getEventCharCode = __webpack_require__(145);
 
 	/**
 	 * Normalization of deprecated HTML5 `key` values
@@ -38727,7 +31425,7 @@
 	};
 
 	/**
-	 * Translation from legacy `which`/`keyCode` to HTML5 `key`
+	 * Translation from legacy `keyCode` to HTML5 `key`
 	 * Only special keys supported, all others depend on keyboard layout or browser
 	 * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent#Key_names
 	 */
@@ -38779,11 +31477,7 @@
 
 	  // Browser does not implement `key`, polyfill as much of it as we can.
 	  if (nativeEvent.type === 'keypress') {
-	    // Create the character from the `charCode` ourselves and use as an almost
-	    // perfect replacement.
-	    var charCode = 'charCode' in nativeEvent ?
-	      nativeEvent.charCode :
-	      nativeEvent.keyCode;
+	    var charCode = getEventCharCode(nativeEvent);
 
 	    // The enter-key is technically both printable and non-printable and can
 	    // thus be captured by `keypress`, no other non-printable key should.
@@ -38794,71 +31488,23 @@
 	    // `keyCode` value, almost all function keys have a universal value.
 	    return translateToKey[nativeEvent.keyCode] || 'Unidentified';
 	  }
-
-	  ("production" !== process.env.NODE_ENV ? invariant(false, "Unexpected keyboard event type: %s", nativeEvent.type) : invariant(false));
+	  return '';
 	}
 
 	module.exports = getEventKey;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
-
-/***/ },
-/* 156 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014 Facebook, Inc.
-	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 *
-	 * @providesModule performance
-	 * @typechecks
-	 */
-
-	"use strict";
-
-	var ExecutionEnvironment = __webpack_require__(39);
-
-	var performance;
-
-	if (ExecutionEnvironment.canUseDOM) {
-	  performance =
-	    window.performance ||
-	    window.msPerformance ||
-	    window.webkitPerformance;
-	}
-
-	module.exports = performance || {};
 
 
 /***/ },
-/* 157 */
+/* 160 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule isNode
 	 * @typechecks
@@ -38881,7 +31527,39 @@
 
 
 /***/ },
-/* 158 */
+/* 161 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule performance
+	 * @typechecks
+	 */
+
+	"use strict";
+
+	var ExecutionEnvironment = __webpack_require__(44);
+
+	var performance;
+
+	if (ExecutionEnvironment.canUseDOM) {
+	  performance =
+	    window.performance ||
+	    window.msPerformance ||
+	    window.webkitPerformance;
+	}
+
+	module.exports = performance || {};
+
+
+/***/ },
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = function(module) {
@@ -38897,23 +31575,16 @@
 
 
 /***/ },
-/* 159 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getNodeForCharacterOffset
 	 */
@@ -38983,23 +31654,16 @@
 
 
 /***/ },
-/* 160 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule Danger
 	 * @typechecks static-only
@@ -39009,12 +31673,12 @@
 
 	"use strict";
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
 
-	var createNodesFromMarkup = __webpack_require__(161);
-	var emptyFunction = __webpack_require__(99);
-	var getMarkupWrap = __webpack_require__(162);
-	var invariant = __webpack_require__(46);
+	var createNodesFromMarkup = __webpack_require__(165);
+	var emptyFunction = __webpack_require__(104);
+	var getMarkupWrap = __webpack_require__(166);
+	var invariant = __webpack_require__(52);
 
 	var OPEN_TAG_NAME_EXP = /^(<[^ \/>]+)/;
 	var RESULT_INDEX_ATTR = 'data-danger-index';
@@ -39048,9 +31712,10 @@
 	  dangerouslyRenderMarkup: function(markupList) {
 	    ("production" !== process.env.NODE_ENV ? invariant(
 	      ExecutionEnvironment.canUseDOM,
-	      'dangerouslyRenderMarkup(...): Cannot render markup in a Worker ' +
-	      'thread. This is likely a bug in the framework. Please report ' +
-	      'immediately.'
+	      'dangerouslyRenderMarkup(...): Cannot render markup in a worker ' +
+	      'thread. Make sure `window` and `document` are available globally ' +
+	      'before requiring React when unit testing or use ' +
+	      'React.renderToString for server rendering.'
 	    ) : invariant(ExecutionEnvironment.canUseDOM));
 	    var nodeName;
 	    var markupByNodeName = {};
@@ -39154,8 +31819,9 @@
 	    ("production" !== process.env.NODE_ENV ? invariant(
 	      ExecutionEnvironment.canUseDOM,
 	      'dangerouslyReplaceNodeWithMarkup(...): Cannot render markup in a ' +
-	      'worker thread. This is likely a bug in the framework. Please report ' +
-	      'immediately.'
+	      'worker thread. Make sure `window` and `document` are available ' +
+	      'globally before requiring React when unit testing or use ' +
+	      'React.renderToString for server rendering.'
 	    ) : invariant(ExecutionEnvironment.canUseDOM));
 	    ("production" !== process.env.NODE_ENV ? invariant(markup, 'dangerouslyReplaceNodeWithMarkup(...): Missing markup.') : invariant(markup));
 	    ("production" !== process.env.NODE_ENV ? invariant(
@@ -39174,26 +31840,19 @@
 
 	module.exports = Danger;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 161 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule createNodesFromMarkup
 	 * @typechecks
@@ -39201,11 +31860,11 @@
 
 	/*jslint evil: true, sub: true */
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
 
-	var createArrayFrom = __webpack_require__(163);
-	var getMarkupWrap = __webpack_require__(162);
-	var invariant = __webpack_require__(46);
+	var createArrayFrom = __webpack_require__(167);
+	var getMarkupWrap = __webpack_require__(166);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Dummy container used to render all markup.
@@ -39274,33 +31933,26 @@
 
 	module.exports = createNodesFromMarkup;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 162 */
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule getMarkupWrap
 	 */
 
-	var ExecutionEnvironment = __webpack_require__(39);
+	var ExecutionEnvironment = __webpack_require__(44);
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Dummy container used to detect which wraps are necessary.
@@ -39401,32 +32053,25 @@
 
 	module.exports = getMarkupWrap;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ },
-/* 163 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014 Facebook, Inc.
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule createArrayFrom
 	 * @typechecks
 	 */
 
-	var toArray = __webpack_require__(164);
+	var toArray = __webpack_require__(168);
 
 	/**
 	 * Perform a heuristic test to determine if an object is "array-like".
@@ -39501,29 +32146,22 @@
 
 
 /***/ },
-/* 164 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
-	 * Copyright 2014 Facebook, Inc.
+	 * Copyright 2014, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule toArray
 	 * @typechecks
 	 */
 
-	var invariant = __webpack_require__(46);
+	var invariant = __webpack_require__(52);
 
 	/**
 	 * Convert array-like objects to arrays.
@@ -39580,132 +32218,7 @@
 
 	module.exports = toArray;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41)))
-
-/***/ },
-/* 165 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(4);
-
-	var StateViewer = __webpack_require__(166)
-	var Game = __webpack_require__(167)
-
-	var BLOCK_SIZE = 20
-
-	module.exports = React.createClass({displayName: 'exports',
-	  render: function() {
-	    return (
-	      React.DOM.div(null, 
-	        Game(null)
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
-/* 166 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(4)
-	// flux + flux modules
-	var flux = __webpack_require__(1)
-	var Game = __webpack_require__(2)
-	var NuclearReactMixin = __webpack_require__(5)
-	var StateViewer = __webpack_require__(166)
-
-	module.exports = React.createClass({displayName: 'exports',
-	  mixins: [NuclearReactMixin(flux)],
-
-	  getDataBindings: function() {
-	    return {
-	      gameStateString: Game.getters.gameStateString
-	    }
-	  },
-
-	  render: function() {
-	    return (
-	      React.DOM.div(null, 
-	        React.DOM.pre(null, this.state.gameStateString)
-	      )
-	    )
-	  }
-	})
-
-
-/***/ },
-/* 167 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * @jsx React.DOM
-	 */
-	var React = __webpack_require__(4);
-
-	var Game = __webpack_require__(2)
-	var flux = __webpack_require__(1)
-	var NuclearReactMixin = __webpack_require__(5)
-
-	var BLOCK_SIZE = 20
-	var WIDTH = 10
-	var HEIGHT = 22
-	var BOARD_WIDTH = BLOCK_SIZE * WIDTH
-	var BOARD_HEIGHT = BLOCK_SIZE * HEIGHT
-
-	module.exports = React.createClass({displayName: 'exports',
-
-	  mixins: [NuclearReactMixin(flux)],
-
-	  getDataBindings: function() {
-	    return {
-	      board: Game.getters.board
-	    }
-	  },
-
-	  render: function() {
-	    var boardStyle = {
-	      width: BOARD_WIDTH,
-	      height: BOARD_HEIGHT,
-	      position: 'absolute',
-	      left: '50%',
-	      top: '50%',
-	      marginTop: -(BOARD_HEIGHT / 2),
-	      marginLeft: -(BOARD_WIDTH / 2),
-	      backgroundColor: '#bada55',
-	    }
-
-	    var blocks = this.state.board
-	    .filter(function(val) {
-	      return !!val
-	    })
-	    .map(function(val, coord) {
-	      var blockStyle = {
-	        width: BLOCK_SIZE,
-	        height: BLOCK_SIZE,
-	        position: 'absolute',
-	        left: coord.x * BLOCK_SIZE,
-	        bottom: coord.y * BLOCK_SIZE,
-	        backgroundColor: 'goldenrod',
-	      }
-	      return React.DOM.div({style: blockStyle})
-	    }).toJS()
-
-	    return (
-	      React.DOM.div({style: boardStyle}, 
-	        blocks
-	      )
-	    )
-
-	  }
-	})
-
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(46)))
 
 /***/ }
 /******/ ])

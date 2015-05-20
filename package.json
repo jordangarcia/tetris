@@ -12,11 +12,10 @@
     "scriptPreprocessor": "jestPreprocessor.js"
   },
   "dependencies": {
-    "nuclear-js": "optimizely/nuclear-js#next",
-    "react": "^0.11.2",
+    "nuclear-js": "^1.0.2",
     "keymirror": "^0.1.0",
     "lodash": "^2.4.1",
-    "nuclear-react-mixin": "jordangarcia/nuclear-react-mixin#next"
+    "react": "^0.12.x"
   },
   "devDependencies": {
     "webpack": "^1.4.4",

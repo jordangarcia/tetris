@@ -29,12 +29,12 @@ module.exports = Nuclear.Store({
 function nextPiece(state) {
   return state.withMutations(state => {
     var remaining = state.get('remaining')
-    var ind = randInt(remaining.length)
+    var ind = randInt(remaining.size)
 
     state.set('next', remaining.get(ind))
     state.set('remaining', remaining.splice(ind, 1))
 
-    if (state.get('remaining').length === 0) {
+    if (state.get('remaining').size === 0) {
       state.set('remaining', pieces)
     }
 

@@ -5,7 +5,6 @@ var React = require('react');
 
 var Game = require('../modules/game')
 var flux = require('../flux')
-var NuclearReactMixin = require('nuclear-react-mixin')
 
 var BLOCK_SIZE = 20
 var WIDTH = 10
@@ -15,11 +14,11 @@ var BOARD_HEIGHT = BLOCK_SIZE * HEIGHT
 
 module.exports = React.createClass({
 
-  mixins: [NuclearReactMixin(flux)],
+  mixins: [flux.ReactMixin],
 
   getDataBindings: function() {
     return {
-      board: Game.getters.board
+      board: Game.getters.board,
     }
   },
 
@@ -36,26 +35,25 @@ module.exports = React.createClass({
     }
 
     var blocks = this.state.board
-    .filter(function(val) {
-      return !!val
-    })
-    .map(function(val, coord) {
-      var blockStyle = {
-        width: BLOCK_SIZE,
-        height: BLOCK_SIZE,
-        position: 'absolute',
-        left: coord.x * BLOCK_SIZE,
-        bottom: coord.y * BLOCK_SIZE,
-        backgroundColor: 'goldenrod',
-      }
-      return <div style={blockStyle}></div>
-    }).toJS()
+      .filter(function(val) {
+        return !!val
+      })
+      .map(function(val, coord) {
+        var blockStyle = {
+          width: BLOCK_SIZE,
+          height: BLOCK_SIZE,
+          position: 'absolute',
+          left: coord.x * BLOCK_SIZE,
+          bottom: coord.y * BLOCK_SIZE,
+          backgroundColor: 'goldenrod',
+        }
+        return <div style={blockStyle}></div>
+      }).toList()
 
     return (
       <div style={boardStyle}>
-        {blocks}
+        {blocks.toJS()}
       </div>
     )
-
   }
 })

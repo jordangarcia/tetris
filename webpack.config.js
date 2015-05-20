@@ -12,7 +12,7 @@ module.exports = {
     loaders: [
       // required for react jsx
       { test: /\.js$/,    loader: "jsx-loader" },
-      { test: /\.jsx$/,   loader: "jsx-loader?insertPragma=React.DOM" },
+      //{ test: /\.jsx$/,   loader: "jsx-loader?insertPragma=React.DOM" },
       { test: /\.js$/, loader: 'jstransform-loader' },
     ]
   },

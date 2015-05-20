@@ -1,3 +1,4 @@
+var Immutable = require('nuclear-js').Immutable
 var boardHelper = require('./helpers/board-helper')
 
 var boardGetter = [
@@ -87,31 +88,6 @@ module.exports = {
       })
 
       return score
-    }
-  ],
-
-  gameStateString: [
-    ['game'],
-    boardGetter,
-    function(gameMap, board) {
-      var gameState = gameMap.toJS()
-      delete gameState.board
-      var plane = []
-      var res = {}
-      board.forEach(function(val, coord) {
-        if (plane[coord.y] === undefined) {
-          plane[coord.y] = []
-        }
-        plane[coord.y][coord.x] = val
-      })
-
-      plane.forEach(function(xs, y) {
-        xs.forEach(function(val, x) {
-          res['y=' + y + ', x=' + x] = val
-        })
-      })
-      gameState.board = res
-      return JSON.stringify(gameState, null, '  ')
     }
   ],
 }

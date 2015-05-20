@@ -5,15 +5,38 @@ var React = require('react')
 // flux + flux modules
 var flux = require('../flux')
 var Game = require('../modules/game')
-var NuclearReactMixin = require('nuclear-react-mixin')
 var StateViewer = require('../components/state-viewer')
 
 module.exports = React.createClass({
-  mixins: [NuclearReactMixin(flux)],
+
+  mixins: [flux.ReactMixin],
 
   getDataBindings: function() {
     return {
-      gameStateString: Game.getters.gameStateString
+      gameStateString: [
+        ['game'],
+        Game.getters.board,
+        function(gameMap, board) {
+          var gameState = gameMap.toJS()
+          delete gameState.board
+          var plane = []
+          var res = {}
+          board.forEach(function(val, coord) {
+            if (plane[coord.y] === undefined) {
+              plane[coord.y] = []
+            }
+            plane[coord.y][coord.x] = val
+          })
+
+          plane.forEach(function(xs, y) {
+            xs.forEach(function(val, x) {
+              res['y=' + y + ', x=' + x] = val
+            })
+          })
+          gameState.board = res
+          return JSON.stringify(gameState, null, '  ')
+        }
+      ]
     }
   },
 
