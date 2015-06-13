@@ -31,7 +31,7 @@ module.exports = React.createClass({
       top: '50%',
       marginTop: -(BOARD_HEIGHT / 2),
       marginLeft: -(BOARD_WIDTH / 2),
-      backgroundColor: '#bada55',
+      backgroundColor: '#ccc',
     }
 
     var blocks = this.state.board
@@ -45,14 +45,14 @@ module.exports = React.createClass({
           position: 'absolute',
           left: coord.x * BLOCK_SIZE,
           bottom: coord.y * BLOCK_SIZE,
-          backgroundColor: 'goldenrod',
+          backgroundColor: '#333',
         }
         return <div style={blockStyle}></div>
-      }).toList()
+      }).toList().toJS()
 
     return (
       <div style={boardStyle}>
-        {blocks.toJS()}
+        {blocks}
       </div>
     )
   }

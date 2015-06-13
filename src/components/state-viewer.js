@@ -2,6 +2,7 @@
  * @jsx React.DOM
  */
 var React = require('react')
+var boardHelper = require('../modules/game/helpers/board-helper')
 // flux + flux modules
 var flux = require('../flux')
 var Game = require('../modules/game')
@@ -15,7 +16,16 @@ module.exports = React.createClass({
     return {
       gameStateString: [
         ['game'],
-        Game.getters.board,
+        [
+          ['game', 'activePiece'],
+          ['game', 'board'],
+          function(piece, board) {
+            if (!piece) {
+              return board
+            }
+            return boardHelper.addPieceToBoard(piece, board)
+          }
+        ],
         function(gameMap, board) {
           var gameState = gameMap.toJS()
           delete gameState.board
