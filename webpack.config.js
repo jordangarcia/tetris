@@ -1,7 +1,7 @@
 module.exports = {
   entry: {
     tetris: './src/main.js',
-    example: './src/example/main.js',
+    example: './src/pages/example/main.js',
   },
 
   output: {
@@ -10,10 +10,7 @@ module.exports = {
   },
   module: {
     loaders: [
-      // required for react jsx
-      { test: /\.js$/,    loader: "jsx-loader" },
-      //{ test: /\.jsx$/,   loader: "jsx-loader?insertPragma=React.DOM" },
-      { test: /\.js$/, loader: 'jstransform-loader' },
+      { test: /\.js$/,    loader: "babel-loader" },
     ]
   },
 };

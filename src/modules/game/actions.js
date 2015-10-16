@@ -26,19 +26,19 @@ exports.start = function() {
 exports.handleKeyDown = function(keyCode) {
   switch (keyCode) {
     case UP_ARROW:
-      rotateClockwise()
+      exports.rotate()
       break
     case DOWN_ARROW:
       tick()
       break
     case RIGHT_ARROW:
-      moveRight()
+      exports.right()
       break
     case LEFT_ARROW:
-      moveLeft()
+      exports.left()
       break
     case SPACE_KEY:
-      softDrop()
+      exports.softDrop()
       break
     case ESCAPE_KEY:
       togglePause()
@@ -56,7 +56,7 @@ function tick() {
     return
   }
 
-  pieceDown()
+  exports.down()
 
   if (gameStatus === 'running') {
     // queue next tick
@@ -68,7 +68,7 @@ function tick() {
  * Sends an action to move the piece down.  Will clear lines and spawn
  * piece if the piece was set in place.
  */
-function pieceDown() {
+exports.down = function() {
   flux.dispatch(actionTypes.MOVE_DOWN)
 
   // if there is no piece spawn one
@@ -83,7 +83,7 @@ function pieceDown() {
 /**
  * Moves the current piece left 1 space
  */
-function moveLeft() {
+exports.left = function() {
   if (getGameStatus() !== 'running') {
     return
   }
@@ -93,7 +93,7 @@ function moveLeft() {
 /**
  * Moves the current piece left 1 space
  */
-function moveRight() {
+exports.right = function() {
   if (getGameStatus() !== 'running') {
     return
   }
@@ -103,7 +103,7 @@ function moveRight() {
 /**
  * Rotates the active piece clockwise
  */
-function rotateClockwise() {
+exports.rotate = function() {
   if (getGameStatus() !== 'running') {
     return
   }
@@ -115,7 +115,7 @@ function rotateClockwise() {
 /**
  * Soft drops the active piece
  */
-function softDrop() {
+exports.softDrop = function() {
   if (getGameStatus() !== 'running') {
     return
   }
