@@ -15,7 +15,8 @@
     "nuclear-js": "^1.0.2",
     "keymirror": "^0.1.0",
     "lodash": "^2.4.1",
-    "react": "^0.12.x"
+    "react": "^0.14.x",
+    "react-dom": "^0.14.0"
   },
   "devDependencies": {
     "webpack": "^1.4.4",

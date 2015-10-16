@@ -12,47 +12,39 @@ var RIGHT_ARROW = 39
 var ESCAPE_KEY = 27
 var SPACE_KEY = 32
 
-module.exports = {
-  /**
-   * Starts the game loop
-   */
-  start: function() {
-    tick()
-  },
-  /**
-   * Handle for key down events
-   * @param {number} keyCode
-   */
-  handleKeyDown: function(keyCode) {
-    switch (keyCode) {
-      case UP_ARROW:
-        rotateClockwise()
-        break
-      case DOWN_ARROW:
-        tick()
-        break
-      case RIGHT_ARROW:
-        moveRight()
-        break
-      case LEFT_ARROW:
-        moveLeft()
-        break
-      case SPACE_KEY:
-        softDrop()
-        break
-      case ESCAPE_KEY:
-        togglePause()
-        break
-    }
-  },
+/**
+ * Starts the game loop
+ */
+exports.start = function() {
+  tick()
+};
 
-  // example actions
-  down: pieceDown,
-  left: moveLeft,
-  right: moveRight,
-  softDrop: softDrop,
-  rotate: rotateClockwise,
-}
+/**
+ * Handle for key down events
+ * @param {number} keyCode
+ */
+exports.handleKeyDown = function(keyCode) {
+  switch (keyCode) {
+    case UP_ARROW:
+      rotateClockwise()
+      break
+    case DOWN_ARROW:
+      tick()
+      break
+    case RIGHT_ARROW:
+      moveRight()
+      break
+    case LEFT_ARROW:
+      moveLeft()
+      break
+    case SPACE_KEY:
+      softDrop()
+      break
+    case ESCAPE_KEY:
+      togglePause()
+      break
+  }
+};
 
 /**
  * Does a single game tick, moves piece down, clear lines

@@ -1,11 +1,14 @@
+/**
+ * @jsx React.DOM
+ */
 var React = require('react')
+var ReactDOM = require('react-dom')
 
 // flux + flux modules
 var flux = require('./flux')
 var Game = require('./modules/game')
 
-// React components
-var UI = require('./ui')
+var GameComponent = require('./components/game')
 
 // setup keydown handler
 window.addEventListener('keydown', function(e) {
@@ -13,7 +16,7 @@ window.addEventListener('keydown', function(e) {
 })
 
 // render UI
-React.renderComponent(UI(), document.getElementById('main'))
+ReactDOM.render(React.createElement(GameComponent), document.getElementById('main'))
 
 window.flux = flux
 window.Game = Game

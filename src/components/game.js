@@ -25,7 +25,7 @@ module.exports = React.createClass({
   },
 
   render: function() {
-    var style ={
+    var style = {
       width: BOARD_WIDTH,
       height: BOARD_HEIGHT,
       position: 'absolute',
@@ -34,28 +34,7 @@ module.exports = React.createClass({
       marginTop: -(BOARD_HEIGHT / 2),
       marginLeft: -(BOARD_WIDTH / 2),
     };
+
     return <BoardComponent style={style} blocks={this.state.board} />
-
-    var blocks = this.state.board
-      .filter(function(val) {
-        return !!val
-      })
-      .map(function(val, coord) {
-        var blockStyle = {
-          width: BLOCK_SIZE,
-          height: BLOCK_SIZE,
-          position: 'absolute',
-          left: coord.x * BLOCK_SIZE,
-          bottom: coord.y * BLOCK_SIZE,
-          backgroundColor: '#333',
-        }
-        return <div style={blockStyle}></div>
-      }).toList().toJS()
-
-    return (
-      <div style={boardStyle}>
-        {blocks}
-      </div>
-    )
   }
 })

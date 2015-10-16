@@ -1,4 +1,3 @@
-var Nuclear = require('nuclear-js')
 var flux = require('../../flux')
 
 flux.registerStores({
@@ -6,8 +5,6 @@ flux.registerStores({
   pieceBag: require('./stores/piece-bag-store'),
 })
 
-module.exports = {
-  actions: require('./actions'),
+exports.actions = require('./actions');
 
-  getters: require('./getters'),
-}
+exports.getters = require('./getters');

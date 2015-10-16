@@ -18,30 +18,28 @@ var DEFAULT_BOARD_STYLE = {
   backgroundColor: '#ccc',
 }
 
-module.exports = React.createClass({
-  render: function() {
-    var boardStyle = _.extend(DEFAULT_BOARD_STYLE, this.props.style || {});
+module.exports = (props) => {
+  var boardStyle = _.extend(DEFAULT_BOARD_STYLE, props.style || {});
 
-    var blocks = this.props.blocks
-      .filter(function(val) {
-        return !!val
-      })
-      .map(function(val, coord) {
-        var blockStyle = {
-          width: BLOCK_SIZE,
-          height: BLOCK_SIZE,
-          position: 'absolute',
-          left: coord.x * BLOCK_SIZE,
-          bottom: coord.y * BLOCK_SIZE,
-          backgroundColor: '#333',
-        }
-        return <div style={blockStyle}></div>
-      }).toList().toJS();
+  var blocks = props.blocks
+    .filter(function(val) {
+      return !!val
+    })
+    .map(function(val, coord) {
+      var blockStyle = {
+        width: BLOCK_SIZE,
+        height: BLOCK_SIZE,
+        position: 'absolute',
+        left: coord.x * BLOCK_SIZE,
+        bottom: coord.y * BLOCK_SIZE,
+        backgroundColor: '#333',
+      }
+      return <div style={blockStyle}></div>
+    }).toList();
 
-    return (
-      <div style={boardStyle}>
-        {blocks}
-      </div>
-    )
-  }
-})
+  return (
+    <div style={boardStyle}>
+      {blocks}
+    </div>
+  )
+}
