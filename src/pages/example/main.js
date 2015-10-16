@@ -7,7 +7,6 @@ var ReactDOM = require('react-dom')
 // flux + flux modules
 var flux = require('../../flux')
 var Game = require('../../modules/game')
-var NuclearReactMixin = require('nuclear-react-mixin')
 var StateViewer = require('../../components/state-viewer')
 
 var ActionRemote = (props) => {

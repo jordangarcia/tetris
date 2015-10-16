@@ -42,6 +42,16 @@ exports.generateBlankBoard = function(width, height) {
   return Map(map)
 }
 
+exports.generateBoard = function(width, height, coords) {
+  var board = exports.generateBlankBoard(width, height);
+
+  return board.withMutations(board => {
+    coords.forEach(([x, y]) => {
+      board.set(coord(x, y), 'I');
+    });
+  });
+};
+
 /**
  * Returns an array of all Y values that are lines
  */
