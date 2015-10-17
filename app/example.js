@@ -213,10 +213,6 @@
 
 	exports.getters = __webpack_require__(17);
 
-	exports.boardHelpers = __webpack_require__(18);
-
-	exports.pieceHelpers = __webpack_require__(19);
-
 /***/ },
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
