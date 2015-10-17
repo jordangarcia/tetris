@@ -4,8 +4,6 @@ module.exports = {
     example: './src/pages/example/main.js',
     helpers: './src/pages/helper_examples/main.js',
   },
-  devtool: 'source-map',
-
   output: {
     path: './app/',
     filename: "[name].js",
