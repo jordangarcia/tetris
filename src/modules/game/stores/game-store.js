@@ -39,6 +39,7 @@ module.exports = Nuclear.Store({
  * Game tick, move piece down
  */
 function moveDown(state) {
+  // TODO implement
   var newState = state
   var piece = state.get('activePiece')
   if (!piece) {

@@ -10,6 +10,7 @@ exports.board = [
   ['game', 'activePiece'],
   ['game', 'board'],
   function(piece, board) {
+    // TODO
     if (!piece) {
       return board
     }
