@@ -1,13 +1,13 @@
 var React = require('react')
 
-// flux + flux modules
-var Game = require('../../modules/game')
+var boardHelper = require('../../modules/game/helpers/board-helper')
+var pieceHelper = require('../../modules/game/helpers/piece-helper')
 var Board = require('../../components/board')
 
-var example = `Game.boardHelpers.generateBlankBoard(10, 10);`
+var example = `boardHelpers.generateBlankBoard(10, 10);`
 
 module.exports = (props) => {
-  var board1 = Game.boardHelpers.generateBlankBoard(10, 10);
+  var board1 = boardHelper.generateBlankBoard(10, 10);
 
   return <table>
     <tbody>

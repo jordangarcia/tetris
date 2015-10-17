@@ -1,15 +1,16 @@
 var React = require('react')
 
-var Game = require('../../modules/game')
+var boardHelper = require('../../modules/game/helpers/board-helper')
+var pieceHelper = require('../../modules/game/helpers/piece-helper')
 var Board = require('../../components/board')
 var coord = require('../../modules/game/coord')
 
-var example = `var lines = Game.boardHelpers.getLines(board1, 10, 10);`
+var example = `var lines = boardHelper.getLines(board1, WIDTH, HEIGHT);`
 
 module.exports = (props) => {
   var HEIGHT = 10;
   var WIDTH = 10;
-  var board1 = Game.boardHelpers.generateBoard(10, 10, [
+  var board1 = boardHelper.generateBoard(10, 10, [
     [0, 0],
     [1, 0],
     [2, 0],
@@ -45,7 +46,7 @@ module.exports = (props) => {
     [9, 3],
   ]);
 
-  var lines = Game.boardHelpers.getLines(board1, 10, 10);
+  var lines = boardHelper.getLines(board1, 10, 10);
 
   return <table style={{ marginTop: 80 }}>
     <tbody>

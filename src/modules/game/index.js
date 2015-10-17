@@ -10,3 +10,5 @@ exports.actions = require('./actions');
 exports.getters = require('./getters');
 
 exports.boardHelpers = require('./helpers/board-helper');
+
+exports.pieceHelpers = require('./helpers/piece-helper');
