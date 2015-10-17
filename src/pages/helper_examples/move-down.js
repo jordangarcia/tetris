@@ -1,4 +1,5 @@
 var React = require('react')
+var PrismCode = require('react-prism').PrismCode;
 
 // flux + flux modules
 var boardHelper = require('../../modules/game/helpers/board-helper')
@@ -36,11 +37,11 @@ module.exports = (props) => {
     <tbody>
       <tr>
         <td colSpan={2}>
-          <pre>{example}</pre>
+          <pre><PrismCode className="lang-javascript">{example}</PrismCode></pre>
         </td>
       </tr>
       <tr>
-        <td>
+        <td style={{ width: 200 }}>
           <Board blocks={board1} height={HEIGHT} width={WIDTH} />
         </td>
         <td>

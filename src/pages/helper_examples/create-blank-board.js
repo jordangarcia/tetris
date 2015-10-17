@@ -1,4 +1,5 @@
 var React = require('react')
+var PrismCode = require('react-prism').PrismCode;
 
 var boardHelper = require('../../modules/game/helpers/board-helper')
 var pieceHelper = require('../../modules/game/helpers/piece-helper')
@@ -13,7 +14,7 @@ module.exports = (props) => {
     <tbody>
       <tr>
         <td colSpan={2}>
-          <pre>{example}</pre>
+          <pre><PrismCode className="lang-javascript">{example}</PrismCode></pre>
         </td>
       </tr>
       <tr>
