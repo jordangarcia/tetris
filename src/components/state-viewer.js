@@ -1,12 +1,9 @@
-/**
- * @jsx React.DOM
- */
 var React = require('react')
-var boardHelper = require('../modules/game/helpers/board-helper')
-// flux + flux modules
+
 var flux = require('../flux')
 var Game = require('../modules/game')
 var StateViewer = require('../components/state-viewer')
+var boardHelper = require('../modules/game/helpers/board-helper')
 
 module.exports = React.createClass({
 
