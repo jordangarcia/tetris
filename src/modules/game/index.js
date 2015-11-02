@@ -1,4 +1,4 @@
-var flux = require('../../flux')
+import flux from '../../flux'
 
 flux.registerStores({
   game: require('./stores/game-store'),
@@ -8,3 +8,5 @@ flux.registerStores({
 exports.actions = require('./actions');
 
 exports.getters = require('./getters');
+
+exports.helpers = require('./helpers');

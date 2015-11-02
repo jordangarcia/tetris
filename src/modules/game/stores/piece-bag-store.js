@@ -1,10 +1,9 @@
-var Nuclear = require('nuclear-js')
-var Map = Nuclear.Immutable.Map
-var Immutable = Nuclear.Immutable
-var actionTypes = require('../action-types')
-var Tetriminos = require('../tetriminos')
+import Nuclear, { Immutable } from 'nuclear-js'
+import actionTypes from '../action-types'
+import Tetriminos from '../tetriminos'
 
-var pieces = Immutable.List(Tetriminos.pieces)
+let { Map } = Immutable
+const pieces = Immutable.List(Tetriminos.pieces)
 
 /**
  * The core that tracks the state of the board
@@ -28,8 +27,8 @@ module.exports = Nuclear.Store({
  */
 function nextPiece(state) {
   return state.withMutations(state => {
-    var remaining = state.get('remaining')
-    var ind = randInt(remaining.size)
+    let remaining = state.get('remaining')
+    const ind = randInt(remaining.size)
 
     state.set('next', remaining.get(ind))
     state.set('remaining', remaining.splice(ind, 1))

@@ -1,13 +1,11 @@
-var Nuclear = require('nuclear-js')
-var toImmutable = Nuclear.toImmutable
-var boardHelper = require('../helpers/board-helper')
-var pieceHelper = require('../helpers/piece-helper')
-var actionTypes = require('../action-types')
-var BoardPiece = require('../board-piece')
-var Tetriminos = require('../tetriminos')
+import Nuclear, { toImmutable } from 'nuclear-js'
+import { Piece } from '../records'
+import actionTypes from '../action-types'
+import Tetriminos from '../tetriminos'
+import * as helpers from '../helpers'
 
-var WIDTH = 10
-var HEIGHT = 22
+const WIDTH = 10
+const HEIGHT = 22
 
 /**
  * The core that tracks the state of the board
@@ -30,7 +28,7 @@ module.exports = Nuclear.Store({
       activePiece: null,
       isOver: false,
       isPaused: false,
-      board: boardHelper.generateBlankBoard(WIDTH, HEIGHT),
+      board: helpers.createBoard(WIDTH, HEIGHT)
     })
   }
 })
@@ -39,7 +37,6 @@ module.exports = Nuclear.Store({
  * Game tick, move piece down
  */
 function moveDown(state) {
-  // TODO implement
   var newState = state
   var piece = state.get('activePiece')
   if (!piece) {
@@ -48,13 +45,13 @@ function moveDown(state) {
 
   var board = state.get('board')
   // move piece down and check if is valid
-  var newPiece = pieceHelper.move(piece, [0, -1])
-  if (boardHelper.isValidPosition(newPiece, board)) {
+  var newPiece = helpers.move(piece, [0, -1])
+  if (helpers.isValidPosition(newPiece, board)) {
     newState = state.set('activePiece', newPiece)
   } else {
     // cannot move down, lock piece on board
     newState = state
-      .set('board', boardHelper.addPieceToBoard(piece, board))
+      .set('board', helpers.addPieceToBoard(piece, board))
       .set('activePiece', null)
 
     return clearLines(newState)
@@ -71,13 +68,13 @@ function softDrop(state) {
   var piece = state.get('activePiece')
   var board = state.get('board')
 
-  var newPiece = pieceHelper.move(piece, [0, -1])
-  if (!boardHelper.isValidPosition(newPiece, board)) {
+  var newPiece = helpers.move(piece, [0, -1])
+  if (!helpers.isValidPosition(newPiece, board)) {
     // if the piece is at the bottom of the board simulate a moveDown
     return moveDown(state)
   }
 
-  newPiece = boardHelper.softDropPiece(piece, board)
+  newPiece = helpers.softDropPiece(piece, board)
   return state.set('activePiece', newPiece)
 }
 
@@ -87,13 +84,13 @@ function softDrop(state) {
 function spawnPiece(state, payload) {
   var piece = payload.piece
   var board = state.get('board')
-  var spawnedPiece = new BoardPiece({
+  var spawnedPiece = new Piece({
     type: piece,
     rotation: 0,
     pos: Tetriminos[piece].spawnPosition,
   })
 
-  if (!boardHelper.isValidPosition(spawnedPiece, board)) {
+  if (!helpers.isValidPosition(spawnedPiece, board)) {
     // if the spawned piece is invalid the game is over
     return state
       .set('activePiece', spawnedPiece)
@@ -111,8 +108,8 @@ function move(state, vector) {
   var activePiece = state.get('activePiece')
   var board = state.get('board')
 
-  var movedPiece = pieceHelper.move(activePiece, vector)
-  if (boardHelper.isValidPosition(movedPiece, board)) {
+  var movedPiece = helpers.move(activePiece, vector)
+  if (helpers.isValidPosition(movedPiece, board)) {
     return state.set('activePiece', movedPiece)
   }
   return state
@@ -139,7 +136,7 @@ function rotate(state, payload) {
   var board = state.get('board')
   var piece = state.get('activePiece')
 
-  var rotatedPiece = pieceHelper.rotate(piece, payload.diff)
+  var rotatedPiece = helpers.rotate(piece, payload.diff)
   var translations = [
     [0,0],
     [0,1],
@@ -159,8 +156,8 @@ function rotate(state, payload) {
   // be necessary to "bounce off the walls".  Iterate through the translations
   // until a valid position is found
   for (var i = 0; i < translations.length; i++) {
-    rotatedPiece = pieceHelper.move(rotatedPiece, translations[i])
-    if (boardHelper.isValidPosition(rotatedPiece, board)) {
+    rotatedPiece = helpers.move(rotatedPiece, translations[i])
+    if (helpers.isValidPosition(rotatedPiece, board)) {
       return state.set('activePiece', rotatedPiece)
     }
   }
@@ -182,7 +179,7 @@ function unpause(state) {
 function clearLines(state) {
   var board = state.get('board')
 
-  var lines = boardHelper.getLines(board, WIDTH, HEIGHT)
+  var lines = helpers.getLines(board, WIDTH, HEIGHT)
   if (lines.length === 0) {
     return state
   }
@@ -190,6 +187,6 @@ function clearLines(state) {
   // add the number of lines to the record of clears
   return state
     .update('clears', vect => vect.push(lines.length))
-    .set('board', boardHelper.removeLines(board, lines, WIDTH, HEIGHT))
+    .set('board', helpers.removeLines(board, lines, WIDTH, HEIGHT))
 }
 

@@ -1,16 +1,16 @@
-var flux = require('../../flux')
-var timeout = require('./timeout')
-var actionTypes = require('./action-types')
-var getters = require('./getters')
+import flux from '../../flux'
+import timeout from './timeout'
+import actionTypes from './action-types'
+import getters from './getters'
 
-var TICK_DURATION = 1000
+const TICK_DURATION = 1000
 
-var UP_ARROW = 38
-var LEFT_ARROW = 37
-var DOWN_ARROW = 40
-var RIGHT_ARROW = 39
-var ESCAPE_KEY = 27
-var SPACE_KEY = 32
+const UP_ARROW = 38
+const LEFT_ARROW = 37
+const DOWN_ARROW = 40
+const RIGHT_ARROW = 39
+const ESCAPE_KEY = 27
+const SPACE_KEY = 32
 
 /**
  * Starts the game loop
@@ -51,7 +51,7 @@ exports.handleKeyDown = function(keyCode) {
  * and spawns the next piece
  */
 function tick() {
-  var gameStatus = getGameStatus()
+  const gameStatus = getGameStatus()
   if (gameStatus !== 'running') {
     return
   }

@@ -45,7 +45,11 @@ export function createBoard(width, height, existing = []) {
  */
 export function isValidPosition(piece, board) {
   return getCoords(piece).every(coord => {
-    return board.getIn(coord) === null
+    // special case since board.get(-1) doesnt return undefined
+    if (coord[0] < 0) {
+      return false
+    }
+    return board.getIn(coord, false) === null
   })
 }
 
@@ -163,6 +167,28 @@ export function move(piece, vector) {
 }
 
 /**
+ * Flattens the 2d board structure into a 1d Map of coord => string where it only has non-null
+ * values
+ */
+export function flattenAndFilterBoard(board) {
+  return Map().withMutations(map => {
+    board.forEach((col, x) => {
+      col.forEach((val, y) => {
+        if (val) {
+          map.set([x, y], val)
+        }
+      })
+    })
+  })
+}
+
+export function getBoardDimensions(board) {
+  const width = board.size
+  const height = board.get(0).size
+  return [width, height]
+}
+
+/**
  * @param {BoardPiece} piece
  * @return {Array}
  */
@@ -176,8 +202,3 @@ function getCoords(piece) {
   })
 }
 
-function getBoardDimensions(board) {
-  const width = board.size
-  const height = board.get(0).size
-  return [width, height]
-}

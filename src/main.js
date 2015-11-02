@@ -1,8 +1,8 @@
-var React = require('react')
-var ReactDOM = require('react-dom')
+import React from 'react'
+import ReactDOM from 'react-dom'
 
-var Game = require('./modules/game')
-var GameComponent = require('./components/game')
+import Game from './modules/game'
+import GameComponent from './components/game'
 
 // setup keydown handler
 window.addEventListener('keydown', (e) => {

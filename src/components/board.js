@@ -1,42 +1,38 @@
 /**
  * @jsx React.DOM
  */
-var React = require('react');
+import React from 'react';
+import Game from '../modules/game'
+import flux from '../flux'
+let {
+  flattenAndFilterBoard,
+  getBoardDimensions
+} = Game.helpers
 
-var Game = require('../modules/game')
-var flux = require('../flux')
-
-var DEFAULT_BLOCK_SIZE = 20;
-var DEFAULT_HEIGHT = 22;
-var DEFAULT_WIDTH = 10;
+const BLOCK_SIZE = 20;
 
 module.exports = (props) => {
-  var blockSize = props.blockSize || DEFAULT_BLOCK_SIZE;
-  var height = props.height || DEFAULT_HEIGHT;
-  var width = props.width || DEFAULT_WIDTH;
-
-  var boardStyle = _.extend({
-    width: blockSize * width,
-    height: blockSize * height,
+  const [width, height] = getBoardDimensions(props.board)
+  const boardStyle = _.extend({
+    width: BLOCK_SIZE * width,
+    height: BLOCK_SIZE * height,
     position: 'relative',
     backgroundColor: '#ccc',
   }, props.style);
 
-  var blocks = props.blocks
-    .filter(function(val) {
-      return !!val
-    })
-    .map(function(val, coord) {
-      var blockStyle = {
-        width: blockSize,
-        height: blockSize,
-        position: 'absolute',
-        left: coord.x * blockSize,
-        bottom: coord.y * blockSize,
-        backgroundColor: '#333',
-      }
-      return <div style={blockStyle}></div>
-    }).toList();
+  const flatBoard = flattenAndFilterBoard(props.board)
+
+  const blocks = flatBoard.map((val, [x, y]) => {
+    const key = x + '_' + y
+    return <div key={key} style={{
+      width: BLOCK_SIZE,
+      height: BLOCK_SIZE,
+      position: 'absolute',
+      left: BLOCK_SIZE * x,
+      bottom: BLOCK_SIZE * y,
+      backgroundColor: '#333',
+    }}></div>
+  }).toList();
 
   return (
     <div style={boardStyle}>

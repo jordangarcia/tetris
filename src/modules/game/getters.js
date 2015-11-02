@@ -1,21 +1,20 @@
-var Immutable = require('nuclear-js').Immutable
-var boardHelper = require('./helpers/board-helper')
+import { Immutable } from 'nuclear-js'
+import { addPieceToBoard } from './helpers'
+
+let { Map } = Immutable
 
 /**
  * Combines the active piece with the current board and returns a Map keyed by coordinates
- *
  * @return {Immutable.Map} coord => string (ex: 'I', 'L', 'J')
  */
 exports.board = [
   ['game', 'activePiece'],
   ['game', 'board'],
-  function(piece, board) {
-    // TODO
-    if (!piece) {
-      return board
-    }
-    return boardHelper.addPieceToBoard(piece, board)
-  }
+  (piece, board) => {
+    return (piece)
+      ? addPieceToBoard(piece, board)
+      : board
+  },
 ];
 
 /**

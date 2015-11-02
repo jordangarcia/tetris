@@ -69,6 +69,17 @@ describe('Game', () => {
         expect(result).toBe(false)
       })
 
+      it('should return false when piece is out of bounds', () => {
+        const board = createBoard(10, 10)
+        const piece = new Piece({
+          type: 'I',
+          rotation: 0,
+          pos: [-1, 9]
+        })
+        const result = isValidPosition(piece, board)
+        expect(result).toBe(false)
+      })
+
       it('should return false when it hits another piece', () => {
         const board = createBoard(10, 10, [
           [[6, 9], 'L'],
