@@ -12,24 +12,26 @@ let {
 const BLOCK_SIZE = 20;
 
 module.exports = (props) => {
+  const blockSize = props.blockSize || BLOCK_SIZE
   const [width, height] = getBoardDimensions(props.board)
   const boardStyle = _.extend({
-    width: BLOCK_SIZE * width,
-    height: BLOCK_SIZE * height,
+    width: blockSize * width,
+    height: blockSize * height,
     position: 'relative',
     backgroundColor: '#ccc',
   }, props.style);
 
+  console.log("BLOCK SIZE", blockSize)
   const flatBoard = flattenAndFilterBoard(props.board)
 
   const blocks = flatBoard.map((val, [x, y]) => {
     const key = x + '_' + y
     return <div key={key} style={{
-      width: BLOCK_SIZE,
-      height: BLOCK_SIZE,
+      width: blockSize,
+      height: blockSize,
       position: 'absolute',
-      left: BLOCK_SIZE * x,
-      bottom: BLOCK_SIZE * y,
+      left: blockSize * x,
+      bottom: blockSize * y,
       backgroundColor: '#333',
     }}></div>
   }).toList();
