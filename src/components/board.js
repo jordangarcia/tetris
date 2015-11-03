@@ -21,7 +21,6 @@ module.exports = (props) => {
     backgroundColor: '#ccc',
   }, props.style);
 
-  console.log("BLOCK SIZE", blockSize)
   const flatBoard = flattenAndFilterBoard(props.board)
 
   const blocks = flatBoard.map((val, [x, y]) => {
