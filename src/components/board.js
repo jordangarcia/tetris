@@ -36,8 +36,21 @@ module.exports = (props) => {
     }}></div>
   }).toList();
 
+  const softDropBlocks = props.softDropCoords.map(([x, y]) => {
+    const key = x + '_' + y
+    return <div key={key} style={{
+      width: blockSize,
+      height: blockSize,
+      position: 'absolute',
+      left: blockSize * x,
+      bottom: blockSize * y,
+      backgroundColor: '#888',
+    }}></div>
+  })
+
   return (
     <div style={boardStyle}>
+      {softDropBlocks}
       {blocks}
     </div>
   )

@@ -11,10 +11,14 @@ module.exports = React.createClass({
   getDataBindings: function() {
     return {
       board: Game.getters.board,
+      softDropCoords: Game.getters.softDropCoords,
     }
   },
 
   render: function() {
-    return <BoardComponent board={this.state.board} blockSize={30} />
+    return <BoardComponent
+      board={this.state.board}
+      softDropCoords={this.state.softDropCoords}
+      blockSize={30} />
   }
 })

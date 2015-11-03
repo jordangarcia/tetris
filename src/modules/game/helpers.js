@@ -199,7 +199,7 @@ export function getBoardDimensions(board) {
  * @param {BoardPiece} piece
  * @return {Array}
  */
-function getCoords(piece) {
+export function getCoords(piece) {
   const { structure } = Tetriminos[piece.type]
   const rotation = piece.rotation % structure.length
 

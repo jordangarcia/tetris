@@ -17,6 +17,7 @@ module.exports = Nuclear.Store({
     this.on(actionTypes.RIGHT, moveRight)
     this.on(actionTypes.MOVE_DOWN, moveDown)
     this.on(actionTypes.ROTATE, rotate)
+    this.on(actionTypes.SOFT_DROP, softDrop)
   },
 
   getInitialState: function() {
@@ -152,41 +153,20 @@ function rotate(state, { diff }) {
   return state
 }
 
+function softDrop(state) {
+  const piece = state.get('activePiece')
+  const board = state.get('board')
 
+  if (!piece) {
+    return state
+  }
 
+  let newPiece = helpers.move(piece, [0, -1])
+  if (!helpers.isValidPosition(newPiece, board)) {
+    // if the piece is at the bottom of the board simulate a moveDown
+    return moveDown(state)
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  newPiece = helpers.softDropPiece(piece, board)
+  return state.set('activePiece', newPiece)
+}

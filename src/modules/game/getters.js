@@ -1,5 +1,5 @@
-import { Immutable } from 'nuclear-js'
-import { addPieceToBoard } from './helpers'
+import { Immutable, toImmutable } from 'nuclear-js'
+import { addPieceToBoard, getCoords, softDropPiece } from './helpers'
 
 let { Map } = Immutable
 
@@ -14,6 +14,17 @@ exports.board = [
     return (piece)
       ? addPieceToBoard(piece, board)
       : board
+  },
+];
+
+exports.softDropCoords = [
+  ['game', 'activePiece'],
+  ['game', 'board'],
+  (piece, board) => {
+    if (!piece) {
+      return toImmutable([])
+    }
+    return toImmutable(getCoords(softDropPiece(piece, board)))
   },
 ];
 
