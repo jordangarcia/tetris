@@ -2,7 +2,7 @@ module.exports = {
   entry: {
     tetris: './src/main.js',
     //example: './src/pages/example/main.js',
-    '../exports': './src/exports',
+    '../exports': './src/presentation-exports',
   },
   output: {
     path: './app/',
