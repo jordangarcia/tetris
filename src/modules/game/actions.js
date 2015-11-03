@@ -16,7 +16,7 @@ const SPACE_KEY = 32
  * Starts the game loop
  */
 exports.start = function() {
-  tick()
+  exports.down()
 };
 
 /**
@@ -29,7 +29,7 @@ exports.handleKeyDown = function(keyCode) {
       exports.rotate()
       break
     case DOWN_ARROW:
-      tick()
+      exports.down();
       break
     case RIGHT_ARROW:
       exports.right()
@@ -40,29 +40,8 @@ exports.handleKeyDown = function(keyCode) {
     case SPACE_KEY:
       exports.softDrop()
       break
-    case ESCAPE_KEY:
-      togglePause()
-      break
   }
 };
-
-/**
- * Does a single game tick, moves piece down, clear lines
- * and spawns the next piece
- */
-function tick() {
-  const gameStatus = getGameStatus()
-  if (gameStatus !== 'running') {
-    return
-  }
-
-  exports.down()
-
-  if (gameStatus === 'running') {
-    // queue next tick
-    timeout.queue(tick, TICK_DURATION)
-  }
-}
 
 /**
  * Sends an action to move the piece down.  Will clear lines and spawn
@@ -78,15 +57,14 @@ exports.down = function() {
       piece: flux.evaluate(getters.nextPiece)
     })
   }
+
+  timeout.queue(exports.down, TICK_DURATION)
 }
 
 /**
  * Moves the current piece left 1 space
  */
 exports.left = function() {
-  if (getGameStatus() !== 'running') {
-    return
-  }
   flux.dispatch(actionTypes.LEFT)
 }
 
@@ -94,9 +72,6 @@ exports.left = function() {
  * Moves the current piece left 1 space
  */
 exports.right = function() {
-  if (getGameStatus() !== 'running') {
-    return
-  }
   flux.dispatch(actionTypes.RIGHT)
 }
 
@@ -104,9 +79,6 @@ exports.right = function() {
  * Rotates the active piece clockwise
  */
 exports.rotate = function() {
-  if (getGameStatus() !== 'running') {
-    return
-  }
   flux.dispatch(actionTypes.ROTATE, {
     diff: 1
   })
@@ -116,37 +88,13 @@ exports.rotate = function() {
  * Soft drops the active piece
  */
 exports.softDrop = function() {
-  if (getGameStatus() !== 'running') {
-    return
-  }
-
   flux.dispatch(actionTypes.SOFT_DROP)
   // if the softdrop actually set the piece on the board
   if (flux.evaluate(getters.shouldSpawnPiece)) {
-    tick()
+    // use down for spawn / piece tick
+    exports.down()
   } else {
     // if it was an actual soft drop defer the game tick
     timeout.reset()
   }
-}
-
-/**
- * Toggle paused based on whether the game is already paused
- */
-function togglePause() {
-  var status = getGameStatus()
-  if (status === 'running') {
-    flux.dispatch(actionTypes.PAUSE)
-    timeout.cancel()
-  } else if (status === 'paused') {
-    flux.dispatch(actionTypes.UNPAUSE)
-    tick()
-  }
-}
-
-/**
- * @return {string} game status
- */
-function getGameStatus() {
-  return flux.evaluate(getters.status)
 }
