@@ -54,7 +54,7 @@ exports.down = function() {
   if (flux.evaluate(getters.shouldSpawnPiece)) {
     // after a move down if there is no active piece
     flux.dispatch(actionTypes.SPAWN_PIECE, {
-      piece: flux.evaluate(getters.nextPiece)
+      type: flux.evaluate(getters.nextPiece)
     })
   }
 

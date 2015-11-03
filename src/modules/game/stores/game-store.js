@@ -34,7 +34,7 @@ module.exports = Nuclear.Store({
  * @param {Object} payload
  * @param {String} payload.piece
  */
-function spawnPiece(state, payload) {
+function spawnPiece(state, { type }) {
   return state
 }
 
@@ -69,7 +69,76 @@ function moveRight(state, payload) {
 
 /**
  * Rotates a piece an arbitrary number of times
+ * @param {Immutable.Map} state
+ * @param {Object} payload
+ * @param {String} payload.piece
  */
-function rotate(state, payload) {
+function rotate(state, { diff }) {
   return state
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * SUPER HIDDEN CODE FOR PRESENTATION
+  const translations = [
+    [0,0],
+    [0,1],
+    [0,2],
+    [1,0],
+    [2,0],
+    [3,0],
+    [-1,0],
+    [-2,0],
+    [-3,0],
+    [0,-1],
+    [0,-2],
+    [0,-3],
+  ]
+
+  // when rotating pieces against walls or other pieces, a translation may
+  // be necessary to "bounce off the walls".  Iterate through the translations
+  // until a valid position is found
+  for (var i = 0; i < translations.length; i++) {
+    rotatedPiece = helpers.move(rotatedPiece, translations[i])
+    if (helpers.isValidPosition(rotatedPiece, board)) {
+      return state.set('activePiece', rotatedPiece)
+    }
+  }
+  */
