@@ -15,6 +15,7 @@ module.exports = (props) => {
   const blockSize = props.blockSize || BLOCK_SIZE
   const [width, height] = getBoardDimensions(props.board)
   const boardStyle = _.extend({
+    margin: 'auto',
     width: blockSize * width,
     height: blockSize * height,
     position: 'relative',

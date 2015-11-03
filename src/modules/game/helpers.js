@@ -46,7 +46,7 @@ export function createBoard(width, height, existing = []) {
 export function isValidPosition(piece, board) {
   return getCoords(piece).every(coord => {
     // special case since board.get(-1) doesnt return undefined
-    if (coord[0] < 0) {
+    if (coord[0] < 0 || coord[1] < 0) {
       return false
     }
     return board.getIn(coord, false) === null
@@ -65,6 +65,13 @@ export function addPieceToBoard(piece, board) {
       board.setIn(coord, piece.type)
     })
   })
+}
+
+/**
+ * Returns a new board with the lines cleared
+ */
+export function clearLines(board) {
+  return removeLines(board, getLines(board))
 }
 
 /**

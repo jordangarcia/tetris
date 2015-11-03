@@ -17,3 +17,8 @@ window.Game = Game
 
 // start the game loop
 Game.actions.start()
+
+window.debugBoard = function() {
+  var board = flux.evaluate(Game.getters.board).toJS()
+  console.log(board.map(col => JSON.stringify(col)))
+}

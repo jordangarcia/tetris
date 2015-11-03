@@ -16,7 +16,7 @@ const SPACE_KEY = 32
  * Starts the game loop
  */
 exports.start = function() {
-  exports.down()
+  //exports.down()
 };
 
 /**
@@ -58,7 +58,7 @@ exports.down = function() {
     })
   }
 
-  timeout.queue(exports.down, TICK_DURATION)
+  //timeout.queue(exports.down, TICK_DURATION)
 }
 
 /**

@@ -1,9 +1,8 @@
+import { Immutable } from 'nuclear-js'
 var React = require('react')
 
 var flux = require('../flux')
 var Game = require('../modules/game')
-var StateViewer = require('../components/state-viewer')
-var boardHelper = require('../modules/game/helpers/board-helper')
 
 module.exports = React.createClass({
 
@@ -12,36 +11,23 @@ module.exports = React.createClass({
   getDataBindings: function() {
     return {
       gameStateString: [
-        ['game'],
-        [
-          ['game', 'activePiece'],
-          ['game', 'board'],
-          function(piece, board) {
-            if (!piece) {
-              return board
-            }
-            return boardHelper.addPieceToBoard(piece, board)
-          }
-        ],
-        function(gameMap, board) {
-          var gameState = gameMap.toJS()
-          delete gameState.board
-          var plane = []
-          var res = {}
-          board.forEach(function(val, coord) {
-            if (plane[coord.y] === undefined) {
-              plane[coord.y] = []
-            }
-            plane[coord.y][coord.x] = val
+        Game.getters.board,
+        (board) => {
+          const boardJS = board.toJS()
+          const mappedRows = boardJS.map(col => {
+            return JSON.stringify(col)
           })
-
-          plane.forEach(function(xs, y) {
-            xs.forEach(function(val, x) {
-              res['y=' + y + ', x=' + x] = val
+          return mappedRows.join("\n")
+          //return JSON.stringify(mappedRows, null, '  ')
+          const map = Immutable.Map().withMutations(map => {
+            board.forEach((col, x) => {
+              col.forEach((val, y) => {
+                  map.set([x, y], val)
+              })
             })
           })
-          gameState.board = res
-          return JSON.stringify(gameState, null, '  ')
+          return JSON.stringify(map, null, '  ')
+
         }
       ]
     }

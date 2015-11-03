@@ -15,9 +15,6 @@ module.exports = React.createClass({
   },
 
   render: function() {
-    var style = {
-      margin: 'auto',
-    };
-    return <BoardComponent style={style} board={this.state.board} />
+    return <BoardComponent board={this.state.board} blockSize={30} />
   }
 })
