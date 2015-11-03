@@ -48,6 +48,11 @@ exports.handleKeyDown = function(keyCode) {
  * piece if the piece was set in place.
  */
 exports.down = function() {
+  if (flux.evaluate(['game', 'isOver'])) {
+    console.log('IS OVERRRRR')
+    return
+  }
+
   flux.dispatch(actionTypes.MOVE_DOWN)
 
   // if there is no piece spawn one
@@ -58,7 +63,7 @@ exports.down = function() {
     })
   }
 
-  //timeout.queue(exports.down, TICK_DURATION)
+  timeout.queue(exports.down, TICK_DURATION)
 }
 
 /**

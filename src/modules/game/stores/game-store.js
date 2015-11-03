@@ -35,14 +35,43 @@ module.exports = Nuclear.Store({
  * @param {String} payload.piece
  */
 function spawnPiece(state, { type }) {
-  return state
+  const board = state.get('board')
+
+  const piece = new Piece({
+    type: type,
+    rotation: 0,
+    pos: Tetriminos[type].spawnPosition,
+  })
+
+  if (!helpers.isValidPosition(piece, board)) {
+    return state.set('isOver', true).set('activePiece', piece);
+  }
+
+  return state.set('activePiece', piece)
 }
 
 /**
  * Game tick, move piece down
  */
 function moveDown(state) {
-  return state
+  const activePiece = state.get('activePiece')
+  const board = state.get('board')
+
+  if (!activePiece) {
+    return state
+  }
+
+  const movedPiece = helpers.move(activePiece, [0, -1])
+
+  if (helpers.isValidPosition(movedPiece, board)) {
+    return state.set('activePiece', movedPiece)
+  } else {
+    const newBoard = helpers.clearLines(helpers.addPieceToBoard(activePiece, board))
+
+    return state
+    .set('board', newBoard)
+    .set('activePiece', null);
+  }
 }
 
 /**
@@ -50,6 +79,19 @@ function moveDown(state) {
  * if the new position is valid, returns updated state
  */
 function move(state, vector) {
+  const activePiece = state.get('activePiece')
+  const board = state.get('board')
+
+  if (!activePiece) {
+    return state
+  }
+
+  const movedPiece = helpers.move(activePiece, vector)
+
+  if (helpers.isValidPosition(movedPiece, board)) {
+    return state.set('activePiece', movedPiece)
+  }
+
   return state
 }
 
@@ -57,14 +99,14 @@ function move(state, vector) {
  * Moves the active piece left
  */
 function moveLeft(state) {
-  return state
+  return move(state, [-1, 0])
 }
 
 /**
  * Moves the active piece left
  */
 function moveRight(state, payload) {
-  return state
+  return move(state, [1, 0])
 }
 
 /**
@@ -74,49 +116,14 @@ function moveRight(state, payload) {
  * @param {String} payload.piece
  */
 function rotate(state, { diff }) {
-  return state
-}
+  const activePiece = state.get('activePiece')
+  const board = state.get('board')
 
+  if (!activePiece) {
+    return state
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * SUPER HIDDEN CODE FOR PRESENTATION
+  let rotatedPiece = helpers.rotate(activePiece, diff);
   const translations = [
     [0,0],
     [0,1],
@@ -141,4 +148,45 @@ function rotate(state, { diff }) {
       return state.set('activePiece', rotatedPiece)
     }
   }
-  */
+
+  return state
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

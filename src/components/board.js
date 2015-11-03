@@ -19,7 +19,7 @@ module.exports = (props) => {
     width: blockSize * width,
     height: blockSize * height,
     position: 'relative',
-    backgroundColor: '#ccc',
+    backgroundColor: '#DDD',
   }, props.style);
 
   const flatBoard = flattenAndFilterBoard(props.board)
